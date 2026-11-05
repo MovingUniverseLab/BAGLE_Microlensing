@@ -26,18 +26,20 @@ To instantiate a model:
 
    mL = 10.0     # msun
    t0 = 57000.00 # MJD
-   xS0 = np.array([0.000, 0.000])  # arcsec
+   # East and North origin, one entry per filter (arcsec).
+   xS0_E = np.array([0.000])
+   xS0_N = np.array([0.000])
    beta = 1.4  # mas
    muS = np.array([8.0, 0.0])   # mas/yr
    muL = np.array([0.00, 0.00]) # mas/yr
    dL = 4000.0 # pc
    dS = 8000.0 # pc
-   b_sff = [1.0]    # one for each filter
+   b_sff = [1.0]    # source flux fraction, one per filter
    mag_src = [19.0] # one for each filter
 
    event1 = model.PSPL_PhotAstrom_noPar_Param1(mL,
                           t0, beta, dL, dL / dS,
-                          xS0[0], xS0[1], muL[0], muL[1],
+                          xS0_E, xS0_N, muL[0], muL[1],
                           muS[0], muS[1],
                           b_sff, mag_src)
 
@@ -437,6 +439,10 @@ Some examples of the parameters for different parameterization are:
             | (ra, dec)
 
 `(ra, dec)` are only required if the model is created with a parallax class.
+``xS0`` is always ``(n_filters, 2)``, including one filter. ``xS0_E``
+and ``xS0_N`` are arrays of length ``n_filters``. ``xS0[filt_idx]``
+is that filter's East/North pair. ``xS0[0, 0]`` is East and
+``xS0[0, 1]`` is North for filter 0.
 More details about each parameterization can be found in the Parameterization
 Class docstring.
 
@@ -545,7 +551,7 @@ class PSPL(ABC):
         """
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
-        xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = self.xL0[filt_idx] + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -558,7 +564,7 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xL += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xL += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
             
         return xL
 
@@ -583,7 +589,7 @@ class PSPL(ABC):
         """
         # Equation of motion for just the background source.
         dt_in_years = (t - self.t0) / days_per_year
-        xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
+        xS_unlensed = self.xS0[filt_idx] + np.outer(dt_in_years, self.muS) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -597,7 +603,7 @@ class PSPL(ABC):
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
 
-            xS_unlensed += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xS_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         return xS_unlensed
 
@@ -841,8 +847,8 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xS_plus += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
-            xS_minus += (self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xS_plus += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
+            xS_minus += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         return np.stack((xS_plus, xS_minus))
 
@@ -873,10 +879,10 @@ class PSPL(ABC):
         dt_in_years = (t - self.t0) / days_per_year
 
         # Equation of motion for just the background source.
-        xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
+        xS_unlensed = self.xS0[filt_idx] + np.outer(dt_in_years, self.muS) * 1e-3
 
         # Equation of motion for just the foreground lens.
-        xL_unlensed = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL_unlensed = self.xL0[filt_idx] + np.outer(dt_in_years, self.muL) * 1e-3
 
         # Add parallax to both.
         if self.parallaxFlag:
@@ -889,8 +895,8 @@ class PSPL(ABC):
             # Get the parallax vector for each date.
             parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
                                                           obsLocation=self.obsLocation[filt_idx])
-            xS_unlensed += np.squeeze(self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
-            xL_unlensed += np.squeeze(self.pi_ref_frame * parallax_vec) * 1e-3  # arcsec
+            xS_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
+            xL_unlensed += (self.pi_ref_frame[filt_idx] * parallax_vec) * 1e-3  # arcsec
 
         # Equation of motion for the relative angular separation between the background source and lens.
         # Note, we don't just call get_centroid_shift() because parallax_vec calculation is repeated.
@@ -1541,9 +1547,15 @@ class PSPL_Phot(PSPL):
         return pos_unlensed
 
     def get_resolved_amplification(self, t, filt_idx=0):
-        raise RuntimeError(
-            "Astrometry is not supported on this object: " +
-            str(self.__class__))
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        u_amp = np.linalg.norm(u_vec, axis=1)
+        sqrt_term = np.sqrt(u_amp ** 2 + 4)
+        A_plus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) + 1)
+        A_minus = 0.5 * ((u_amp ** 2 + 2) / (u_amp * sqrt_term) - 1)
+        A = np.zeros((len(t), 1, 2), dtype=float)
+        A[:, 0, 0] = A_plus
+        A[:, 0, 1] = A_minus
+        return A
 
     def get_resolved_astrometry(self, t, filt_idx=0):
         '''
@@ -1559,7 +1571,7 @@ class PSPL_Phot(PSPL):
 
         Returns
         -------
-        model_pos : array_like. shape = [N_times, N_images, 2]
+        model_pos : array_like. shape = [N_times, N_sources, N_images, 2]
             Array of vector positions of the centroid at each t.
         '''
         u_vec = self.get_u(t, filt_idx=filt_idx)
@@ -1571,11 +1583,9 @@ class PSPL_Phot(PSPL):
         u_plus = ((u + np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
         u_minu = ((u - np.sqrt(u ** 2 + 4)) / 2.0).reshape(u.size, 1) * u_hat
 
-        # Shape = [len(t), [+, -], [E, N]]
-        u_lensed = np.zeros((len(t), 2, 2), dtype=float)
-
-        u_lensed[:, 0, :] = u_plus
-        u_lensed[:, 1, :] = u_minu
+        u_lensed = np.zeros((len(t), 1, 2, 2), dtype=float)
+        u_lensed[:, 0, 0, :] = u_plus
+        u_lensed[:, 0, 1, :] = u_minu
 
         return u_lensed
 
@@ -1609,7 +1619,11 @@ class PSPL_Phot(PSPL):
         A = np.sum(A_lensed2[:, 0, :, np.newaxis], axis=1)
 
         # Calculate un-magnified fluxes. Note, we ignore blended flux entirely.
-        fS = mag2flux(self.mag_src_pri[filt_idx])
+        if hasattr(self, 'mag_src_pri'):
+            mag = self.mag_src_pri[filt_idx]
+        else:
+            mag = self.mag_src[filt_idx]
+        fS = mag2flux(mag)
 
         # Assume all blended light comes from the lens.
         fL = fS * (1 - self.b_sff[filt_idx]) / self.b_sff[filt_idx]
@@ -1894,7 +1908,7 @@ class PSPL_Parallax(ParallaxClassABC):
         return t0_g, u0_g, tE_g, piEE_g, piEN_g
 
     # Make sure this method fails for phot only parametrizations.
-    def get_geoproj_ast_params(self, t0par, plot=False):
+    def get_geoproj_ast_params(self, t0par, plot=False, filt_idx=0):
         """
         Get the astrometric microlensing model parameters in the geocentric-projected
         coordinate system, which just applies a rectalinear position and
@@ -1909,6 +1923,11 @@ class PSPL_Parallax(ParallaxClassABC):
         ----------
         t0par : float
             Time in MJD at which to convert into the geocentric frame.
+        plot : bool, optional
+            Draw the conversion diagnostic. Default False.
+        filt_idx : int, optional
+            0-based filter whose source origin is converted.
+            Default 0, so a one-filter model is unchanged.
 
         Returns
         -------
@@ -1925,17 +1944,26 @@ class PSPL_Parallax(ParallaxClassABC):
             The North-component of source proper motion vector,
             in the geocentric-projected frame.
 
+        Notes
+        -----
+        ``xS0`` has shape ``(n_filters, 2)``. ``xS0[filt_idx]`` is
+        that filter's East/North origin. The parallax offset is
+        Earth's at ``t0par``, because the output frame is
+        geocentric. The filter's observer does not enter.
         """
-        xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(self.raL, self.decL,
-                                                                  self.piS, self.xS0[0], self.xS0[1],
-                                                                  self.muS[0], self.muS[1],
-                                                                  self.t0, self.u0_amp,
-                                                                  self.tE, self.piE[0], self.piE[1],
-                                                                  t0par,
-                                                                  in_frame='helio',
-                                                                  murel_in='SL', murel_out='LS',
-                                                                  coord_in='EN', coord_out='tb',
-                                                                  plot=plot)
+        # This filter's East/North origin. Shape is (n_filters, 2).
+        xS0 = np.asarray(self.xS0[filt_idx], dtype=float)
+        xS0E_g, xS0N_g, muSE_g, muSN_g = fc.convert_helio_geo_ast(
+            self.raL, self.decL,
+            self.piS, xS0[0], xS0[1],
+            self.muS[0], self.muS[1],
+            self.t0, self.u0_amp,
+            self.tE, self.piE[0], self.piE[1],
+            t0par,
+            in_frame='helio',
+            murel_in='SL', murel_out='LS',
+            coord_in='EN', coord_out='tb',
+            plot=plot)
 
         return xS0E_g, xS0N_g, muSE_g, muSN_g
 
@@ -2325,14 +2353,156 @@ class PSPL_GPnoJitter(ABC):
 #    This serves as a reminder for the class variables that
 #    MUST be set. 
 #
+_ALLOWED_USAGE = ('phot', 'astrom', 'both')
+
+
+class _UsageView:
+    """Read-only view of ``filt_param_names`` filtered by usage.
+
+    Parameters
+    ----------
+    usages : tuple of str
+        Usage strings to keep.
+    """
+
+    def __init__(self, usages):
+        self.usages = tuple(usages)
+        return None
+
+    def __get__(self, obj, owner):
+        names = list(getattr(owner, 'filt_param_names', []))
+        usage = list(getattr(owner, 'filt_param_usage', []))
+        kept = [
+            name for name, use in zip(names, usage) if use in self.usages
+        ]
+        return kept
+
+    def __set__(self, obj, value):
+        raise AttributeError(
+            'phot_param_names and astrom_param_names are derived from '
+            'filt_param_names and filt_param_usage'
+        )
+
+
+# Class-body descriptors. Subclasses must not assign these names.
+phot_param_view = _UsageView(('phot', 'both'))
+astrom_param_view = _UsageView(('astrom', 'both'))
+
+
+def split_param_filter_index1(name):
+    """Split a suffixed name into a base and a 1-based filter index.
+
+    Parameters
+    ----------
+    name : str
+        Parameter name, for example ``'xS0_E1'`` or ``'t0'``.
+
+    Returns
+    -------
+    base : str
+        Name with a trailing filter suffix removed.
+    filt_index : int or None
+        1-based filter index, or None when ``name`` has no suffix.
+        A trailing integer of 1 or more is the index, including 10
+        and 20. A trailing 0 is part of the name (``t0``, ``u0``).
+    """
+    end = len(name)
+    while end > 0 and name[end - 1].isdigit():
+        end -= 1
+    digits = name[end:]
+    if not digits:
+        return name, None
+    # A leading 0 in the digit run is part of the name (t0, gp_log_S0).
+    # The digits after that 0 are the filter (gp_log_S01 -> S0, filter 1).
+    # 10 and 20 have no leading 0, so the whole run is the filter.
+    rest = digits.lstrip('0')
+    if not rest:
+        return name, None
+    index = int(rest)
+    if index < 1:
+        return name, None
+    return name[:end + (len(digits) - len(rest))], index
+
+
+def validate_param_declaration(cls):
+    """Check one parameter class's parallel filter lists.
+
+    Parameters
+    ----------
+    cls : type
+        Class that may define ``filt_param_names``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    TypeError
+        The class assigns ``phot_param_names`` or ``astrom_param_names``.
+    ValueError
+        The parallel lists disagree with ``fitter_param_names``.
+    """
+    has_filt = any(
+        'filt_param_names' in base.__dict__ for base in cls.__mro__
+    )
+    if not has_filt:
+        return None
+
+    for forbidden in ('phot_param_names', 'astrom_param_names'):
+        if forbidden not in cls.__dict__:
+            continue
+        if isinstance(cls.__dict__[forbidden], _UsageView):
+            continue
+        raise TypeError(
+            f'{cls.__name__} assigns {forbidden}. Declare filt_param_names '
+            'and filt_param_usage instead.'
+        )
+
+    names = list(cls.filt_param_names)
+    usage = list(cls.filt_param_usage)
+    if len(names) != len(usage):
+        raise ValueError(
+            f'{cls.__name__}: filt_param_names and filt_param_usage '
+            f'have lengths {len(names)} and {len(usage)}'
+        )
+    if len(names) != len(set(names)):
+        raise ValueError(f'{cls.__name__}: filt_param_names are not unique')
+    for use in usage:
+        if use not in _ALLOWED_USAGE:
+            raise ValueError(
+                f'{cls.__name__}: usage {use!r} is not phot, astrom, or both'
+            )
+
+    fitter = list(cls.fitter_param_names)
+    positions = []
+    for name in names:
+        if fitter.count(name) != 1:
+            raise ValueError(
+                f'{cls.__name__}: {name} must appear once in '
+                'fitter_param_names'
+            )
+        positions.append(fitter.index(name))
+    if positions != sorted(positions):
+        raise ValueError(
+            f'{cls.__name__}: filt_param_names are not in '
+            'fitter_param_names order'
+        )
+    return None
+
+
 class PSPL_Param(ABC):
-    # Fit parameters: Shared fit parameters
+    # Fit parameters: Shared fit parameters, plus filter-indexed names.
     fitter_param_names = []
 
-    # Fit parameters: Filter specific fit parameters -- handled as arrays.
-    # Every photometric data-set has them.
-    # (e.g. b_sff, mag_src, mag_base)
-    phot_param_names = []
+    # One value per filter, in fitter_param_names order.
+    # Usage is 'phot', 'astrom', or 'both'.
+    filt_param_names = []
+    filt_param_usage = []
+
+    # Derived views. Subclasses must not assign these names.
+    phot_param_names = phot_param_view
+    astrom_param_names = astrom_param_view
 
     # Fit parameters: Optional data-set specific fit parameters -- handled as dictionaries
     # (with keys on the filter index). Not every data-set needs these.
@@ -2367,110 +2537,132 @@ class PSPL_Param(ABC):
     # Set to False on forward-modeling-only parameterizations (e.g. ones that
     # carry fixed inputs the fitter has no plumbing for).
     fitter_supported = True
+    def __init_subclass__(cls, **kwargs):
+        """Validate the parallel filter-parameter lists.
+
+        Parameters
+        ----------
+        cls : type
+            Subclass being created.
+        **kwargs : dict
+            Forwarded to ``ABC.__init_subclass__``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init_subclass__(**kwargs)
+        validate_param_declaration(cls)
+        return None
 
     def __init__(self, *args, **kwargs):
-        # Check that required phot_params are proper arrays.
-        # If not, then make them arrays of len(1).
-        for param in self.phot_param_names:
+        """Reshape every filter-indexed parameter onto ``n_filters``.
+
+        Parameters
+        ----------
+        *args : tuple
+            Unused. Subclasses assign attributes before calling this.
+        **kwargs : dict
+            Unused.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        Each filter parameter the subclass set becomes a 1-d float
+        array of shape ``(n_filters,)``, the same length as the
+        source flux fraction ``b_sff`` and ``mag_src``.
+        ``xS0`` is stacked from ``xS0_E`` and ``xS0_N`` with shape
+        ``(n_filters, 2)`` for every ``n_filters``, including one
+        filter. ``xS0[filt_idx]`` is that filter's East/North
+        origin at ``t0``. A constant Earth-spacecraft offset is
+        absorbed by a free ``xS0``; the time-variable parallax
+        is not.
+        """
+        # Reshape each declared filter parameter to a 1-d float array.
+        # After the broadcast below, each one has shape (n_filters,).
+        reshaped = []
+        for param in self.filt_param_names:
+            if not hasattr(self, param):
+                continue
             param_var = getattr(self, param)
+            if isinstance(param_var, (str, bytes)):
+                continue
             if not isinstance(param_var, (list, np.ndarray)):
-                setattr(self, param, np.array([param_var]))
-            elif isinstance(param_var, list):
-                setattr(self, param, np.array(param_var))
-            param_var = getattr(self, param)
+                param_var = np.array([param_var], dtype=float)
+            else:
+                param_var = np.asarray(param_var, dtype=float).ravel()
+            setattr(self, param, param_var)
+            reshaped.append(param)
 
-            # Ensure array shape only has 1 dimension.
-            if len(param_var.shape) > 1:
-                setattr(self, param, param_var.reshape(np.max(param_var.shape)))
+        # Broadcast length-1 arrays up to the longest filter parameter.
+        n_filters = 1
+        if reshaped:
+            lengths = [
+                int(np.size(getattr(self, name))) for name in reshaped
+            ]
+            n_filters = max(lengths)
+            for name, length in zip(reshaped, lengths):
+                if length == n_filters:
+                    continue
+                if length == 1:
+                    repeated = np.repeat(getattr(self, name), n_filters)
+                    setattr(self, name, repeated)
+                    continue
+                msg = (
+                    'Mis-matched length for filter parameter: {0:s}. '
+                    'Expected length = {1:d} and got {2:d}'
+                )
+                raise RuntimeError(msg.format(name, n_filters, length))
 
-        # Check that required fixed_phot_params are proper arrays.
-        # If not, then make them arrays of the appropriate length.
+        # Store xS0 once, after the length check above. Both
+        # components are shape (n_filters,). xS0 is always
+        # (n_filters, 2), including one filter, so xS0[filt_idx]
+        # is that filter's East/North origin.
+        if hasattr(self, 'xS0_E') and hasattr(self, 'xS0_N'):
+            stacked = np.stack([self.xS0_E, self.xS0_N], axis=-1)
+            self.xS0 = stacked
+        elif hasattr(self, 'xS0'):
+            # A class that passed one East/North pair as xS0.
+            arr = np.asarray(self.xS0, dtype=float)
+            if arr.shape == (2,):
+                self.xS0 = arr.reshape(1, 2)
+
+        # A scalar fixed phot parameter is repeated to (n_filters,).
         for param in self.fixed_phot_param_names:
             param_var = getattr(self, param)
-
-            # These fixed_phot params should have the same length
-            # as the phot_params. Use the first one as an example.
-            if len(self.phot_param_names) > 0:
-                ex_phot_param = getattr(self, self.phot_param_names[0])
-                N_filt = len(ex_phot_param)
-            else:
-                N_filt = 1
-
-            # Ensure our fixed_phot_params are list objects.
             if not isinstance(param_var, (list, np.ndarray)):
-                setattr(self, param, np.repeat(param_var, N_filt))
+                setattr(self, param, np.repeat(param_var, n_filters))
 
-        # Loop through again and check the lengths are the same
-        # and all have the same length.
-        phot_param_len = None
-        for param in self.phot_param_names:
+        # Optional phot and ast parameters are dicts keyed by filter.
+        # A scalar is stored on filter 0. A sequence must have length
+        # n_filters.
+        optional_names = list(self.phot_optional_param_names)
+        optional_names += list(self.ast_optional_param_names)
+        for param in optional_names:
             param_var = getattr(self, param)
+            if isinstance(param_var, dict):
+                continue
 
-            if phot_param_len is None:
-                phot_param_len = len(param_var)
-            else:
-                if len(param_var) != phot_param_len:
-                    msg = 'Mis-matched length for photometric parameter: {0:s}.'
-                    msg += 'Expected length = {1:d} and got {2:d}'
-                    raise RuntimeError(msg.format(param, phot_param_len, len(param_var)))
+            new_param_var = {}
+            if isinstance(param_var, (int, float)):
+                new_param_var[0] = param_var
+            elif isinstance(param_var, (list, np.ndarray)):
+                if len(param_var) != n_filters:
+                    msg = (
+                        'Mis-matched format for optional parameter: '
+                        '{0:s}. Should be a dictionary with keys '
+                        'matched to the filter indices.'
+                    )
+                    raise RuntimeError(msg.format(param))
+                for ii in range(len(param_var)):
+                    new_param_var[ii] = param_var[ii]
 
-        # Check that the optional paramaters are proper dictionaries.
-        # If not and they contain a single value, then make them
-        # a dictionary with the value set for the first photometric filter.
-        # Otherwise, set an empty dictionary.
-        for param in self.phot_optional_param_names:
-            param_var = getattr(self, param)
-            if not isinstance(param_var, dict):
-                new_param_var = {}
+            setattr(self, param, new_param_var)
 
-                # Case: single number passed in... assume first filter.
-                if isinstance(param_var, (int, float)):
-                    new_param_var[0] = param_var
-
-                # Case: array with length of all photometric filters passed in.
-                if isinstance(param_var, (list, np.ndarray)):
-                    if len(param_var) == phot_param_len:
-                        for ii in range(len(param_var)):
-                            new_param_var[ii] = param_var[ii]  # move entry to dictionary
-                    else:
-                        # Case: Too-short list or array.
-                        msg = 'Mis-matched fomat for optional photometric parameter: {0:s}.'
-                        msg += 'Should be a dictionary with keys matched to the filter indices.'
-
-                        raise RuntimeExcpetion(msg.format(param))
-
-                # Save the proerly formatted param dictionary.    
-                setattr(self, param, new_param_var)
-
-        # Check that the optional paramaters are proper dictionaries.
-        # If not and they contain a single value, then make them
-        # a dictionary with the value set for the first photometric filter.
-        # Otherwise, set an empty dictionary.
-        for param in self.ast_optional_param_names:
-            param_var = getattr(self, param)
-            if not isinstance(param_var, dict):
-                new_param_var = {}
-
-                # Case: single number passed in... assume first filter.
-                if isinstance(param_var, (int, float)):
-                    new_param_var[0] = param_var
-
-                # Case: array with length of all photometric filters passed in.
-                if isinstance(param_var, (list, np.ndarray)):
-                    if len(param_var) == phot_param_len:
-                        for ii in range(len(param_var)):
-                            new_param_var[ii] = param_var[ii]  # move entry to dictionary
-                    else:
-                        # Case: Too-short list or array.
-                        msg = 'Mis-matched fomat for optional photometric parameter: {0:s}.'
-                        msg += 'Should be a dictionary with keys matched to the filter indices.'
-
-                        raise RuntimeExcpetion(msg.format(param))
-
-                # Save the proerly formatted param dictionary.    
-                setattr(self, param, new_param_var)
-
-        return
+        return None
 
 
 class PSPL_AstromParam3(PSPL_Param):
@@ -2506,10 +2698,12 @@ class PSPL_AstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -2531,10 +2725,22 @@ class PSPL_AstromParam3(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -2546,15 +2752,18 @@ class PSPL_AstromParam3(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
+                 b_sff=1.0,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
+        self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -2657,10 +2866,12 @@ class PSPL_AstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -2682,10 +2893,22 @@ class PSPL_AstromParam4(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both']
     #    phot_param_names = ['b_sff', 'mag_base']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -2699,15 +2922,18 @@ class PSPL_AstromParam4(PSPL_Param):
                  piE_E, piE_N,
                  xS0_E, xS0_N,
                  muS_E, muS_N,
+                 b_sff=1.0,
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.u0_amp = u0_amp
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
+        self.b_sff = b_sff
         self.raL = raL
         self.decL = decL
         self.obsLocation = obsLocation
@@ -2774,7 +3000,9 @@ class PSPL_AstromParam4(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = self.xL0
+        # xL0 matches xS0: always (n_filters, 2).
+        self.xL0_E = self.xL0[:, 0]
+        self.xL0_N = self.xL0[:, 1]
 
         return
 
@@ -2824,9 +3052,9 @@ class PSPL_PhotParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N', 'b_sff', 'mag_src']
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -2930,9 +3158,9 @@ class PSPL_PhotParam2(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N', 'b_sff', 'mag_base']
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
 
     paramAstromFlag = False
@@ -3033,9 +3261,17 @@ class PSPL_PhotParam3(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'log_tE',
-                          'log_piE', 'phi_muRel']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'log_tE',
+        'log_piE',
+        'phi_muRel',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
 
     paramAstromFlag = False
@@ -3094,6 +3330,18 @@ class PSPL_PhotParam3(PSPL_Param):
         return
 
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
+    fitter_param_names = [
+        't0_geotr',
+        'u0_amp_geotr',
+        'tE_geotr',
+        'piE_E_geotr',
+        'piE_N_geotr',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
+
     """PSPL model for photometry only.
 
     Point source point lens model for microlensing photometry only
@@ -3208,10 +3456,12 @@ class PSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -3238,11 +3488,23 @@ class PSPL_PhotAstromParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -3259,7 +3521,8 @@ class PSPL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -3376,10 +3639,12 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -3402,11 +3667,23 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -3425,7 +3702,8 @@ class PSPL_PhotAstromParam2(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3532,12 +3810,14 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3565,11 +3845,23 @@ class PSPL_PhotAstromParam3(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -3591,7 +3883,8 @@ class PSPL_PhotAstromParam3(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3696,12 +3989,14 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3733,11 +4028,24 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N', 'pi_ref_frame']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'pi_ref_frame',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'pi_ref_frame', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -3795,12 +4103,14 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3828,11 +4138,23 @@ class PSPL_PhotAstromParam4(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -3852,7 +4174,8 @@ class PSPL_PhotAstromParam4(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -3958,12 +4281,14 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -3995,11 +4320,24 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N', 'pi_ref_frame']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'pi_ref_frame',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'pi_ref_frame', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['log10_thetaE', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -4029,6 +4367,24 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
 
 
 class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
+    fitter_param_names = [
+        't0_geotr',
+        'u0_amp_geotr',
+        'tE_geotr',
+        'thetaE',
+        'piS',
+        'piE_E_geotr',
+        'piE_N_geotr',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
+
     """
     Point Source Point Lens model for microlensing in the
     geocentric-projected reference frame. This model includes
@@ -4064,12 +4420,14 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE. In the geocentric-projected frame.
     piE_N_geotr : float
         The microlensing parallax in the North direction in units of thetaE. In the geocentric-projected frame.
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. In the Solar-System Barycentric frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. In the Solar-System Barycentric frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr). In the Solar-System Barycentric frame.
     muS_N : float
@@ -4111,7 +4469,8 @@ class PSPL_PhotAstromParam4_geoproj(PSPL_PhotAstromParam4):
         self.tE_geotr = tE_geotr
         self.piE_geotr = np.array([piE_E_geotr, piE_N_geotr])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4171,12 +4530,14 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         Ratio of piE_N to piE_E.
     piE_E : float
         The microlensing parallax in the East direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -4204,11 +4565,23 @@ class PSPL_PhotAstromParam5(PSPL_Param):
                        identical. Otherwise, array of same length as mag_src
                        or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piEN_piEE', 'piE_E',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piEN_piEE',
+        'piE_E',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -4232,7 +4605,8 @@ class PSPL_PhotAstromParam5(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4338,10 +4712,12 @@ class PSPL_PhotAstromParam6(PSPL_Param):
     phi_muRel : float
         The angle of the muRel vector, in degrees. Angle is measured in degrees
         East of North (counter-clockwise on the sky from North). 
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -4364,11 +4740,23 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'log_piE', 'phi_muRel',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'log_piE',
+        'phi_muRel',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -4384,9 +4772,11 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         self.u0_amp = u0_amp
         self.tE = tE
         self.thetaE = thetaE
+        self.thetaE_amp = thetaE
         self.log_piE = log_piE
         self.phi_muRel = phi_muRel  # degrees
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -4400,7 +4790,6 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         super().__init__()
 
         # Derived quantities
-        self.tE = 10 ** log_tE
         self.piE_amp = 10 ** log_piE
         self.phi_muRel_rad = np.deg2rad(phi_muRel)  # radians
         self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
@@ -4507,16 +4896,16 @@ class PSPL_PhotAstromParam7(PSPL_Param):
         log10 of the microlensing parallax amplitude.
     phi_muRel : float
         Angle of the muRel (and piE) vector in degrees East of North.
-    xS0_E : float
+    xS0_E : array_like
         R.A. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
-    xS0_N : float
+        arbitrary ref. frame. One entry per filter.
+    xS0_N : array_like
         Dec. of source position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        arbitrary ref. frame. One entry per filter.
     muS_E : float
-        RA source proper motion (mas/yr)
+        RA source proper motion (mas/yr).
     muS_N : float
-        Dec source proper motion (mas/yr)
+        Dec source proper motion (mas/yr).
     b_sff : numpy array or list
         Source flux fraction for each filter,
         :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
@@ -4536,8 +4925,11 @@ class PSPL_PhotAstromParam7(PSPL_Param):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'log10_piE', 'phi_muRel',
                           'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+                          'muS_E', 'muS_N',
+                          'b_sff', 'mag_base']
+    # muS is shared. xS0 is per astrometric filter.
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'piE_E', 'piE_N',
                               'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -4560,7 +4952,8 @@ class PSPL_PhotAstromParam7(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.log10_piE = log10_piE
         self.phi_muRel = phi_muRel
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.b_sff = b_sff
@@ -5278,10 +5671,12 @@ class PSPL_GP_PhotAstromParam3(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5383,10 +5778,12 @@ class PSPL_GP_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5491,10 +5888,12 @@ class PSPL_GP_PhotAstromParam3_1(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5595,10 +5994,12 @@ class PSPL_GP_PhotAstromParam3_1_RefPar(PSPL_PhotAstromParam3_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5704,10 +6105,12 @@ class PSPL_GP_PhotAstromParam3_2(PSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5813,10 +6216,12 @@ class PSPL_GP_PhotAstromParam4(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -5922,10 +6327,12 @@ class PSPL_GP_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -6030,10 +6437,12 @@ class PSPL_GP_PhotAstromParam4_1(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -6138,10 +6547,12 @@ class PSPL_GP_PhotAstromParam4_1_RefPar(PSPL_PhotAstromParam4_RefPar):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -6247,10 +6658,12 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -6695,6 +7108,10 @@ class PSBL(PSPL):
             #         print('N images = {0} : {1}'.format(ii, (nim == ii).sum()))
 
         return z_arr
+
+    def get_image_pos_arr_mpsolve(self, w, z1, z2, m1, m2, check_sols=False):
+        """Reference quintic roots via :func:`numpy.roots` (same as production path)."""
+        return self.get_image_pos_arr(w, z1, z2, m1, m2, check_sols=check_sols)
 
     def get_all_arrays(self, t, filt_idx=0, check_sols=True, rescale=True):
         '''
@@ -7296,6 +7713,7 @@ class PSBL_Phot(PSBL, PSPL_Phot):
 
       # Get the position of the lenses (in units of Einstein radii)
         if self.orbitFlag:
+            self.get_resolved_lens_astrometry(t, filt_idx=filt_idx)
             z1 = self.xL1[:, 0] + self.xL1[:, 1] * 1j
             z2 = self.xL2[:, 0] + self.xL2[:, 1] * 1j
         else:    
@@ -7375,7 +7793,7 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             Position of the lens system (geometric center) over time.
         """
         dt_in_years = (t - self.t0) / days_per_year
-        xL = self.xL0 + np.outer(dt_in_years, self.muL) * 1e-3
+        xL = self.xL0[filt_idx] + np.outer(dt_in_years, self.muL) * 1e-3
 
         if self.parallaxFlag:
             # Get the parallax vector for each date.
@@ -7431,7 +7849,9 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                # Center of mass moving with muL system proper motion at different
+                # times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = self.xL0_com[filt_idx] + np.outer(dt_in_years, self.muL) * 1e-3
 
                 orb = orbits.Orbit()
                 orb.w = self.omega_pri
@@ -7772,12 +8192,14 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -7821,10 +8243,27 @@ class PSBL_PhotAstromParam1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -7838,7 +8277,8 @@ class PSBL_PhotAstromParam1(PSPL_Param):
         self.mLs = mLs  # Msun
 
         self.t0 = t0
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -7942,12 +8382,14 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -7995,11 +8437,29 @@ class PSBL_PhotAstrom_LinOrbs_Param1(PSBL_PhotAstromParam1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8035,12 +8495,14 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of photometric peak, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -8092,11 +8554,31 @@ class PSBL_PhotAstrom_AccOrbs_Param1(PSBL_PhotAstromParam1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N', 'beta',
-                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8133,12 +8615,14 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
@@ -8191,11 +8675,31 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N', 'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8209,7 +8713,8 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
@@ -8344,9 +8849,10 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
 
         # Calculate the position of the lens on the sky at time, t0
-        #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E = self.xL0[0]
-        #self.xL0_N = self.xL0[1]
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+        # xL0 matches xS0: always (n_filters, 2).
+        self.xL0_E = self.xL0[:, 0]
+        self.xL0_N = self.xL0[:, 1]
 
         thetaS0_com = self.u0_com * self.thetaE_amp
         self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
@@ -8369,12 +8875,14 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_com: float
         Angular distance between the source and the CoM
         of the lenses on the plane of the sky (mas). Can be
@@ -8425,11 +8933,30 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -8476,12 +9003,14 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8514,10 +9043,27 @@ class PSBL_PhotAstromParam2(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8536,7 +9082,8 @@ class PSBL_PhotAstromParam2(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -8649,12 +9196,14 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8691,11 +9240,29 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8719,7 +9286,7 @@ class PSBL_PhotAstrom_LinOrbs_Param2(PSBL_PhotAstromParam2):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
 
         return
 
@@ -8749,12 +9316,14 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8793,11 +9362,31 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -8820,7 +9409,7 @@ class PSBL_PhotAstrom_AccOrbs_Param2(PSBL_PhotAstromParam2):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -8851,12 +9440,14 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -8899,17 +9490,38 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     obsLocation: str or list[str], optional
         The observers location for each photometric dataset (def=['earth'])
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'e', 'tp']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'a',
+        'big_omega_sec',
+        'omega_pri',
+        'i',
+        'e',
+        'tp',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'Keplarian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
@@ -8922,7 +9534,8 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9015,7 +9628,7 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.a = a
         self.aleph_sec = (self.mLp / (self.mLp + self.mLs)) * self.a  # mas
         self.aleph = self.a - self.aleph_sec  # mas
-        self.a_AU = dL * (self.a * 1e-3) * units.AU
+        self.a_AU = self.dL * (self.a * 1e-3) * units.AU
         mL = self.mL * units.Msun
         p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mL))).to('day')
         self.p = p.value  # Period in Days
@@ -9034,7 +9647,16 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
         self.alpha = np.rad2deg(self.alpha_rad)
-        self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
+        self.phi_rad = self.alpha_rad - np.arctan2(self.piE[0], self.piE[1])
+
+        qeff = (1 - self.q) / (1 + self.q)
+        self.t0_com = self.t0 + 0.5 * qeff * self.tE * self.sep * np.cos(self.phi_rad) / self.thetaE_amp
+        self.u0_amp_com = self.u0_amp + 0.5 * qeff * self.sep * np.sin(self.phi_rad) / self.thetaE_amp
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
+        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
 
         return
 
@@ -9064,12 +9686,14 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9110,17 +9734,37 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'a', 'big_omega_sec', 'omega_pri', 'i', 'tp']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'a',
+        'big_omega_sec',
+        'omega_pri',
+        'i',
+        'tp',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
 
     paramAstromFlag = True
     paramPhotFlag = True
-    orbitFlag = 'Keplarian'
+    orbitFlag = 'Keplerian'
 
     def __init__(self, t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
@@ -9129,7 +9773,7 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
         e = 0  # no eccentricity
-        super().__init__(self, t0, u0_amp, tE, thetaE, piS,
+        super().__init__(t0, u0_amp, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, a, big_omega_sec, omega_pri, i, e, tp,
                  b_sff, mag_src, dmag_Lp_Ls,
@@ -9165,12 +9809,14 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9206,12 +9852,27 @@ class PSBL_PhotAstromParam3(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9233,7 +9894,8 @@ class PSBL_PhotAstromParam3(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9348,12 +10010,14 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9393,13 +10057,29 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9423,7 +10103,7 @@ class PSBL_PhotAstrom_LinOrbs_Param3(PSBL_PhotAstromParam3):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
 
         return
 
@@ -9455,12 +10135,14 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9504,13 +10186,31 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha',
-                          'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9534,7 +10234,7 @@ class PSBL_PhotAstrom_AccOrbs_Param3(PSBL_PhotAstromParam3):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -9565,12 +10265,14 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -9616,11 +10318,31 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9742,12 +10464,14 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -9792,11 +10516,30 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N',
@@ -9851,12 +10594,14 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -9892,13 +10637,30 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -9907,14 +10669,15 @@ class PSBL_PhotAstromParam4(PSPL_Param):
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
                  piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                  q, sep, alpha,
-                 b_sff, mag_src, dmag_Lp_Ls,
+                 b_sff, mag_base, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -9922,7 +10685,7 @@ class PSBL_PhotAstromParam4(PSPL_Param):
         self.alpha = alpha
         self.alpha_rad = self.alpha * np.pi / 180.0
         self.b_sff = b_sff
-        self.mag_src = mag_src
+        self.mag_base = mag_base
         self.dmag_Lp_Ls = dmag_Lp_Ls
         self.raL = raL
         self.decL = decL
@@ -9931,6 +10694,8 @@ class PSBL_PhotAstromParam4(PSPL_Param):
 
         # Check variable formatting.
         super().__init__()
+
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
 
         # Derived quantities
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
@@ -10034,12 +10799,14 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -10085,12 +10852,31 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10157,6 +10943,10 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
         self.alpha = np.rad2deg(self.alpha_rad) #Defined at tp
 
+        self.b_sff = b_sff
+        self.mag_src = mag_src
+        self.dmag_Lp_Ls = dmag_Lp_Ls
+
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
                          piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
                          q, self.a, self.alpha,
@@ -10201,12 +10991,14 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -10252,11 +11044,30 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a'
-                         , 'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10309,12 +11120,14 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piEN_piEE : float
         The ratio of piE_E / piE_N.
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -10349,10 +11162,27 @@ class PSBL_PhotAstromParam5(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_prim', 'u0_amp_prim', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piEN_piEE', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_base', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_prim',
+        'u0_amp_prim',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piEN_piEE',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_base',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['piE_N', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N', 'mag_src']
@@ -10375,7 +11205,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.piE_N = piE_N
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -10459,7 +11290,8 @@ class PSBL_PhotAstromParam5(PSPL_Param):
         self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
         self.u0 = np.abs(self.u0_amp) * self.u0_hat
 
-        # IS THIS IT? DOES IT WORK?
+        self.thetaS0 = self.u0 * self.thetaE_amp
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
 
@@ -10491,12 +11323,14 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -10531,10 +11365,27 @@ class PSBL_PhotAstromParam6(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10556,7 +11407,8 @@ class PSBL_PhotAstromParam6(PSPL_Param):
         self.tE = tE
         self.piE = np.array([piE_E, piE_N])
         self.thetaE_amp = thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
 
         self.piS = piS
@@ -10662,12 +11514,14 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -10718,11 +11572,31 @@ class PSBL_PhotAstrom_AccOrbs_Param6(PSBL_PhotAstromParam6):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10763,12 +11637,14 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -10815,10 +11691,29 @@ class PSBL_PhotAstrom_LinOrbs_Param6(PSBL_PhotAstrom_AccOrbs_Param6):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -10856,12 +11751,14 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -10904,10 +11801,27 @@ class PSBL_PhotAstromParam7(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag=False
@@ -10921,9 +11835,11 @@ class PSBL_PhotAstromParam7(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
+        self.muL_E, self.muL_N = self.muL
         self.muS = np.array([muS_E, muS_N])
         self.dL = dL
         self.dS = dS
@@ -11040,12 +11956,14 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11096,11 +12014,31 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N', 'beta_p',
-                          'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'accLsec_E', 'accLsec_N',
-                          'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -11118,7 +12056,7 @@ class PSBL_PhotAstrom_AccOrbs_Param7(PSBL_PhotAstromParam7):
 
         self.delta_muL_sec = np.array([delta_muL_sec_E, delta_muL_sec_N])
         self.delta_muL_sec_E, self.delta_muL_sec_N = self.delta_muL_sec
-        self.muL_sec = np.array([muL_E + delta_muL_sec_E, muL_N + delta_muL_sec_N])
+        self.muL_sec = np.array([self.muL_E + delta_muL_sec_E, self.muL_N + delta_muL_sec_N])
         self.accL = np.array([accLsec_E, accLsec_N])
 
         return
@@ -11136,12 +12074,14 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between the source and primary lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on the sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the GEOMETRIC center
         of the lenses on the plane of the sky (mas). Can be
@@ -11188,10 +12128,29 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'delta_muL_sec_E', 'delta_muL_sec_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -11203,7 +12162,7 @@ class PSBL_PhotAstrom_LinOrbs_Param7(PSBL_PhotAstrom_AccOrbs_Param7):
                  sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, delta_muL_sec_E,
+                         beta_p, muL_E, muL_N, delta_muL_sec_E,
                          delta_muL_sec_N, 0, 0, muS_E, muS_N, dL, dS,
                          sep, alpha, b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
@@ -11222,12 +12181,14 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -11285,10 +12246,31 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
@@ -11302,7 +12284,8 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -11465,12 +12448,14 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source and the PRIMARY LENS
         of the lenses on the plane of the sky (mas) at t0. Can be
@@ -11526,10 +12511,30 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'omega_pri', 'big_omega_sec', 'i', 'tp', 'a', 'muS_E', 'muS_N',
-                          'dL', 'dS']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
@@ -11539,11 +12544,14 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
                  beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        e=0
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, a, tp, sep, muS_E, muS_N, dL, dS,
-                 b_sff, mag_src, dmag_Lp_Ls,
-                 raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
+        e = 0
+        super().__init__(
+            mLp, mLs, t0_p, xS0_E, xS0_N,
+            beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a,
+            muS_E, muS_N, dL, dS,
+            b_sff, mag_src, dmag_Lp_Ls,
+            raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol,
+        )
 
         return
 
@@ -11574,12 +12582,14 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
     muS_N : float
@@ -11614,10 +12624,27 @@ class PSBL_PhotAstromParam8(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                          'q', 'sep', 'alpha']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'q',
+        'sep',
+        'alpha',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -11638,7 +12665,8 @@ class PSBL_PhotAstromParam8(PSPL_Param):
         self.log10_thetaE = log10_thetaE
         self.thetaE = 10 ** log10_thetaE
         self.thetaE_amp = 10 ** log10_thetaE
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.piS = piS
         self.q = q
@@ -11757,12 +12785,14 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
         The secondary source will be directly 180 degrees across the primary
@@ -11807,11 +12837,31 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N', 'omega_pri', 'big_omega_sec', 'i', 'e', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -11921,12 +12971,14 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     omega_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
@@ -11976,11 +13028,30 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N', 'xS0_E', 'xS0_N','omega_pri', 'big_omega_sec', 'i', 'tp', 'a',
-                          'muS_E', 'muS_N',
-                          'q']
-    phot_param_names = ['b_sff', 'mag_src', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'tp',
+        'a',
+        'muS_E',
+        'muS_N',
+        'q',
+        'b_sff',
+        'mag_src',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -12060,9 +13131,20 @@ class PSBL_PhotParam1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'phi']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'phi',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -12211,9 +13293,25 @@ class PSBL_Phot_EllOrbs_Param1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'r_s', 'a_s', 'dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'r_s',
+        'a_s',
+        'dmag_Lp_Ls',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -12378,9 +13476,23 @@ class PSBL_Phot_CircOrbs_Param1(PSBL_Phot_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'q', 'sep', 'v_para', 'v_rad', 'v_perp', 'dmag_Lp_Ls']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'q',
+        'sep',
+        'v_para',
+        'v_rad',
+        'v_perp',
+        'dmag_Lp_Ls',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['dmag_Lp_Ls', 'b_sff', 'mag_src']
+    filt_param_usage = ['both', 'both', 'phot']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -12518,11 +13630,13 @@ class BSPL(PSPL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag==True:
-            xS_unlensed = self.get_resolved_source_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx
+            )
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
-            xL = self.get_lens_astrometry(t)
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
             thetaE_amp = self.thetaE_amp * 1e-3
             u_pri = (xS1_unlens - xL) / thetaE_amp
             u_sec = (xS2_unlens - xL)/thetaE_amp
@@ -12910,14 +14024,19 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
 
         # Calculate position vs. time in arcsec
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = self.xS0_pri[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec[filt_idx] + np.outer(
+                dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0) / days_per_year #Array of Time With Respect To Primary
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3 #Motion of the Center of Mass. xS0_com is the initial source CoM position at t0=t0_p.
+            # Motion of the Center of Mass. xS0_com is the initial source CoM position
+            # at t0=t0_p.
+            xCoM_unlens = self.xS0_com[filt_idx] + np.outer(
+                dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omega_pri
@@ -12939,8 +14058,10 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
 
         else:
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = self.xS0_pri[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -13436,8 +14557,23 @@ class BSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
     ref_frame_parallax_flag = False
 
-    def get_amplification(self, t):
-        u_vec = self.get_u(t)
+    def get_amplification(self, t, filt_idx=0):
+        """Sum the two point-source amplifications.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            0-based filter index passed through to ``get_u``.
+
+        Returns
+        -------
+        amplification : ndarray
+            Sum of the two point-source amplifications. Shape ``(N_times,)``.
+        """
+        # The source-lens separation depends on this filter's origin.
+        u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
         u_vec2 = u_vec[:, 1, :]
@@ -13454,8 +14590,23 @@ class BSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
     ref_frame_parallax_flag = False
 
-    def get_amplification(self, t):
-        u_vec = self.get_u(t)
+    def get_amplification(self, t, filt_idx=0):
+        """Sum the two point-source amplifications.
+
+        Parameters
+        ----------
+        t : array_like
+            Observation times in MJD.
+        filt_idx : int, optional
+            0-based filter index passed through to ``get_u``.
+
+        Returns
+        -------
+        amplification : ndarray
+            Sum of the two point-source amplifications. Shape ``(N_times,)``.
+        """
+        # The source-lens separation depends on this filter's origin.
+        u_vec = self.get_u(t, filt_idx=filt_idx)
 
         u_vec1 = u_vec[:, 0, :]
         u_vec2 = u_vec[:, 1, :]
@@ -13526,9 +14677,20 @@ class BSPL_PhotParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'sep', 'phi']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'sep',
+        'phi',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['phot', 'both', 'both']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -13643,12 +14805,14 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -13687,12 +14851,26 @@ class BSPL_PhotAstromParam1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
 
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -13712,7 +14890,8 @@ class BSPL_PhotAstromParam1(PSPL_Param):
                  raL=None, decL=None, obsLocation='earth'):
         self.t0 = t0  # time of closest approach for system=primary pos
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -13858,12 +15037,14 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -13900,12 +15081,26 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -13927,7 +15122,8 @@ class BSPL_PhotAstromParam2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -14059,12 +15255,14 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -14102,12 +15300,26 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -14129,7 +15341,8 @@ class BSPL_PhotAstromParam3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS = np.array([muS_E, muS_N])
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -14363,12 +15576,14 @@ class BSPL_GP_PhotAstromParam1(BSPL_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -14492,12 +15707,14 @@ class BSPL_GP_PhotAstromParam2(BSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -14611,10 +15828,12 @@ class BSPL_GP_PhotAstromParam3(BSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -14735,12 +15954,14 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -14782,13 +16003,28 @@ class BSPL_PhotAstrom_LinOrbs_Param1(BSPL_PhotAstromParam1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -14862,12 +16098,14 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -14912,14 +16150,30 @@ class BSPL_PhotAstrom_AccOrbs_Param1(BSPL_PhotAstrom_LinOrbs_Param1):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -14997,12 +16251,14 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15044,13 +16300,28 @@ class BSPL_PhotAstrom_LinOrbs_Param2(BSPL_PhotAstromParam2):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15124,12 +16395,14 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15174,14 +16447,30 @@ class BSPL_PhotAstrom_AccOrbs_Param2(BSPL_PhotAstrom_LinOrbs_Param2):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15254,12 +16543,14 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15301,13 +16592,28 @@ class BSPL_PhotAstrom_LinOrbs_Param3(BSPL_PhotAstromParam3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15380,12 +16686,14 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -15431,14 +16739,30 @@ class BSPL_PhotAstrom_AccOrbs_Param3(BSPL_PhotAstrom_LinOrbs_Param3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                          'accSsec_E', 'accSsec_N',
-                          'sep', 'alpha']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'sep',
+        'alpha',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -15543,10 +16867,12 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -15570,14 +16896,32 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph_sec'
-                          ]
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -15599,7 +16943,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.t0 = t0  # time of closest approach for system=primary pos
 
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -15826,10 +17171,12 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -15852,13 +17199,33 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                           'omega_pri', 'big_omega_sec', 'i', 'e',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
 
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -15885,7 +17252,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.thetaE_amp = thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -15923,8 +17291,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
 
         self.fratio_bin = np.array(fratio_bin)
-        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio_bin)
-        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fratio_bin))
+        fb = np.asarray(self.fratio_bin, dtype=float).reshape(-1)
+        self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fb)
+        self.mag_src_sec = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + (1.0 / fb))
 
         self.sep = aleph + aleph_sec
 
@@ -16063,10 +17432,12 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         The RA proper motion of the system in mas/yr.
     muS_N: float
         The Dec proper motion of the system in mas/yr.
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -16089,14 +17460,32 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'e', 'p',
-                          'tp', 'aleph', 'aleph_sec',
-                          'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N'
-                          ]
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -16122,11 +17511,11 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.thetaE_amp = 10 ** log10_thetaE
         self.piS = piS
         self.piE = np.array([piE_E, piE_N])
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muS_E = muS_E
         self.muS_N = muS_N
         self.muS = np.array([muS_E, muS_N])  # mas
-        self.x0_system = self.xS0
         self.muS_system = self.muS
         self.mag_base = np.array(mag_base)
         self.b_sff = np.array(b_sff)
@@ -16178,6 +17567,7 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
         super().__init__()
+        self.x0_system = self.xS0
 
         # Derived quantities
         self.beta = self.u0_amp * self.thetaE_amp
@@ -16312,10 +17702,12 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     muL_E: float
         RA Lens proper motion (mas/yr)
@@ -16370,15 +17762,32 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec',
-                           'i', 'e',
-                          'tp', 'log_a',
-                          'mass_source_p', 'mass_source_s']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'e',
+        'tp',
+        'log_a',
+        'mass_source_p',
+        'mass_source_s',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -16400,7 +17809,8 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.t0 = t0  # time of closest approach for system=primary pos
 
         self.mL = mL
-        self.xS0 = np.array([xS0_E, xS0_N])  # position of source system=primary
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])  # mas
@@ -16647,10 +18057,12 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
     aleph_sec: float
         This is the semi-major axis of the secondary source in mas.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
@@ -16674,14 +18086,31 @@ class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['mL', 't0_com', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N',
-                          'omega_pri', 'big_omega_sec', 'i',
-                          'p', 'tp', 'aleph', 'aleph_sec'
-                          ]
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff']
+    fitter_param_names = [
+        'mL',
+        't0_com',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'mag_src_pri', 'mag_src_sec', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -16774,10 +18203,12 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
     muS_N: float
         The Dec proper motion of the system in mas/yr.
 
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -16800,13 +18231,32 @@ class BSPL_PhotAstrom_CircOrbs_Param2(BSPL_PhotAstrom_EllOrbs_Param2):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i',
-                          'p', 'tp', 'aleph', 'aleph_sec', 'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
 
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -16903,10 +18353,12 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         The RA proper motion of the system in mas/yr.
     muS_N: float
         The Dec proper motion of the system in mas/yr.
-    xS0_E: float
+    xS0_E: array
         The initial  coordinates (RA) of the primary source in arcsec at t0=t0_p.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         The initial  coordinates (Dec) of the primary source in arcsec at t0=t0_p.
+        One entry per filter.
 
     fratio_bin: float
         Flux ratio of secondary flux / primary flux.
@@ -16929,14 +18381,31 @@ class BSPL_PhotAstrom_CircOrbs_Param3(BSPL_PhotAstrom_EllOrbs_Param3):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'omega_pri', 'big_omega_sec', 'i', 'p',
-                          'tp', 'aleph', 'aleph_sec',
-                          'muS_E', 'muS_N',
-                          'xS0_E', 'xS0_N'
-                          ]
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'log10_thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'omega_pri',
+        'big_omega_sec',
+        'i',
+        'p',
+        'tp',
+        'aleph',
+        'aleph_sec',
+        'muS_E',
+        'muS_N',
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'fratio_bin', 'mag_base', 'b_sff']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['thetaE_amp', 'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -17002,12 +18471,14 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -17084,6 +18555,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param1(BSPL_GP_PhotAstromParam1):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
@@ -17122,12 +18594,14 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param1(BSPL_GP_PhotAstrom_LinOrbs_Param1):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
         This should be the position of the source primary.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -17251,12 +18725,14 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -17330,6 +18806,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param2(BSPL_GP_PhotAstromParam2):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
@@ -17371,12 +18848,14 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param2(BSPL_GP_PhotAstrom_LinOrbs_Param2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : float
+    xS0_E : array
         R.A. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame. This should be the position of the source primary.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         RA Source proper motion (mas/yr)
         Identical proper motions are assumed for the source primary and secondary.
@@ -17494,10 +18973,12 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -17568,6 +19049,7 @@ class BSPL_GP_PhotAstrom_LinOrbs_Param3(BSPL_GP_PhotAstromParam3):
         self.delta_muS_sec = np.array([delta_muS_sec_E, delta_muS_sec_N])
         self.delta_muS_sec_E = delta_muS_sec_E
         self.delta_muS_sec_N = delta_muS_sec_N
+        self.muS_sec = self.muS + self.delta_muS_sec
 
         #self.muRel_sec = self.muRel + self.delta_muS_sec
         #self.muRel_sec_E, self.muRel_sec_N = self.muRel_sec
@@ -17608,10 +19090,12 @@ class BSPL_GP_PhotAstrom_AccOrbs_Param3(BSPL_GP_PhotAstrom_LinOrbs_Param3):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -17757,7 +19241,9 @@ class BSBL(PSBL):
                 xL1 = np.zeros((len(t), 2), dtype=float)
                 xL2 = np.zeros((len(t), 2), dtype=float)
 
-                xLCoM = self.xL0_com + np.outer(dt_in_years, self.muL) * 1e-3 #Center of mass moving with muL system proper motion at different times. xL0_com is the initial position of lens system's CoM at t0_com
+                # Center of mass moving with muL system proper motion at different
+                # times. xL0_com is the initial position of lens system's CoM at t0_com
+                xLCoM = self.xL0_com[filt_idx] + np.outer(dt_in_years, self.muL) * 1e-3
 
                 orb = orbits.Orbit()
                 orb.w = self.omegaL_pri
@@ -17861,11 +19347,13 @@ class BSBL(PSBL):
         tau_pri = (t - self.t0_pri) / self.tE
 
         if self.astrometryFlag == True:
-            xS_unlensed = self.get_resolved_astrometry_unlensed(t)
+            xS_unlensed = self.get_resolved_source_astrometry_unlensed(
+                t, filt_idx=filt_idx
+            )
             xS1_unlens = xS_unlensed[:, 0, :]
             xS2_unlens = xS_unlensed[:, 1, :]
 
-            xL = self.get_lens_astrometry(t)
+            xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
             thetaE_amp = self.thetaE_amp * 1e-3
             u_pri = (xS1_unlens - xL) / thetaE_amp
             u_sec = (xS2_unlens - xL)/thetaE_amp
@@ -18493,14 +19981,17 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
         dt1_in_years = (t - self.t0) / days_per_year
 
         if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS_sec) * 1e-3
+            xS1_unlens = self.xS0_pri[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec[filt_idx] + np.outer(
+                dt1_in_years, self.muS_sec) * 1e-3
             if self.orbitFlag == 'accelerated':
                 xS2_unlens += np.outer((0.5*(dt1_in_years**2)), self.accS) * 1e-3
 
         elif self.orbitFlag == 'Keplerian':
             dt_in_years = (t - self.t0_com) / days_per_year
-            xCoM_unlens = self.xS0_com + np.outer(dt_in_years, self.muS_system) * 1e-3
+            xCoM_unlens = self.xS0_com[filt_idx] + np.outer(
+                dt_in_years, self.muS_system) * 1e-3
 
             orb = orbits.Orbit()
             orb.w = self.omegaS_pri
@@ -18522,8 +20013,10 @@ class BSBL_PhotAstrom(BSBL, PSBL_PhotAstrom):
             xS2_unlens[:,0] += xCoM_unlens[:, 0] + x2
             xS2_unlens[:,1] += xCoM_unlens[:, 1] + y2
         else:
-            xS1_unlens = self.xS0_pri + np.outer(dt1_in_years, self.muS) * 1e-3
-            xS2_unlens = self.xS0_sec + np.outer(dt1_in_years, self.muS) * 1e-3
+            xS1_unlens = self.xS0_pri[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
+            xS2_unlens = self.xS0_sec[filt_idx] + np.outer(
+                dt1_in_years, self.muS) * 1e-3
 
         N_sources = 2
         xS_unlensed = np.zeros((len(t), N_sources, 2), dtype=float)
@@ -18761,9 +20254,24 @@ class BSBL_PhotParam1(PSPL_Param):
 
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'piE_E', 'piE_N',
-                          'sep_SL', 'sep_S', 'phi_S', 'sep_L', 'phi_L']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'sep_SL',
+        'sep_S',
+        'phi_S',
+        'sep_L',
+        'phi_L',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    filt_param_usage = ['phot', 'both', 'both', 'both']
 
     paramAstromFlag = False
     paramPhotFlag = True
@@ -18869,12 +20377,14 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -18934,10 +20444,37 @@ class BSBL_PhotAstromParam1(PSPL_Param):
      root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -18951,7 +20488,8 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0 = t0
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta = beta
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -19093,12 +20631,14 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -19171,12 +20711,41 @@ class BSBL_PhotAstrom_LinOrbs_Param1(BSBL_PhotAstromParam1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muL_sec_E', 'delta_muL_sec_N']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19228,12 +20797,14 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
         Masses of the lenses (Msun)
     t0 : float
         Time of closest approach between the geometric center of source and geometric center of the lens, as seen from Earth (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -19314,12 +20885,45 @@ class BSBL_PhotAstrom_AccOrbs_Param1(BSBL_PhotAstrom_LinOrbs_Param1):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
 
     """
-    fitter_param_names = ['mLp', 'mLs', 't0', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS',
-                          'delta_muS_sec_E', 'delta_muS_sec_N',
-                         'delta_muL_sec_E', 'delta_muL_sec_N', 'accSsec_E', 'accSsec_N', 'accLsec_E', 'accLsec_N']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'delta_muS_sec_E',
+        'delta_muS_sec_N',
+        'delta_muL_sec_E',
+        'delta_muL_sec_N',
+        'accSsec_E',
+        'accSsec_N',
+        'accLsec_E',
+        'accLsec_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19381,12 +20985,14 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -19446,10 +21052,37 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'sepL', 'alphaL', 'sepS', 'alphaS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'sepL',
+        'alphaL',
+        'sepS',
+        'alphaS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -19463,7 +21096,8 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -19625,12 +21259,14 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the primary source
         and the lens geometric center on the plane of the sky (mas).
@@ -19704,11 +21340,47 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -19722,7 +21394,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
         self.beta = beta
@@ -19904,7 +21577,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        self.xL0_E, self.xL0_N = self.xL0
+        # xL0 matches xS0: always (n_filters, 2).
+        self.xL0_E = self.xL0[:, 0]
+        self.xL0_N = self.xL0[:, 1]
 
 
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -19931,12 +21606,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source COM position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta: float
         Angular distance between the source PRIMARY position
         and the GEOMETRIC center of the lenses on the plane of the sky (mas).
@@ -20008,12 +21685,46 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_com', 'xS0_E', 'xS0_N',
-                          'beta', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'sepL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_com',
+        'xS0_E',
+        'xS0_N',
+        'beta',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'tpL',
+        'sepL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -20067,12 +21778,14 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : float
+    xS0_E : array
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
 
     muS_E : float
         Source system proper motion in the RA direction (mas/yr)
@@ -20137,10 +21850,47 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 
-                          'xS0_N', 'muS_E', 'muS_N', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                          'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'q',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -20164,7 +21914,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.muS_E, self.muS_N = self.muS
 
 
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.xS0_E = xS0_E
         self.xS0_N = xS0_N
 
@@ -20319,7 +22070,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Calculate the position of the lens on the sky at time, t0=t0_g (closest approach between geometric center of lens and primary source).
         #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E, self.xL0_N = self.xL0
+        #self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
 
         self.xL0_com = self.xS0  - self.thetaS0_com * 1e-3
         com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
@@ -20364,12 +22115,14 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : float
+    xS0_E : array
         R.A. of primary source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of primary source position on sky at t = to_com (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     muS_E : float
         Source system proper motion in the RA direction (mas/yr)
     muS_N : float
@@ -20431,11 +22184,46 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
     """
 
-    fitter_param_names = ['t0_com', 'u0_amp_com', 'tE', 'thetaE', 'piS', 'piE_E', 'piE_N', 'q', 'xS0_E', 'xS0_N', 'muS_E', 'muS_N',
-                 'omegaL_pri', 'big_omegaL_sec', 'iL',  'tpL', 'sepL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'pS', 'tpS', 'alephS', 'aleph_secS']
+    fitter_param_names = [
+        't0_com',
+        'u0_amp_com',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'q',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'tpL',
+        'sepL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'fratio_bin',
+        'mag_base',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both', 'both']
 
-    phot_param_names = ['fratio_bin', 'mag_base', 'b_sff', 'dmag_Lp_Ls']
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
@@ -20444,7 +22232,7 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
                  omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
                  omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(t0_com, u0_amp, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
                          omegaL_pri, big_omegaL_sec, iL, 0, tpL, sepL,
                          omegaS_pri, big_omegaS_sec, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
@@ -20470,12 +22258,14 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -20559,11 +22349,47 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'eL', 'tpL', 'aL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS', 'eS', 'tpS', 'aS', 'mass_source_p', 'mass_source_s']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'tpS',
+        'aS',
+        'mass_source_p',
+        'mass_source_s',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
@@ -20577,7 +22403,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -20834,12 +22661,14 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         Masses of the lenses (Msun)
     t0_p : float
         Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : float
+    xS0_E : array
         R.A. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
-    xS0_N : float
+        One entry per filter.
+    xS0_N : array
         Dec. of source primary position on sky at t = t0 (arcsec) in an
         arbitrary ref. frame.
+        One entry per filter.
     beta_p : float
         Angular distance between the source PRIMARY position
         and the PRIMARY center of the lenses on the plane of the sky (mas). 
@@ -20918,19 +22747,56 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mLp', 'mLs', 't0_p', 'xS0_E', 'xS0_N',
-                          'beta_p', 'muL_E', 'muL_N', 'muS_E', 'muS_N',
-                          'dL', 'dS', 'omegaL_pri', 'big_omegaL_sec', 'iL', 'tpL', 'aL',
-                 'omegaS_pri', 'big_omegaS_sec', 'iS',  'pS', 'tpS', 'alephS', 'aleph_secS']
-    phot_param_names = ['mag_src_pri', 'mag_src_sec', 'b_sff', 'dmag_Lp_Ls']
+    fitter_param_names = [
+        'mLp',
+        'mLs',
+        't0_p',
+        'xS0_E',
+        'xS0_N',
+        'beta_p',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'dL',
+        'dS',
+        'omegaL_pri',
+        'big_omegaL_sec',
+        'iL',
+        'eL',
+        'tpL',
+        'aL',
+        'omegaS_pri',
+        'big_omegaS_sec',
+        'iS',
+        'eS',
+        'pS',
+        'tpS',
+        'alephS',
+        'aleph_secS',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_names = [
+        'xS0_E',
+        'xS0_N',
+        'mag_src_pri',
+        'mag_src_sec',
+        'b_sff',
+        'dmag_Lp_Ls',
+    ]
+    filt_param_usage = ['astrom', 'astrom', 'phot', 'both', 'both', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
     def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, tpL, aL,
-                 omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
 
@@ -21005,6 +22871,13 @@ class FSPL(PSPL):
         plus = np.append(plus, plus[:, 0:1, :], axis=1)
         minus = np.append(minus, minus[:, 0:1, :], axis=1)
 
+        # The centroid integrand is not translation-invariant at finite
+        # outline resolution. Subtract one sky point and add it back so a
+        # shared xS0 offset shifts the image by that offset exactly.
+        origin = np.array(plus[:, 0, :], dtype=float, copy=True)
+        plus = plus - origin[:, None, :]
+        minus = minus - origin[:, None, :]
+
         # Pre-calculate squared versions...
         # we use these a lot in the calculations below.
         plus2 = plus ** 2
@@ -21076,8 +22949,8 @@ class FSPL(PSPL):
 
         # Final shape = [N_times, [+, -], [E, N]]
         images = np.zeros((len(t), 2, 2), dtype=float)
-        images[:, 0, :] = img_pos_plus.T
-        images[:, 1, :] = img_pos_minus.T
+        images[:, 0, :] = img_pos_plus.T + origin
+        images[:, 1, :] = img_pos_minus.T + origin
 
         # Final shape = [N_times, [+, -]]
         amps = np.array((amp_plus, amp_minus)).T  # amplifications
@@ -22042,6 +23915,23 @@ class FSPL_Phot(FSPL):
     photometryFlag = True
     astrometryFlag = False
 
+    def get_resolved_astrometry(self, t, image_arr=None, amp_arr=None, filt_idx=0):
+        """Resolved finite-source image positions from AMG (phot-only)."""
+        if (image_arr is None) or (amp_arr is None):
+            out = self.get_all_arrays(t, filt_idx=filt_idx)
+            if isinstance(out, tuple) and len(out) == 4:
+                image_arr = out[0]
+            else:
+                image_arr, amp_arr = out
+        img = np.asarray(image_arr)
+        if np.iscomplexobj(img):
+            return np.stack(
+                [np.real(img), np.imag(img)], axis=-1
+            ).astype(np.float64, copy=False)
+        if getattr(img.dtype, "names", None) is not None:
+            return img.view("(2,)float")
+        return np.asarray(img, dtype=np.float64)
+
     def get_u_outline(self, t, filt_idx=0):
         """
         Get the separation vector, \\vec{u}(t), which is the unlensed
@@ -22191,8 +24081,10 @@ class FSPL_PhotParam1(PSPL_Param):
     """
 
     fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+                          'piE_E', 'piE_N', 'radiusS',
+                          'b_sff', 'mag_src']
+    filt_param_names = ['b_sff', 'mag_src']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_base']
 
     paramAstromFlag = False
@@ -22303,9 +24195,18 @@ class FSPL_PhotParam2(PSPL_Param):
                        or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE',
-                          'piE_E', 'piE_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_base']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'piE_E',
+        'piE_N',
+        'radiusS',
+        'b_sff',
+        'mag_base',
+    ]
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
     additional_param_names = ['mag_src']
 
     paramAstromFlag = False
@@ -22390,10 +24291,12 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -22424,11 +24327,24 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -22453,7 +24369,8 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         self.dL = dL
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline
@@ -22566,10 +24483,12 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         The microlensing parallax in the East direction in units of thetaE
     piE_N: float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muS_E: float
         RA Source proper motion (mas/yr)
     muS_N: float
@@ -22597,11 +24516,24 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         or b_sff (e.g. other photometric parameters).
     """
 
-    fitter_param_names = ['t0', 'u0_amp', 'tE', 'thetaE', 'piS',
-                          'piE_E', 'piE_N',
-                          'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        't0',
+        'u0_amp',
+        'tE',
+        'thetaE',
+        'piS',
+        'piE_E',
+        'piE_N',
+        'xS0_E',
+        'xS0_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
                               'muRel_E', 'muRel_N']
@@ -22850,7 +24782,8 @@ class FSPL_Limb_PhotAstromParam1(PSPL_Param):
         self.u0 = get_u0(self.thetaE_hat, self.beta,
                          self.thetaE_amp)  # closest approach vector
         self.thetas0 = self.u0 * self.thetaE_amp  # [RA,Dec] position of the source at peak
-        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3  # [RA, Dec] position of the lens at peak
+        # Filter 0 East/North origin. Shape is (n_filters, 2).
+        self.xL0 = self.xS0[0] - self.thetas0 * 1e-3
         self.tE = get_einstein_time(self.thetaE_amp, self.muRel,
                                     365.25)  # Einstein crossing time
 
@@ -23129,7 +25062,7 @@ class BFSPL(PSPL):
             
             return bottomp, bottomm
         
-        u_center = self.get_u(t)
+        u_center = self.get_u(t, filt_idx=filt_idx)
         u_pri = u_center[:, 0, :] 
         u_sec = u_center[:, 1, :] 
 
@@ -23153,7 +25086,7 @@ class BFSPL(PSPL):
 
         amp_plus_sec = au + 1/2 * al
         amp_minus_sec = am + 1/2 * al
-        xL = self.get_lens_astrometry(t)
+        xL = self.get_lens_astrometry(t, filt_idx=filt_idx)
 
         
         bp, bm = astrometry_bottom(t, rho_pri, u_amp_pri)
@@ -23651,10 +25584,12 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
     dL_dS: float
         Ratio of Distance from the obersver to the lens to
         Distance from the observer to the source
-    xS0_E: float
+    xS0_E: array
         RA Source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
-    xS0_N: float
+        One entry per filter.
+    xS0_N: array
         Dec source position on sky at t = t0 (arcsec) in an arbitrary ref. frame.
+        One entry per filter.
     muL_E: float
         RA Lens proper motion (mas/yr)
     muL_N: float
@@ -23688,11 +25623,24 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
     """
-    fitter_param_names = ['mL', 't0', 'beta', 'dL', 'dL_dS',
-                          'xS0_E', 'xS0_N',
-                          'muL_E', 'muL_N',
-                          'muS_E', 'muS_N', 'radiusS']
-    phot_param_names = ['b_sff', 'mag_src']
+    fitter_param_names = [
+        'mL',
+        't0',
+        'beta',
+        'dL',
+        'dL_dS',
+        'xS0_E',
+        'xS0_N',
+        'muL_E',
+        'muL_N',
+        'muS_E',
+        'muS_N',
+        'radiusS',
+        'b_sff',
+        'mag_src',
+    ]
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['dS', 'tE', 'u0_amp',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -23719,7 +25667,8 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.alpha_rad = np.deg2rad(alpha)
         self.dL_dS = dL_dS
         self.dS = self.dL / self.dL_dS
-        self.xS0 = np.array([xS0_E, xS0_N])
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
         self.n_outline = n_outline_pri
@@ -23926,7 +25875,23 @@ def checkconflicts(self):
 # --------------------------------------------------
 # Abstract base class for Model objects (end-user uses these).
 class ModelClassABC(ABC):
-    pass
+    def __init_subclass__(cls, **kwargs):
+        """Validate filter lists on concrete model classes.
+
+        Parameters
+        ----------
+        cls : type
+            Concrete model class being created.
+        **kwargs : dict
+            Forwarded to ``ABC.__init_subclass__``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init_subclass__(**kwargs)
+        validate_param_declaration(cls)
+        return None
 
 
 # PSPL
@@ -25003,6 +26968,50 @@ class PSBL_PhotAstrom_noPar_CircOrbs_Param1(ModelClassABC,
                                             PSBL_PhotAstrom,
                                             PSBL_noParallax,
                                             PSBL_PhotAstrom_CircOrbs_Param1):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_CircOrbs_Param2(ModelClassABC,
+                                            PSBL_PhotAstrom,
+                                            PSBL_noParallax,
+                                            PSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_CircOrbs_Param2(ModelClassABC,
+                                          PSBL_PhotAstrom,
+                                          PSBL_Parallax,
+                                          PSBL_PhotAstrom_CircOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_noPar_EllOrbs_Param2(ModelClassABC,
+                                           PSBL_PhotAstrom,
+                                           PSBL_noParallax,
+                                           PSBL_PhotAstrom_EllOrbs_Param2):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSBL_PhotAstrom_Par_EllOrbs_Param2(ModelClassABC,
+                                         PSBL_PhotAstrom,
+                                         PSBL_Parallax,
+                                         PSBL_PhotAstrom_EllOrbs_Param2):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -27172,7 +29181,9 @@ def cluster(image, R):
 #         the lenses
 #         """
 #         t_yrs = (t - self.t0) / days_per_year
-#         xl = self.xL0 + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         return (xl, (xl + (1 - self.m1) * self.separation * np.array(
 #             [-np.cos(self.angle), np.sin(self.angle)]),
 #                      xl - self.m1 * self.separation * np.array(
@@ -27183,7 +29194,9 @@ def cluster(image, R):
 #         the centre of the source
 #         """
 #         dt_in_years = (t - self.t0) / days_per_year
-#         return self.xS0 + np.outer(dt_in_years, self.muS * 1e-3)
+#         return (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS * 1e-3)
 #
 #     def get_caustic(self, t):
 #         """ This functions finds the position of the caustics at a list of times """
@@ -27445,7 +29458,9 @@ def cluster(image, R):
 #         images = points[2]
 #         centroids = points[3]
 #
-#         srce_pos_model = self.xS0 + np.outer((t - self.t0) / days_per_year,
+#         srce_pos_model = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer((t - self.t0) / days_per_year,
 #                                              self.muS) * 1e-3
 #         pos_model = srce_pos_model + centroids
 #
@@ -27726,7 +29741,9 @@ def cluster(image, R):
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #         dt_in_years = (t - self.t0) / days_per_year
 #
-#         xS = self.xS0 + np.outer(dt_in_years, self.muS * 1e-3) + (
+#         xS = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS * 1e-3) + (
 #                     self.piS * parallax_vec)
 #
 #         return xS
@@ -27901,7 +29918,9 @@ def cluster(image, R):
 #         return parallax.parallax_in_direction(self.raL, self.decL, t)
 #         t_yrs = (t - self.t0) / days_per_year
 #
-#         xL_sys = self.xL0 + np.outer(t_yrs, self.muL * 1e-3) + (
+#         xL_sys = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL * 1e-3) + (
 #                     self.piL * parallax_vec)
 #
 #         cosa = np.cos(self.angle)
@@ -27923,7 +29942,9 @@ def cluster(image, R):
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #
 #         # Equation of motion for just the background source.
-#         xS_unlensed = self.xS0 + np.outer(dt_in_years, self.muS) * 1e-3
+#         xS_unlensed = (
+#             self.xS0 if self.xS0.ndim == 1 else self.xS0[filt_idx]
+#         ) + np.outer(dt_in_years, self.muS) * 1e-3
 #         xS_unlensed += (self.piS * parallax_vec) * 1e-3  # arcsec
 #
 #         # Equation of motion for the relative angular separation between the background source and lens.
@@ -28110,7 +30131,9 @@ def cluster(image, R):
 #
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
 #         t_yrs = (t - self.t0) / 365.25
-#         xl = self.xL0 + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         xl += self.piL * parallax_vec
 #         return get_orbit(self.a, self.e, self.t_peri, self.P, self.m1,
 #                          1 - self.m1, xl, t, self.i, self.Omega, self.arg_peri,
@@ -28291,7 +30314,9 @@ def cluster(image, R):
 #         source = self.get_astrometry_unlensed(t)
 #         lens = self.get_lens_astrometry(t)
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
-#         xl = self.xL0 + np.outer(t_yrs, self.muL) * 1e-3
+#         xl = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         xl += self.piL * parallax_vec
 #         amplifications = []
 #         images = []
@@ -28353,7 +30378,9 @@ def cluster(image, R):
 #         ycentroids = centroids[:, 1]
 #         t_yrs = (t - self.t0) / 365.25
 #         parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t)
-#         lens = self.xL0 + np.outer(t_yrs, self.muL) * 1e-3
+#         lens = (
+#             self.xL0 if self.xL0.ndim == 1 else self.xL0[filt_idx]
+#         ) + np.outer(t_yrs, self.muL) * 1e-3
 #         lens += self.piL * parallax_vec
 #         fig = plt.figure(figsize=[size[0], size[1]])
 #         matplotlib.rc('xtick', labelsize=25)

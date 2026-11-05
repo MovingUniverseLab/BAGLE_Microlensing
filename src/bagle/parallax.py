@@ -137,6 +137,12 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
         input times.
     """
 
+    # Capitalized Earth is the same builtin body. Do not alias
+    # 'l2' or a Roman Horizons id; those stay caller-supplied.
+    _observer_aliases = {'Earth': 'earth', 'EARTH': 'earth'}
+    if isinstance(body, str):
+        body = _observer_aliases.get(body, body)
+
     if body in solar_system_ephemeris.bodies:
         if velocity:
             obs_pos, obs_vel = get_body_barycentric_posvel(body=body, time=times)

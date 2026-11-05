@@ -1,0 +1,1847 @@
+"""Old NumPy reference vs model_jax parity and autodiff smoke tests."""
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+pytest.importorskip("jax")
+
+import bagle.model_jax as model_jax
+from model_old_vs_jax_fixtures import (
+    AST_LIKELIHOOD_METHODS,
+    PHOT_LIKELIHOOD_METHODS,
+    build_paired_instances,
+    build_psbl_photastrom_param2_caustic_instances,
+    call_method,
+    grad_smoke_jax,
+    bsbl_photastrom_param1_pairs,
+    bsbl_photastrom_circorbs_param1_pairs,
+    bsbl_photastrom_ellorbs_param1_pairs,
+    bsbl_photastrom_ellorbs_param2_pairs,
+    bsbl_photastrom_param2_pairs,
+    bsbl_photastrom_param1_phot_likelihood_pairs,
+    bsbl_photastrom_param2_phot_likelihood_pairs,
+    bsbl_photastrom_linorbs_param1_likelihood_pairs,
+    bsbl_photastrom_accorbs_param1_likelihood_pairs,
+    bsbl_photastrom_circorbs_param1_likelihood_pairs,
+    bsbl_photastrom_ellorbs_param1_likelihood_pairs,
+    psbl_photastrom_param5_likelihood_pairs,
+    psbl_photastrom_param6_likelihood_pairs,
+    fspl_photastrom_param1_pairs,
+    fspl_photastrom_param1_extended_pairs,
+    fspl_photastrom_param1_grad_phot_pairs,
+    fspl_photastrom_param2_pairs,
+    fspl_phot_gp_param1_pairs,
+    fsbl_phot_param1_pairs,
+    fsbl_phot_ellorbs_param1_pairs,
+    fsbl_phot_circorbs_param1_pairs,
+    fsbl_photastrom_param1_pairs,
+    fsbl_photastrom_linorbs_param1_pairs,
+    fsbl_photastrom_accorbs_param1_pairs,
+    fsbl_photastrom_circorbs_param1_pairs,
+    fsbl_photastrom_ellorbs_param1_pairs,
+    fsbl_photastrom_orbit_param1_extended_pairs,
+    fsbl_photastrom_param12_resolved_pairs,
+    fsbl_phot_ellorbs_param2_pairs,
+    fsbl_photastrom_param2_pairs,
+    fsbl_photastrom_param3plus_pairs,
+    fspl_photastrom_param2_extended_pairs,
+    fspl_photastrom_param2_resolved_astrometry_pairs,
+    fspl_phot_param2_extended_pairs,
+    fspl_photastrom_param2_grad_phot_pairs,
+    psbl_photastrom_param1_resolved_lens_pairs,
+    bsbl_photastrom_param1_resolved_lens_pairs,
+    psbl_photastrom_param5_pairs,
+    psbl_photastrom_param6_pairs,
+    bsbl_photastrom_gp_param1_pairs,
+    psbl_gp_photastrom_param3_pairs,
+    bsbl_phot_param1_pairs,
+    bspl_phot_param2_pairs,
+    bspl_photastrom_gp_param1_pairs,
+    bspl_photastrom_gp_orbit_and_param23_pairs,
+    bspl_phot_gp_param1_pairs,
+    bspl_phot_param1_pairs,
+    bspl_photastrom_param1_pairs,
+    bspl_photastrom_param2_pairs,
+    bspl_photastrom_param34_pairs,
+    bspl_photastrom_orbit_param12_pairs,
+    bspl_photastrom_orbit_param12_extended_pairs,
+    bspl_photastrom_orbit_param12_extended_grad_pairs,
+    bspl_photastrom_extended_pairs,
+    bspl_phot_extended_pairs,
+    bspl_gp_extended_pairs,
+    bsbl_photastrom_param3_pairs,
+    bsbl_photastrom_ast_likelihood_gaps_pairs,
+    fsbl_photastrom_extended_pairs,
+    fsbl_phot_extended_pairs,
+    fsbl_phot_grad_pairs,
+    fsbl_photastrom_param1_grad_pairs,
+    fsbl_photastrom_orbit_param1_grad_pairs,
+    fsbl_photastrom_param2_grad_pairs,
+    fsbl_photastrom_param12_resolved_grad_pairs,
+    fsbl_photastrom_param3_grad_pairs,
+    fsbl_photastrom_param4_grad_pairs,
+    fsbl_photastrom_param5_grad_pairs,
+    fsbl_photastrom_param6_grad_pairs,
+    fsbl_photastrom_param7_grad_pairs,
+    fsbl_photastrom_param8_grad_pairs,
+    fsbl_photastrom_param38_grad_pairs,
+    fsbl_photastrom_orbit_param1_extended_grad_pairs,
+    fsbl_photastrom_extended_grad_pairs,
+    fsbl_phot_extended_grad_pairs,
+    psbl_phot_extended_pairs,
+    psbl_phot_extended_grad_pairs,
+    psbl_photastrom_param1_ast_likelihood_pairs,
+    psbl_photastrom_param7_ast_likelihood_pairs,
+    psbl_photastrom_gp_extended_pairs,
+    fspl_outline_and_resolved_pairs,
+    fspl_phot_param2_resolved_pairs,
+    resolved_amplification_extension_pairs,
+    resolved_amplification_extension_grad_pairs,
+    source_astrometry_unlensed_extension_pairs,
+    source_astrometry_unlensed_extension_grad_pairs,
+    bfspl_photastrom_param1_pairs,
+    bspl_photastrom_ellorbs_param2_pairs,
+    fspl_phot_param2_pairs,
+    psbl_gp_param1_pairs,
+    psbl_gp_photastrom_param2_pairs,
+    psbl_phot_grad_pairs,
+    psbl_gp_grad_pairs,
+    bspl_gp_grad_pairs,
+    bspl_photastrom_gp_grad_pairs,
+    bspl_phot_grad_pairs,
+    bspl_orbit_phot_grad_pairs,
+    bspl_photastrom_param1_grad_bulk_pairs,
+    psbl_photastrom_param1_grad_bulk_pairs,
+    psbl_phot_pairs,
+    psbl_photastrom_accorbs_param1_pairs,
+    psbl_photastrom_circorbs_param1_pairs,
+    psbl_photastrom_circorbs_param2_pairs,
+    psbl_photastrom_orbit_param4_pairs,
+    bsbl_photastrom_circorbs_param2_pairs,
+    bsbl_photastrom_circorbs_param2_ast_likelihood_pairs,
+    bsbl_photastrom_circorbs_param2_phot_likelihood_pairs,
+    bsbl_photastrom_ellorbs_param2_phot_likelihood_pairs,
+    psbl_photastrom_param2_likelihood_pairs,
+    psbl_photastrom_ellorbs_param1_pairs,
+    psbl_photastrom_ellorbs_param2_pairs,
+    psbl_photastrom_circorbs_ellorbs_param38_pairs,
+    bsbl_photastrom_linorbs_param1_pairs,
+    bsbl_photastrom_accorbs_param1_pairs,
+    psbl_photastrom_linorbs_param1_pairs,
+    psbl_photastrom_param7_pairs,
+    psbl_photastrom_param4_phot_pairs,
+    psbl_photastrom_param4_pairs,
+    psbl_photastrom_param4_grad_phot_pairs,
+    psbl_photastrom_param4_grad_ast_pairs,
+    psbl_photastrom_likelihood_grad_pairs,
+    psbl_gp_param2_grad_pairs,
+    psbl_gp_param2_extended_grad_pairs,
+    bspl_photastrom_param2_grad_pairs,
+    bspl_photastrom_param2_likelihood_grad_pairs,
+    psbl_photastrom_param5_grad_pairs,
+    psbl_photastrom_param6_grad_pairs,
+    psbl_photastrom_orbit_param2_grad_bulk_pairs,
+    psbl_photastrom_param2_grad_bulk_pairs,
+    psbl_photastrom_param3_grad_bulk_pairs,
+    psbl_photastrom_circorbs_ellorbs_param2_extended_grad_pairs,
+    psbl_gp_param2_bulk_grad_pairs,
+    fspl_photastrom_param1_grad_ast_pairs,
+    fspl_photastrom_param2_grad_ast_pairs,
+    fspl_photastrom_param1_extended_grad_pairs,
+    fspl_photastrom_param2_extended_grad_pairs,
+    fspl_phot_param2_grad_pairs,
+    fspl_phot_param2_extended_grad_pairs,
+    fspl_phot_param2_resolved_grad_pairs,
+    bspl_photastrom_param34_grad_pairs,
+    bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs,
+    bspl_photastrom_gp_orbit_grad_pairs,
+    bspl_photastrom_gp_orbit_ast_grad_pairs,
+    psbl_photastrom_orbit_param1_grad_bulk_pairs,
+    psbl_photastrom_orbit_param1_likelihood_grad_pairs,
+    psbl_photastrom_orbit_param1_extended_grad_pairs,
+    bfspl_photastrom_param1_grad_pairs,
+    fspl_outline_and_resolved_grad_pairs,
+    bsbl_photastrom_param1_core_grad_pairs,
+    bsbl_photastrom_orbit_param1_get_u_grad_pairs,
+    bsbl_photastrom_param2_grad_pairs,
+    bsbl_photastrom_param3_grad_pairs,
+    bsbl_photastrom_circorbs_param2_grad_pairs,
+    bsbl_photastrom_ellorbs_param2_grad_pairs,
+    bspl_photastrom_orbit_param12_grad_pairs,
+    fsbl_photastrom_param3plus_remaining_grad_pairs,
+    psbl_photastrom_param1_ast_likelihood_grad_pairs,
+    bspl_photastrom_gp_orbit_param23_grad_pairs,
+    psbl_photastrom_param7_remaining_grad_pairs,
+    psbl_phot_extended_remaining_grad_pairs,
+    bspl_photastrom_gp_param1_remaining_grad_pairs,
+    psbl_photastrom_param3_likelihood_remaining_grad_pairs,
+    psbl_photastrom_param2_likelihood_remaining_grad_pairs,
+    fsbl_photastrom_get_u_probe_grad_pairs,
+    fsbl_photastrom_lens_ast_probe_grad_pairs,
+    bsbl_lens_u_probe_grad_pairs,
+    bspl_gp_probe_grad_pairs,
+    psbl_gp_param_probe_grad_pairs,
+    grad_probe_nonresolved_pass_pairs,
+    grad_probe_resolved_pass_pairs,
+    bspl_phot_extended_probe_grad_pairs,
+    psbl_phot_orbit_param1_phot_grad_pairs,
+    resolved_ast_grad_recovered_pairs,
+    bsbl_param1_phot_grad_recovered_pairs,
+    bsbl_param1_phot_ast_likelihood_grad_recovered_pairs,
+    fsbl_lens_ast_grad_recovered_pairs,
+    get_u_grad_recovered_pairs,
+    psbl_photastrom_circorbs_ellorbs_param38_grad_pairs,
+    psbl_photastrom_param7_grad_pairs,
+    psbl_photastrom_orbit_param4_grad_pairs,
+    bspl_gp_extended_grad_pairs,
+    bspl_photastrom_gp_orbit_phot_grad_pairs,
+    bspl_photastrom_extended_grad_pairs,
+    psbl_photastrom_gp_param1_extended_grad_pairs,
+    psbl_photastrom_gp_extended_grad_pairs,
+    psbl_photastrom_param6_likelihood_grad_pairs,
+    psbl_photastrom_param7_ast_likelihood_grad_pairs,
+    build_jax_eval_paired_instances,
+    call_method_via_jax_eval,
+    psbl_photastrom_first_pairs,
+    psbl_photastrom_gp_param1_pairs,
+    psbl_photastrom_param2_pairs,
+    psbl_photastrom_param2_caustic_time_grid,
+    psbl_photastrom_param3_pairs,
+    psbl_photastrom_param3_likelihood_pairs,
+    psbl_photastrom_par_param1_pairs,
+    pspl_gp_pairs,
+    pspl_non_gp_pairs,
+    time_grid_ast,
+    time_grid_phot,
+)
+
+RTOL = ATOL = 1e-6
+GP_STD_RTOL = GP_STD_ATOL = 1e-5
+# AMG finite-source: model.py vs model_jax image positions differ ~1e-8 arcsec
+# (~5e-5 mas in centroid shift). Tighter atol (1e-6 mas) is not achievable without
+# changing the host AMG path; keep 1e-4 mas as the permanent parity tolerance.
+CENTROID_SHIFT_ATOL = 1e-4
+PHOT_METHODS = {"get_photometry", "get_amplification", "get_photometry_with_gp"}
+
+
+def _time_grid(method_name: str, instance):
+    if method_name in PHOT_METHODS or method_name in PHOT_LIKELIHOOD_METHODS:
+        return time_grid_phot(instance)
+    if method_name in AST_LIKELIHOOD_METHODS or method_name == "get_u":
+        return time_grid_ast(instance)
+    return time_grid_ast(instance)
+
+
+def _assert_parity(old_inst, jax_inst, method_name: str, t: np.ndarray):
+    ref_out = call_method(old_inst, method_name, t)
+    test_out = call_method(jax_inst, method_name, t)
+    if method_name == "get_photometry_with_gp":
+        ref_mean, ref_std = ref_out
+        test_mean, test_std = test_out
+        assert ref_mean.shape == test_mean.shape
+        assert ref_std.shape == test_std.shape
+        np.testing.assert_allclose(test_mean, ref_mean, rtol=RTOL, atol=ATOL)
+        np.testing.assert_allclose(test_std, ref_std, rtol=GP_STD_RTOL, atol=GP_STD_ATOL)
+        return
+    ref = np.asarray(ref_out, dtype=np.float64)
+    test = np.asarray(test_out, dtype=np.float64)
+    assert ref.shape == test.shape, f"shape mismatch {ref.shape} vs {test.shape}"
+    if method_name == "get_resolved_astrometry":
+        mask = np.isfinite(ref) & np.isfinite(test)
+        assert mask.any(), f"no overlapping finite values for {method_name}"
+        np.testing.assert_allclose(test[mask], ref[mask], rtol=RTOL, atol=ATOL)
+        return
+    if method_name == "get_centroid_shift":
+        np.testing.assert_allclose(
+            test, ref, rtol=RTOL, atol=CENTROID_SHIFT_ATOL, equal_nan=True
+        )
+        return
+    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL, equal_nan=True)
+
+
+def _assert_jax_eval_parity(class_name: str, method_name: str):
+    native_inst, eval_inst = build_jax_eval_paired_instances(class_name)
+    t = _time_grid(method_name, native_inst)
+    ref_out = call_method(native_inst, method_name, t)
+    test_out = call_method_via_jax_eval(eval_inst, method_name, t)
+    if method_name == "get_centroid_shift":
+        ref = np.asarray(ref_out, dtype=np.float64)
+        test = np.asarray(test_out, dtype=np.float64)
+        assert ref.shape == test.shape
+        np.testing.assert_allclose(
+            test, ref, rtol=RTOL, atol=CENTROID_SHIFT_ATOL, equal_nan=True
+        )
+        return
+    if method_name == "get_resolved_astrometry":
+        ref = np.asarray(ref_out, dtype=np.float64)
+        test = np.asarray(test_out, dtype=np.float64)
+        assert ref.shape == test.shape
+        mask = np.isfinite(ref) & np.isfinite(test)
+        assert mask.any(), f"no overlapping finite values for {method_name}"
+        np.testing.assert_allclose(test[mask], ref[mask], rtol=RTOL, atol=ATOL)
+        return
+    ref = np.asarray(ref_out, dtype=np.float64)
+    test = np.asarray(test_out, dtype=np.float64)
+    assert ref.shape == test.shape
+    np.testing.assert_allclose(test, ref, rtol=RTOL, atol=ATOL, equal_nan=True)
+
+
+@pytest.mark.parametrize("class_name,method_name", pspl_non_gp_pairs())
+def test_parity_old_vs_jax(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", pspl_non_gp_pairs())
+def test_grad_old_vs_jax(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names), (
+        f"grad length {len(g)} != init param count {len(init_names)} "
+        f"for {class_name}.{method_name}"
+    )
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", pspl_gp_pairs())
+def test_parity_pspl_gp(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", pspl_gp_pairs())
+def test_grad_pspl_gp(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_pairs())
+def test_parity_psbl_phot(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_extended_pairs())
+def test_parity_psbl_phot_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_first_pairs())
+def test_parity_psbl_photastrom_first(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_par_param1_pairs())
+def test_parity_psbl_photastrom_par_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param2_pairs())
+def test_parity_psbl_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+def test_parity_psbl_photastrom_param2_caustic_crossing():
+    """Caustic-crossing PSBL PhotAstrom Param2 phot parity (test_model params)."""
+    old_inst, jax_inst = build_psbl_photastrom_param2_caustic_instances()
+    t = psbl_photastrom_param2_caustic_time_grid(old_inst)
+    _assert_parity(old_inst, jax_inst, "get_photometry", t)
+    phot_old = np.asarray(call_method(old_inst, "get_photometry", t), dtype=np.float64)
+    phot_jax = np.asarray(call_method(jax_inst, "get_photometry", t), dtype=np.float64)
+    assert phot_old.min() < 16
+    assert phot_jax.min() < 16
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param2_likelihood_pairs())
+def test_parity_psbl_photastrom_param2_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param1_pairs())
+def test_parity_psbl_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param3_pairs())
+def test_parity_psbl_photastrom_param3(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param3_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param3_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param1_pairs())
+def test_parity_bspl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_grad_pairs())
+def test_grad_psbl_phot(class_name, method_name):
+    """PSBL phot grad smoke; jax.grad NaN => host FD through get_photometry."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_grad_pairs())
+def test_grad_bspl_gp(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_gp_grad_pairs())
+def test_grad_bspl_photastrom_gp(class_name, method_name):
+    """BSPL PhotAstrom GP phot+GP grad (host FD through get_photometry_with_gp)."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_grad_pairs())
+def test_grad_psbl_gp(class_name, method_name):
+    """PSBL GP phot / PhotAstrom grad smoke (jax.grad or host FD)."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_grad_pairs())
+def test_grad_bspl_phot(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_orbit_phot_grad_pairs())
+def test_grad_bspl_orbit_phot(class_name, method_name):
+    """BSPL orbit phot grad via host FD (orbital parameters)."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_photastrom_param2_pairs())
+def test_parity_psbl_gp_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_param1_pairs())
+def test_parity_bspl_phot_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_gp_param1_pairs())
+def test_parity_psbl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param1_pairs())
+def test_parity_bsbl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_param1_phot_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_param1_phot_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param2_pairs())
+def test_parity_bsbl_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_param2_phot_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_param2_phot_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_circorbs_param1_pairs())
+def test_parity_psbl_photastrom_circorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_accorbs_param1_pairs())
+def test_parity_psbl_photastrom_accorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_linorbs_param1_pairs())
+def test_parity_psbl_photastrom_linorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param7_pairs())
+def test_parity_psbl_photastrom_param7(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_ast_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param7_ast_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param1_ast_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param1_ast_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_gp_extended_pairs())
+def test_parity_psbl_photastrom_gp_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_ellorbs_param1_pairs())
+def test_parity_psbl_photastrom_ellorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_circorbs_param2_pairs())
+def test_parity_psbl_photastrom_circorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_ellorbs_param2_pairs())
+def test_parity_psbl_photastrom_ellorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_circorbs_ellorbs_param38_pairs()
+)
+def test_parity_psbl_photastrom_circorbs_ellorbs_param38(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_linorbs_param1_pairs())
+def test_parity_bsbl_photastrom_linorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_linorbs_param1_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_linorbs_param1_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_accorbs_param1_pairs())
+def test_parity_bsbl_photastrom_accorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_accorbs_param1_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_accorbs_param1_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_gp_param1_pairs())
+def test_parity_bspl_phot_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param2_pairs())
+def test_parity_bspl_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_pairs())
+def test_parity_bspl_photastrom_param34(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_orbit_param12_pairs())
+def test_parity_bspl_photastrom_orbit_param12(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_orbit_param12_extended_pairs()
+)
+def test_parity_bspl_photastrom_orbit_param12_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_extended_pairs())
+def test_parity_bspl_photastrom_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_extended_pairs())
+def test_parity_bspl_phot_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_extended_pairs())
+def test_parity_bspl_gp_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", resolved_amplification_extension_pairs()
+)
+def test_parity_resolved_amplification_extension(class_name, method_name):
+    """BSPL / FSPL_PhotAstrom / BFSPL own-override resolved amplification."""
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", source_astrometry_unlensed_extension_pairs()
+)
+def test_parity_source_astrometry_unlensed_extension(class_name, method_name):
+    """PSBL_Phot / BSPL_Phot / BSPL_PhotAstrom own-override source astrometry."""
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_pairs())
+def test_parity_fspl_phot_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_gp_param1_pairs())
+def test_parity_bspl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_and_param23_pairs()
+)
+def test_parity_bspl_photastrom_gp_orbit_and_param23(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_circorbs_param1_pairs())
+def test_parity_bsbl_photastrom_circorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_circorbs_param1_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_circorbs_param1_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_ellorbs_param1_pairs())
+def test_parity_bsbl_photastrom_ellorbs_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param1_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_ellorbs_param1_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_pairs())
+def test_parity_fspl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_ellorbs_param2_pairs())
+def test_parity_bsbl_photastrom_ellorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_ellorbs_param2_pairs())
+def test_parity_bspl_photastrom_ellorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_grad_phot_pairs())
+def test_grad_fspl_photastrom_param1_phot(class_name, method_name):
+    """FSPL phot grad smoke via host AMG finite-difference."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_phot_pairs())
+def test_parity_psbl_photastrom_param4_phot(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_pairs())
+def test_parity_psbl_photastrom_param4(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_orbit_param4_pairs())
+def test_parity_psbl_photastrom_orbit_param4(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_circorbs_param2_pairs())
+def test_parity_bsbl_photastrom_circorbs_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_circorbs_param2_ast_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_circorbs_param2_ast_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_circorbs_param2_phot_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_circorbs_param2_phot_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param2_phot_likelihood_pairs()
+)
+def test_parity_bsbl_photastrom_ellorbs_param2_phot_likelihood(
+    class_name, method_name
+):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_extended_pairs())
+def test_parity_fspl_photastrom_param1_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_pairs())
+def test_parity_fspl_photastrom_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_param1_pairs())
+def test_parity_fsbl_phot_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_ellorbs_param1_pairs())
+def test_parity_fsbl_phot_ellorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_circorbs_param1_pairs())
+def test_parity_fsbl_phot_circorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param1_pairs())
+def test_parity_fsbl_photastrom_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_linorbs_param1_pairs())
+def test_parity_fsbl_photastrom_linorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_accorbs_param1_pairs())
+def test_parity_fsbl_photastrom_accorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_circorbs_param1_pairs())
+def test_parity_fsbl_photastrom_circorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_ellorbs_param1_pairs())
+def test_parity_fsbl_photastrom_ellorbs_param1(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_orbit_param1_extended_pairs()
+)
+def test_parity_fsbl_photastrom_orbit_param1_extended(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param12_resolved_pairs())
+def test_parity_fsbl_photastrom_param12_resolved(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_ellorbs_param2_pairs())
+def test_parity_fsbl_phot_ellorbs_param2(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param2_pairs())
+def test_parity_fsbl_photastrom_param2(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param3plus_pairs())
+def test_parity_fsbl_photastrom_param3plus(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_extended_pairs())
+def test_parity_fsbl_photastrom_extended(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_extended_pairs())
+def test_parity_fsbl_phot_extended(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_phot_param1_pairs())
+def test_parity_bsbl_phot_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_param2_pairs())
+def test_parity_bspl_phot_param2(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_gp_param1_pairs())
+def test_parity_fspl_phot_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_extended_pairs())
+def test_parity_fspl_photastrom_param2_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_resolved_astrometry_pairs())
+def test_parity_fspl_photastrom_param2_resolved_astrometry(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_extended_pairs())
+def test_parity_fspl_phot_param2_extended(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param1_resolved_lens_pairs())
+def test_parity_psbl_photastrom_resolved_lens(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param1_resolved_lens_pairs())
+def test_parity_bsbl_photastrom_resolved_lens(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param5_pairs())
+def test_parity_psbl_photastrom_param5(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param6_pairs())
+def test_parity_psbl_photastrom_param6(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param5_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param5_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param6_likelihood_pairs()
+)
+def test_parity_psbl_photastrom_param6_likelihood(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_gp_param1_pairs())
+def test_parity_bsbl_photastrom_gp_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param3_pairs())
+def test_parity_bsbl_photastrom_param3(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ast_likelihood_gaps_pairs()
+)
+def test_parity_bsbl_photastrom_ast_likelihood_gaps(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", bfspl_photastrom_param1_pairs())
+def test_parity_bfspl_photastrom_param1(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_outline_and_resolved_pairs())
+def test_parity_fspl_outline_and_resolved(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_resolved_pairs())
+def test_parity_fspl_phot_param2_resolved(class_name, method_name):
+    _assert_jax_eval_parity(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_photastrom_param3_pairs())
+def test_parity_psbl_gp_photastrom_param3(class_name, method_name):
+    old_inst, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, old_inst)
+    _assert_parity(old_inst, jax_inst, method_name, t)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_grad_phot_pairs())
+def test_grad_fspl_photastrom_param2_phot(class_name, method_name):
+    """FSPL PhotAstrom Param2 phot grad smoke via host AMG finite-difference."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_grad_phot_pairs())
+def test_grad_psbl_photastrom_param4_phot(class_name, method_name):
+    """Param4 COM-frame init names (t0_com, u0_amp_com) wired in grad_smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param4_grad_ast_pairs())
+def test_grad_psbl_photastrom_param4_ast(class_name, method_name):
+    """Param4 astrometry + ast likelihood via JAX gaussian kernels."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_likelihood_grad_pairs())
+def test_grad_psbl_photastrom_likelihood(class_name, method_name):
+    """PSBL PhotAstrom Param2/3 chi2 / log-likelihood JAX grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_grad_pairs())
+def test_grad_psbl_gp_param2(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 ``get_photometry_with_gp`` grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_gp_orbit_grad_pairs())
+def test_grad_bspl_photastrom_gp_orbit(class_name, method_name):
+    """BSPL GP orbit / Param2/3 phot + GP grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_param1_grad_bulk_pairs()
+)
+def test_grad_bspl_photastrom_param1_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param1_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_param1_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_extended_grad_pairs())
+def test_grad_psbl_gp_param2_extended(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 get_u + phot likelihood JAX grad smoke."""
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param2_grad_pairs())
+def test_grad_bspl_photastrom_param2(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_param2_likelihood_grad_pairs()
+)
+def test_grad_bspl_photastrom_param2_likelihood(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param5_grad_pairs())
+def test_grad_psbl_photastrom_param5(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param6_grad_pairs())
+def test_grad_psbl_photastrom_param6(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param2_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param2_bulk(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param1_likelihood_grad_pairs()
+)
+def test_grad_bsbl_photastrom_ellorbs_param1_likelihood(class_name, method_name):
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+def _assert_grad_smoke(class_name: str, method_name: str) -> None:
+    _, jax_inst = build_paired_instances(class_name)
+    t = _time_grid(method_name, jax_inst)
+    g, init_names = grad_smoke_jax(
+        class_name, method_name, jax_inst, t, return_names=True
+    )
+    assert len(g) == len(init_names)
+    assert np.all(np.isfinite(g)), f"non-finite grad for {class_name}.{method_name}"
+    assert np.linalg.norm(g) > 0.0, f"zero grad norm for {class_name}.{method_name}"
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_circorbs_ellorbs_param38_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param38(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_photastrom_param7_grad_pairs())
+def test_grad_psbl_photastrom_param7(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param4_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param4(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_extended_grad_pairs())
+def test_grad_bspl_gp_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_phot_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_orbit_phot(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_extended_grad_pairs()
+)
+def test_grad_bspl_photastrom_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_gp_param1_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_gp_param1_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_gp_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_gp_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param6_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param6_likelihood(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_ast_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param7_ast_likelihood(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_grad_pairs())
+def test_grad_fsbl_phot(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param1_grad_pairs())
+def test_grad_fsbl_photastrom_param1(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_orbit_param1_grad_pairs()
+)
+def test_grad_fsbl_photastrom_orbit_param1(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param2_grad_pairs())
+def test_grad_fsbl_photastrom_param2(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_param12_resolved_grad_pairs()
+)
+def test_grad_fsbl_photastrom_param12_resolved(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param3_grad_pairs())
+def test_grad_fsbl_photastrom_param3(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param4_grad_pairs())
+def test_grad_fsbl_photastrom_param4(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param5_grad_pairs())
+def test_grad_fsbl_photastrom_param5(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param6_grad_pairs())
+def test_grad_fsbl_photastrom_param6(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param7_grad_pairs())
+def test_grad_fsbl_photastrom_param7(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param8_grad_pairs())
+def test_grad_fsbl_photastrom_param8(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_param38_grad_pairs())
+def test_grad_fsbl_photastrom_param38(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_orbit_param1_extended_grad_pairs()
+)
+def test_grad_fsbl_photastrom_orbit_param1_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_extended_grad_pairs()
+)
+def test_grad_fsbl_photastrom_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_phot_extended_grad_pairs())
+def test_grad_fsbl_phot_extended(class_name, method_name):
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_extended_grad_pairs())
+def test_grad_psbl_phot_extended(class_name, method_name):
+    """PSBL phot extended likelihood grad (host FD through roots)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_extended(class_name, method_name):
+    """PSBL PhotAstrom AccOrbs/LinOrbs Param1 extended grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_orbit_param12_extended_grad_pairs()
+)
+def test_grad_bspl_photastrom_orbit_param12_extended(class_name, method_name):
+    """BSPL PhotAstrom orbit Param1/2 extended likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param2_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_param2_bulk(class_name, method_name):
+    """PSBL PhotAstrom static Param2 phot + core astrometry grad smoke."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param3_grad_bulk_pairs()
+)
+def test_grad_psbl_photastrom_param3_bulk(class_name, method_name):
+    """PSBL PhotAstrom static Param3 phot + core astrometry + ``get_u`` grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_circorbs_ellorbs_param2_extended_grad_pairs()
+)
+def test_grad_psbl_photastrom_circorbs_ellorbs_param2_extended(class_name, method_name):
+    """PSBL PhotAstrom CircOrbs/EllOrbs Param2 extended likelihood grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param2_bulk_grad_pairs())
+def test_grad_psbl_gp_param2_bulk(class_name, method_name):
+    """PSBL PhotAstrom GP Param2 phot + core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_grad_ast_pairs())
+def test_grad_fspl_photastrom_param1_ast(class_name, method_name):
+    """FSPL PhotAstrom Param1 core astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param2_grad_ast_pairs())
+def test_grad_fspl_photastrom_param2_ast(class_name, method_name):
+    """FSPL PhotAstrom Param2 core astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_photastrom_param1_extended_grad_pairs()
+)
+def test_grad_fspl_photastrom_param1_extended(class_name, method_name):
+    """FSPL PhotAstrom Param1 extended likelihood grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_photastrom_param2_extended_grad_pairs()
+)
+def test_grad_fspl_photastrom_param2_extended(class_name, method_name):
+    """FSPL PhotAstrom Param2 extended likelihood grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_grad_pairs())
+def test_grad_fspl_phot_param2(class_name, method_name):
+    """FSPL phot-only Param2 phot/amp grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_extended_grad_pairs())
+def test_grad_fspl_phot_param2_extended(class_name, method_name):
+    """FSPL phot-only Param2 ``get_u`` + phot likelihood grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fspl_phot_param2_resolved_grad_pairs())
+def test_grad_fspl_phot_param2_resolved(class_name, method_name):
+    """FSPL phot-only Param2 ``get_resolved_astrometry`` grad."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_photastrom_param34_grad_pairs())
+def test_grad_bspl_photastrom_param34(class_name, method_name):
+    """BSPL PhotAstrom Param3/4 phot + core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_orbit_param1_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_orbit_param1_likelihood(class_name, method_name):
+    """PSBL PhotAstrom orbit Param1 likelihood + get_u grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_ast_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_orbit_ast(class_name, method_name):
+    """BSPL GP orbit Param1-3 core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bfspl_photastrom_param1_grad_pairs()
+)
+def test_grad_bfspl_photastrom_param1(class_name, method_name):
+    """BFSPL PhotAstrom Param1 phot + core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fspl_outline_and_resolved_grad_pairs()
+)
+def test_grad_fspl_outline_and_resolved(class_name, method_name):
+    """FSPL outline unlensed + resolved astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", resolved_amplification_extension_grad_pairs()
+)
+def test_grad_resolved_amplification_extension(class_name, method_name):
+    """BSPL / FSPL_PhotAstrom / BFSPL resolved amplification grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", source_astrometry_unlensed_extension_grad_pairs()
+)
+def test_grad_source_astrometry_unlensed_extension(class_name, method_name):
+    """PSBL_Phot / BSPL_Phot / BSPL_PhotAstrom source astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_param1_core_grad_pairs()
+)
+def test_grad_bsbl_photastrom_param1_core(class_name, method_name):
+    """BSBL PhotAstrom Param1/orbit Param1 core ast + amp grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_orbit_param1_get_u_grad_pairs()
+)
+def test_grad_bsbl_photastrom_orbit_param1_get_u(class_name, method_name):
+    """BSBL PhotAstrom Param1/orbit Param1 get_u grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param3_grad_pairs())
+def test_grad_bsbl_photastrom_param3(class_name, method_name):
+    """BSBL PhotAstrom CircOrbs/EllOrbs Param3 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_photastrom_param2_grad_pairs())
+def test_grad_bsbl_photastrom_param2(class_name, method_name):
+    """BSBL PhotAstrom Param2 phot + ast + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_circorbs_param2_grad_pairs()
+)
+def test_grad_bsbl_photastrom_circorbs_param2(class_name, method_name):
+    """BSBL PhotAstrom CircOrbs Param2 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_photastrom_ellorbs_param2_grad_pairs()
+)
+def test_grad_bsbl_photastrom_ellorbs_param2(class_name, method_name):
+    """BSBL PhotAstrom EllOrbs Param2 grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_orbit_param12_grad_pairs()
+)
+def test_grad_bspl_photastrom_orbit_param12(class_name, method_name):
+    """BSPL PhotAstrom orbit Param1/2 core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_param3plus_remaining_grad_pairs()
+)
+def test_grad_fsbl_photastrom_param3plus_remaining(class_name, method_name):
+    """FSBL PhotAstrom Param3+ get_u + lens astrometry grad (jax-eval FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param1_ast_likelihood_grad_pairs()
+)
+def test_grad_psbl_photastrom_param1_ast_likelihood(class_name, method_name):
+    """PSBL PhotAstrom Param1 ast likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_orbit_param23_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_orbit_param23(class_name, method_name):
+    """BSPL GP Param2/3 + orbit GP core astrometry grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param7_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param7_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param7 phot + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_phot_extended_remaining_grad_pairs()
+)
+def test_grad_psbl_phot_extended_remaining(class_name, method_name):
+    """PSBL phot extended likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bspl_photastrom_gp_param1_remaining_grad_pairs()
+)
+def test_grad_bspl_photastrom_gp_param1_remaining(class_name, method_name):
+    """BSPL PhotAstrom GP Param1 phot + GP grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param3_likelihood_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param3_likelihood_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param3 likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", psbl_photastrom_param2_likelihood_remaining_grad_pairs()
+)
+def test_grad_psbl_photastrom_param2_likelihood_remaining(class_name, method_name):
+    """PSBL PhotAstrom Param2 likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_photastrom_get_u_probe_grad_pairs())
+def test_grad_fsbl_photastrom_get_u_probe(class_name, method_name):
+    """FSBL PhotAstrom ``get_u`` grad verified by non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", fsbl_photastrom_lens_ast_probe_grad_pairs()
+)
+def test_grad_fsbl_photastrom_lens_ast_probe(class_name, method_name):
+    """FSBL PhotAstrom ``get_lens_astrometry`` grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_lens_u_probe_grad_pairs())
+def test_grad_bsbl_lens_u_probe(class_name, method_name):
+    """BSBL Param1/2 lens ast / ``get_u`` grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_gp_probe_grad_pairs())
+def test_grad_bspl_gp_probe(class_name, method_name):
+    """BSPL GP Param1 core ast + phot grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_gp_param_probe_grad_pairs())
+def test_grad_psbl_gp_param_probe(class_name, method_name):
+    """PSBL GP/Param4/5 grad from non-resolved probe."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", grad_probe_resolved_pass_pairs())
+def test_grad_probe_resolved_pass(class_name, method_name):
+    """Resolved astrometry grad pairs verified by family probe batches."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bspl_phot_extended_probe_grad_pairs())
+def test_grad_bspl_phot_extended_probe(class_name, method_name):
+    """BSPL phot-only extended ``get_u`` + likelihood grad (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", psbl_phot_orbit_param1_phot_grad_pairs())
+def test_grad_psbl_phot_orbit_param1_phot(class_name, method_name):
+    """PSBL phot-only keplerian Param1 phot paths (host FD)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", resolved_ast_grad_recovered_pairs())
+def test_grad_resolved_ast_recovered(class_name, method_name):
+    """Eleven resolved-astrometry grad pairs recovered from probe skip batches.
+
+    Covers FSBL/PSBL phot paths that pass host FD after derived-geometry
+    refresh and squared sum on ``get_resolved_*`` outputs.
+    """
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", bsbl_param1_phot_grad_recovered_pairs())
+def test_grad_bsbl_param1_phot_recovered(class_name, method_name):
+    """BSBL Param1/2/3 phot paths recovered by skipping ``root_tol`` in host FD."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize(
+    "class_name,method_name", bsbl_param1_phot_ast_likelihood_grad_recovered_pairs()
+)
+def test_grad_bsbl_param1_phot_ast_likelihood_recovered(class_name, method_name):
+    """BSBL Param1/2/3 phot + ast + likelihood grad (``root_tol`` FD skip)."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", fsbl_lens_ast_grad_recovered_pairs())
+def test_grad_fsbl_lens_ast_recovered(class_name, method_name):
+    """FSBL PhotAstrom ``get_lens_astrometry`` recovered via squared FD objective."""
+    _assert_grad_smoke(class_name, method_name)
+
+
+@pytest.mark.parametrize("class_name,method_name", get_u_grad_recovered_pairs())
+def test_grad_get_u_recovered(class_name, method_name):
+    """Thirty-one ``get_u`` skip-batch rows recovered via geometry refresh + squared FD."""
+    _assert_grad_smoke(class_name, method_name)
+

@@ -1,7 +1,9 @@
 Satellite Parallax
 =========================
 BAGLE supports observers that are not located at Earth so long as an ephemeris can
-be downloaded from the JPL Horizons web app.
+be downloaded from the JPL Horizons web app. Several observers on one event,
+each with its own parallax vector and astrometric origin, are described in
+:doc:`multi_location`.
 
 Models with Satellite Parallax
 ------------------------------

@@ -42,6 +42,7 @@ only, astrometry only, or joint fitting of photometry and astrometry
    getting_started
    models
    fitting
+   multi_location
    new_models
    api_docs
    citation

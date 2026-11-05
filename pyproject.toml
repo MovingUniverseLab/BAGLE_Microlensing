@@ -24,8 +24,15 @@ dependencies = ["numpy>=1.24",
                 "matplotlib",
                 "astropy>=5.3",
                 "celerite",
+                "jplephem",
                 "scipy>=1.10",
-                "jplephem"]
+                "pymc>=5.0",
+                "arviz>=0.16",
+                "pytensor>=2.18",
+                "jax>=0.4",
+                "jaxlib>=0.4",
+                "tinygp>=0.3",
+                "numpyro>=0.15"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -34,6 +41,11 @@ classifiers = [
     "Intended Audience :: Developers"
 ]
 
+[project.optional-dependencies]
+jaxns = ["jaxns>=2.5", "tensorflow-probability>=0.24"]
+nautilus = ["nautilus-sampler>=1.0"]
+pocomc = ["pocomc>=1.2"]
+blackjax = ["blackjax>=1.6,<1.7"]
 
 [project.urls]
 Homepage = "https://github.com/MovingUniverseLab/BAGLE_Microlensing"
@@ -48,3 +60,14 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: multi-seed sampler comparisons. Deselect with -m 'not slow'.",
+]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+stubPath = "typings"
+reportMissingModuleSource = false
