@@ -1231,6 +1231,128 @@ def test_pspl_photastrom_param7_matches_param3():
                                rtol=1e-12)
 
 
+def test_pspl_photastrom_param8_matches_param1():
+    """Param8 (xL0, xS0 at t_ref) reproduces Param1 (t0, beta) exactly."""
+    raL = 265.0
+    decL = -30.0
+    mL = 17.0
+    dL = 20.0
+    dS = 4000.0
+    muL_E, muL_N = -55.1822208, -165.12352812
+    muS_E, muS_N = 10.0, 0.0
+    # Use b_sff != 1 and two filters so the mag_base -> mag_src conversion
+    # in Param8 is actually exercised.
+    b_sff = [0.7, 1.0]
+    mag_src = [17.0, 18.5]
+    mag_base = list(np.array(mag_src) + 2.5 * np.log10(np.array(b_sff)))
+    t0 = 56647.0 + 5 * 365 / 2.0
+
+    for beta in [1000.0, -1000.0, 37.5, -0.8]:
+        p1 = model.PSPL_PhotAstrom_Par_Param1(
+            mL, t0, beta, dL, dL / dS,
+            0.0, 0.0, muL_E, muL_N, muS_E, muS_N,
+            b_sff, mag_src, raL=raL, decL=decL)
+
+        # Propagate lens and source back to an arbitrary reference epoch
+        # using proper motion only (SSB frame).
+        t_ref = t0 - 900.0
+        dt_yr = (t_ref - t0) / model.days_per_year
+        xS_ref = p1.xS0 + p1.muS * dt_yr * 1e-3
+        xL_ref = p1.xL0 + p1.muL * dt_yr * 1e-3
+
+        p8 = model.PSPL_PhotAstrom_Par_Param8(
+            mL, t_ref, dL, dL / dS,
+            xL_ref[0], xL_ref[1], xS_ref[0], xS_ref[1],
+            muL_E, muL_N, muS_E, muS_N,
+            b_sff, mag_base, raL=raL, decL=decL)
+
+        # Photometric parameters round-trip.
+        np.testing.assert_allclose(p8.mag_base, mag_base, rtol=1e-12)
+        np.testing.assert_allclose(p8.mag_src, p1.mag_src, rtol=1e-12)
+        np.testing.assert_allclose(p8.b_sff, p1.b_sff, rtol=1e-12)
+
+        # Derived scalars.
+        np.testing.assert_allclose(p8.t0, p1.t0, rtol=1e-10)
+        np.testing.assert_allclose(p8.beta, p1.beta, rtol=1e-10)
+        np.testing.assert_allclose(p8.u0_amp, p1.u0_amp, rtol=1e-10)
+        np.testing.assert_allclose(p8.tE, p1.tE, rtol=1e-10)
+        np.testing.assert_allclose(p8.thetaE_amp, p1.thetaE_amp, rtol=1e-10)
+        np.testing.assert_allclose(p8.muRel, p1.muRel, rtol=1e-10)
+        np.testing.assert_allclose(p8.piE, p1.piE, rtol=1e-10)
+
+        # Positions at t0 (absolute tolerance since xS0 is 0 for Param1).
+        np.testing.assert_allclose(p8.xS0, p1.xS0, atol=1e-12)
+        np.testing.assert_allclose(p8.xL0, p1.xL0, atol=1e-12)
+        np.testing.assert_allclose([p8.xL0_E, p8.xL0_N], p1.xL0, atol=1e-12)
+
+        # Reference-epoch inputs are preserved.
+        np.testing.assert_allclose(p8.xS0_ref, xS_ref, atol=1e-15)
+        np.testing.assert_allclose(p8.xL0_ref, xL_ref, atol=1e-15)
+        assert p8.t_ref == t_ref
+
+        # Full model outputs over a 20 year baseline, in every filter.
+        t = np.arange(56647.0, 56647.0 + 20 * 365, 10.0)
+        for ff in range(len(b_sff)):
+            np.testing.assert_allclose(p8.get_photometry(t, filt_idx=ff),
+                                       p1.get_photometry(t, filt_idx=ff),
+                                       rtol=1e-12)
+            np.testing.assert_allclose(p8.get_astrometry(t, filt_idx=ff),
+                                       p1.get_astrometry(t, filt_idx=ff),
+                                       rtol=1e-12, atol=1e-13)
+            np.testing.assert_allclose(p8.get_astrometry_unlensed(t, filt_idx=ff),
+                                       p1.get_astrometry_unlensed(t, filt_idx=ff),
+                                       rtol=1e-12, atol=1e-13)
+            np.testing.assert_allclose(p8.get_lens_astrometry(t, filt_idx=ff),
+                                       p1.get_lens_astrometry(t, filt_idx=ff),
+                                       rtol=1e-12, atol=1e-13)
+
+    # noPar flavor also works, including scalar b_sff / mag_base inputs.
+    p8_nopar = model.PSPL_PhotAstrom_noPar_Param8(
+        mL, t0 - 900.0, dL, dL / dS,
+        0.0, 0.0, 0.0, 1e-3,
+        muL_E, muL_N, muS_E, muS_N,
+        0.5, 18.0)
+    assert np.isfinite(p8_nopar.t0)
+    assert np.isfinite(p8_nopar.beta)
+    np.testing.assert_allclose(p8_nopar.mag_base, [18.0])
+    np.testing.assert_allclose(p8_nopar.mag_src, [18.0 - 2.5 * np.log10(0.5)])
+
+    # Identical proper motions -> no closest approach -> error.
+    with pytest.raises(RuntimeError, match='identical proper motions'):
+        model.PSPL_PhotAstrom_Par_Param8(
+            mL, t0, dL, dL / dS,
+            0.0, 0.0, 0.0, 1e-3,
+            muL_E, muL_N, muL_E, muL_N,
+            b_sff, mag_base, raL=raL, decL=decL)
+
+
+def test_pspl_photastrom_param8_not_fittable():
+    """Param8 is forward-modeling only; the fitter must refuse it."""
+    assert model.PSPL_PhotAstromParam8.fitter_supported is False
+    assert model.PSPL_PhotAstrom_Par_Param8.fitter_supported is False
+    assert model.PSPL_PhotAstrom_Par_Param1.fitter_supported is True
+
+    # Minimal data dict; the guard fires before any data is inspected.
+    t = np.arange(56000.0, 56100.0, 1.0)
+    data = {'target': 'sim',
+            'phot_data': 'sim', 'ast_data': 'sim',
+            'phot_files': ['fake_phot1'], 'ast_files': ['fake_ast1'],
+            't_phot1': t, 'mag1': np.full_like(t, 17.0),
+            'mag_err1': np.full_like(t, 0.01),
+            't_ast1': t, 'xpos1': np.zeros_like(t), 'ypos1': np.zeros_like(t),
+            'xpos_err1': np.full_like(t, 1e-4),
+            'ypos_err1': np.full_like(t, 1e-4),
+            'raL': 265.0, 'decL': -30.0}
+
+    with pytest.raises(RuntimeError, match='not supported by the fitter'):
+        model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_Par_Param8,
+                                 outputfiles_basename='./test_param8_')
+
+    with pytest.raises(RuntimeError, match='not supported by the fitter'):
+        model_fitter.PSPL_Solver(data, model.PSPL_PhotAstrom_noPar_Param8,
+                                 outputfiles_basename='./test_param8_')
+
+
 def compare_lumlens_parallax_bulge():
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0

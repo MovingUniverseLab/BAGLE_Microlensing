@@ -97,11 +97,13 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_Param5`
     - :class:`PSPL_PhotAstrom_Par_Param6` -- photometry-style parameters, such as t0, u0, tE, log10(piE), phi_muRel, mag_base; but with astrometry parameters added (thetaE, piS, xS0, muS)
     - :class:`PSPL_PhotAstrom_Par_Param7` -- photometry-style parameters, such as t0, u0, tE, log10(piE), phi_muRel, mag_base; but with astrometry parameters added (log10(thetaE), piS, xS0, muS)
+    - :class:`PSPL_PhotAstrom_Par_Param8` -- physical parameters like Param1 (with mag_base instead of mag_src), but lens and source positions (xL0, xS0) given at a reference epoch t_ref instead of t0/beta (forward modeling only; not fittable)
     - :class:`PSPL_PhotAstrom_noPar_Param1`
     - :class:`PSPL_PhotAstrom_noPar_Param2`
     - :class:`PSPL_PhotAstrom_noPar_Param3`
     - :class:`PSPL_PhotAstrom_noPar_Param4`
     - :class:`PSPL_PhotAstrom_noPar_Param7`
+    - :class:`PSPL_PhotAstrom_noPar_Param8`
     - :class:`PSPL_PhotAstrom_Par_Param1_geoproj` -- parameters in geo-projected rather than helio frame
     - :class:`PSPL_PhotAstrom_Par_Param4_geoproj` -- parameters in geo-projected rather than helio frame
     - :class:`PSPL_PhotAstrom_noPar_GP_Param1`
@@ -117,6 +119,7 @@ Point source, point lens, photometry and astrometry:
     - :class:`PSPL_PhotAstrom_Par_GPnoJitter_Param3_1`
     - :class:`PSPL_PhotAstrom_RefPar_Param3`
     - :class:`PSPL_PhotAstrom_RefPar_Param4`
+    - :class:`PSPL_PhotAstrom_RefPar_Param7`
     - :class:`PSPL_PhotAstrom_RefPar_GP_Param3`
     - :class:`PSPL_PhotAstrom_RefPar_GP_Param4`
     - :class:`PSPL_PhotAstrom_RefPar_GP_Param3_1`
@@ -2359,6 +2362,11 @@ class PSPL_Param(ABC):
     # need to set this.
     paramAstromFlag = False
     paramPhotFlag = False
+
+    # Whether this parameterization can be used with bagle.model_fitter.
+    # Set to False on forward-modeling-only parameterizations (e.g. ones that
+    # carry fixed inputs the fitter has no plumbing for).
+    fitter_supported = True
 
     def __init__(self, *args, **kwargs):
         # Check that required phot_params are proper arrays.
@@ -4607,6 +4615,287 @@ class PSPL_PhotAstromParam7(PSPL_Param):
 
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return
+
+
+class PSPL_PhotAstromParam7_RefPar(PSPL_PhotAstromParam7):
+    """
+    Point Source Point Lens model for photometry and astrometry.
+
+    Same as :class:`PSPL_PhotAstromParam7` (sampling
+    :math:`\\log_{10}\\pi_E`, :math:`\\phi_{\\mu_\\mathrm{rel}}`,
+    :math:`\\log_{10}\\theta_E`, and ``mag_base``).
+    The RefPar version includes a term for a parallax reference frame offset.
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the geometric center of
+        the lens on the plane of the sky at closest approach in units of
+        thetaE. Positive when u0_hat[0] > 0; negative when u0_hat[0] < 0.
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        log10 of the Einstein radius in mas.
+    piS : float
+        Source parallax (mas).
+    log10_piE : float
+        log10 of the microlensing parallax amplitude.
+    phi_muRel : float
+        Angle of the muRel (and piE) vector in degrees East of North.
+    xS0_E : float
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    xS0_N : float
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame.
+    muS_E : float
+        RA source proper motion (mas/yr)
+    muS_N : float
+        Dec source proper motion (mas/yr)
+    pi_ref_frame : float
+        parallax offset in the astrometric reference frame (mas).
+        This is useful for fitting astrometry derived from FlyStar w/ Parallax motion model
+        where absolute parallax reference frame could not be established.
+    b_sff : numpy array or list
+        Source flux fraction for each filter,
+        :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
+    mag_base : numpy array or list
+        Baseline magnitude for each photometric filter.
+
+    Notes
+    -----
+
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'log10_piE', 'phi_muRel',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N', 'pi_ref_frame']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['thetaE_amp', 'piE_E', 'piE_N',
+                              'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 log10_piE, phi_muRel,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 pi_ref_frame,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                         log10_piE, phi_muRel,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.pi_ref_frame = pi_ref_frame
+
+        return
+
+
+class PSPL_PhotAstromParam8(PSPL_PhotAstromParam1):
+    """PSPL model for astrometry and photometry - physical parameterization
+    with lens and source positions at a reference epoch.
+
+    A Point Source Point Lens model for microlensing. This is the same
+    physical parameterization as :class:`PSPL_PhotAstromParam1` (lens mass,
+    distances, proper motions), except that (a) the photometry is given as
+    ``mag_base`` rather than ``mag_src``, and (b) instead of specifying the
+    time of closest approach ``t0`` and the impact parameter ``beta``, the
+    user specifies the on-sky positions of both the lens (``xL0_E``,
+    ``xL0_N``) and the source (``xS0_E``, ``xS0_N``) at a common reference
+    epoch ``t_ref``. The time of closest approach, ``beta``, and the source
+    position at ``t0`` are then derived from rectilinear (proper motion only)
+    extrapolation in the Solar System barycentric frame, and passed on to
+    :class:`PSPL_PhotAstromParam1`.
+
+    This is useful for forward modeling: one lens (``mL``, ``dL``, ``xL0``,
+    ``muL``) can be paired with many catalog sources (e.g. Gaia positions,
+    proper motions, and parallaxes at the catalog reference epoch) without
+    any manual bookkeeping of ``t0`` and ``beta``.
+
+    .. note::
+        This parameterization is intended for forward modeling only. It
+        carries a fixed reference epoch ``t_ref`` that the fitter has no
+        plumbing for, so it is not supported by :mod:`bagle.model_fitter`
+        (``fitter_supported = False``). Use :class:`PSPL_PhotAstromParam1`
+        or another parameterization to fit data.
+
+    Note the attributes, RA (raL) and Dec (decL) are required
+    if you are calculating a model with parallax.
+
+    Attributes
+    ----------
+    mL: float
+        Mass of the lens (Msun)
+    t_ref: float
+        Reference epoch (MJD.DDD) at which the lens and source positions
+        ``xL0_*`` and ``xS0_*`` are specified. For Gaia DR3 this is
+        J2016.0 = MJD 57388.5.
+    dL: float
+        Distance from the observer to the lens (pc)
+    dL_dS: float
+        Ratio of Distance from the obersver to the lens to
+        Distance from the observer to the source
+    xL0_E: float
+        RA lens position on sky at t = t_ref (arcsec) in an arbitrary ref.
+        frame (Solar System barycentric, i.e. no parallax applied).
+    xL0_N: float
+        Dec lens position on sky at t = t_ref (arcsec) in an arbitrary ref.
+        frame (Solar System barycentric, i.e. no parallax applied).
+    xS0_E: float
+        RA source position on sky at t = t_ref (arcsec) in the same ref.
+        frame as ``xL0_E``.
+    xS0_N: float
+        Dec source position on sky at t = t_ref (arcsec) in the same ref.
+        frame as ``xL0_N``.
+    muL_E: float
+        RA Lens proper motion (mas/yr)
+    muL_N: float
+        Dec Lens proper motion (mas/yr)
+    muS_E: float
+        RA Source proper motion (mas/yr)
+    muS_N: float
+        Dec Source proper motion (mas/yr)
+    b_sff: numpy array or list
+        The ratio of the source flux to the total (source + neighbors + lens)
+        :math:`b_sff = f_S / (f_S + f_L + f_N)`. This must be passed in as a list or
+        array, with one entry for each photometric filter.
+    mag_base: numpy array or list
+        Photometric magnitude of the baseline (source + neighbors + lens,
+        unlensed). This must be passed in as a list or array, with one entry
+        for each photometric filter. The source magnitude is derived as
+        ``mag_src = mag_base - 2.5 log10(b_sff)``.
+    raL: float, optional
+        Right ascension of the lens in decimal degrees.
+    decL: float, optional
+        Declination of the lens in decimal degrees.
+    obsLocation: str or list[str], optional
+        The observers location for each photometric dataset (def=['earth'])
+        such as 'jwst' or 'spitzer'. Can be a single string if all observer
+        locations are identical. Otherwise, array of same length as mag_base
+        or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    Derived attributes (in addition to everything derived by
+    :class:`PSPL_PhotAstromParam1`):
+
+    * ``t0``: time of closest approach (MJD), heliocentric/SSB frame.
+    * ``beta``: signed impact parameter (mas) following the Gould 2004 /
+      BAGLE sign convention (``beta > 0`` means ``u0_E > 0``).
+    * ``xS0``, ``xL0``: source and lens positions at ``t0`` (arcsec). These
+      are what the base-class astrometry methods use.
+    * ``xS0_ref``, ``xL0_ref``: the input positions at ``t_ref`` (arcsec).
+    * ``mag_src``: source magnitude per filter, derived from ``mag_base``.
+    """
+
+    fitter_param_names = ['mL', 'dL', 'dL_dS',
+                          'xL0_E', 'xL0_N',
+                          'xS0_E', 'xS0_N',
+                          'muL_E', 'muL_N',
+                          'muS_E', 'muS_N']
+    phot_param_names = ['b_sff', 'mag_base']
+    additional_param_names = ['t0', 'beta', 'u0_amp', 'tE', 'dS',
+                              'thetaE_E', 'thetaE_N',
+                              'piE_E', 'piE_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    # Forward-modeling only: t_ref is a fixed epoch with no fitter plumbing.
+    fitter_supported = False
+
+    def __init__(self, mL, t_ref, dL, dL_dS,
+                 xL0_E, xL0_N,
+                 xS0_E, xS0_N,
+                 muL_E, muL_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        # Store the reference-epoch inputs.
+        self.t_ref = t_ref
+        self.xL0_ref = np.array([xL0_E, xL0_N], dtype=float)  # arcsec
+        self.xS0_ref = np.array([xS0_E, xS0_N], dtype=float)  # arcsec
+        self.xL0_ref_E, self.xL0_ref_N = self.xL0_ref
+        self.xS0_ref_E, self.xS0_ref_N = self.xS0_ref
+
+        muL = np.array([muL_E, muL_N], dtype=float)  # mas/yr
+        muS = np.array([muS_E, muS_N], dtype=float)  # mas/yr
+
+        # Relative proper motion (source - lens) and relative separation at
+        # t_ref. All rectilinear in the SSB frame, so parallax doesn't enter.
+        muRel = muS - muL  # mas/yr
+        muRel_amp2 = np.dot(muRel, muRel)
+        if muRel_amp2 == 0:
+            raise RuntimeError('PSPL_PhotAstromParam8: source and lens have '
+                               'identical proper motions (|muRel| = 0), so '
+                               'the time of closest approach is undefined.')
+
+        thetaS_ref = (self.xS0_ref - self.xL0_ref) * 1e3  # mas
+
+        # Time (years) from t_ref until closest approach:
+        # minimize |thetaS_ref + muRel * dt|^2  -->  dt = -(thetaS_ref . muRel) / |muRel|^2
+        dt_yr = -np.dot(thetaS_ref, muRel) / muRel_amp2
+        t0 = t_ref + dt_yr * days_per_year
+
+        # Separation vector (lens -> source) at closest approach. This is
+        # perpendicular to muRel by construction.
+        thetaS0 = thetaS_ref + muRel * dt_yr  # mas
+
+        # Signed impact parameter following the BAGLE/Gould convention:
+        # beta > 0 <--> u0_E > 0. u0_hat_from_thetaE_hat(muRel_hat, +1)
+        # returns the unit vector perpendicular to muRel with the sign
+        # convention applied, so the projection onto it gives signed beta.
+        muRel_hat = muRel / np.sqrt(muRel_amp2)
+        u0_hat_plus = u0_hat_from_thetaE_hat(muRel_hat, 1.0)
+        beta = np.dot(thetaS0, u0_hat_plus)  # mas
+
+        # Source position at t0 (arcsec).
+        xS0_t0 = self.xS0_ref + muS * dt_yr * 1e-3
+
+        # Convert baseline magnitude to source magnitude for Param1.
+        # Coerce to 1D float arrays here so scalar / list / array inputs all
+        # work; PSPL_Param.__init__ will re-validate shapes afterward.
+        b_sff_arr = np.atleast_1d(np.asarray(b_sff, dtype=float)).ravel()
+        mag_base_arr = np.atleast_1d(np.asarray(mag_base, dtype=float)).ravel()
+        mag_src = mag_base_arr - 2.5 * np.log10(b_sff_arr)
+
+        # PSPL_Param.__init__ (called inside Param1.__init__) validates every
+        # name in phot_param_names, so mag_base must exist before that call.
+        self.mag_base = mag_base_arr
+
+        super().__init__(mL, t0, beta, dL, dL_dS,
+                         xS0_t0[0], xS0_t0[1],
+                         muL_E, muL_N,
+                         muS_E, muS_N,
+                         b_sff_arr, mag_src,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        # Param1 recomputes mag_base from mag_src; store the exact input.
+        self.mag_base = mag_base_arr
+
+        # Convenience scalar components of the lens position at t0.
+        self.xL0_E, self.xL0_N = self.xL0
 
         return
 
@@ -23849,6 +24138,53 @@ class PSPL_PhotAstrom_Par_Param7(ModelClassABC,
                                  PSPL_PhotAstromParam7):
     """
     Microlensing params with log10_piE, phi_muRel, log10_thetaE, mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_RefPar_Param7(ModelClassABC,
+                                    PSPL_PhotAstrom,
+                                    PSPL_Parallax_RefFrame,
+                                    PSPL_PhotAstromParam7_RefPar):
+    """
+    Microlensing params with log10_piE, phi_muRel, log10_thetaE, mag_base
+    and a reference frame parallax shift.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_noPar_Param8(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam8):
+    """
+    Physical parameterization (i.e. mL instead of tE) with lens and source
+    positions (xL0, xS0) given at a reference epoch t_ref instead of t0/beta.
+    Forward modeling only; not supported by the fitter.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_Param8(ModelClassABC,
+                                 PSPL_PhotAstrom,
+                                 PSPL_Parallax,
+                                 PSPL_PhotAstromParam8):
+    """
+    Physical parameterization (i.e. mL instead of tE) with lens and source
+    positions (xL0, xS0) given at a reference epoch t_ref instead of t0/beta.
+    Forward modeling only; not supported by the fitter.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

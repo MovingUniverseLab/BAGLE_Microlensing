@@ -396,6 +396,15 @@ class MicrolensSolver(Solver):
         return
 
     def check_data(self):
+        # Some parameterizations are forward-modeling only (e.g. they carry
+        # fixed inputs like a reference epoch that the fitter cannot supply).
+        if not getattr(self.model_class, 'fitter_supported', True):
+            raise RuntimeError(
+                f'{self.model_class.__name__} is a forward-modeling-only class '
+                '(it takes a fixed reference epoch t_ref and lens/source positions '
+                'at that epoch) and is not supported by the fitter. Use '
+                'PSPL_PhotAstrom_Par_Param1 (or another Param class) to fit.')
+
         if 't_ast1' in self.data.keys():
             if not self.model_class.paramAstromFlag or \
                     not self.model_class.astrometryFlag:
