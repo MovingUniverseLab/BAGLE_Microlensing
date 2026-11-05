@@ -1932,9 +1932,10 @@ def plot_caustics(caustics, thetaE_amp = None, ax = None, show = True):
 def gen_and_plot_caustics_and_critical_curves(
         mmodel, caustic_time='t0', show=True, plot_caus=True, plot_cc=True,
         plot_source_trajectory=True, min_t_trajectory_plot='default',
-        max_t_trajectory_plot='default', N_pts=400):
+        max_t_trajectory_plot='default', N_pts=400, plot_lenses=True):
     """
-    Generates and plots caustics, critical curves, and unlensed source trajectory
+    Generates and plots caustics, critical curves, unlensed source trajectory,
+    and the lens positions at ``caustic_time``.
 
     Parameters
     ----------
@@ -1973,6 +1974,9 @@ def gen_and_plot_caustics_and_critical_curves(
         Default is 'default'.
     N_pts : int, optional
         Samples along the critical curve / caustic.
+    plot_lenses : bool, optional
+        Mark each lens at ``caustic_time`` (mas for PhotAstrom, Einstein
+        radii for phot-only). Default is True.
 
     Returns
     -------
@@ -2021,6 +2025,17 @@ def gen_and_plot_caustics_and_critical_curves(
                 u = u[:, 0, :]
             ax.plot(u[:, 0], u[:, 1], color='green',
                     label='Unlensed source')
+
+    if plot_lenses:
+        # Lenses at the caustic epoch, in the same frame as the curves.
+        zs, _masses = _resolved_lens_complex(mmodel, t_c)
+        scale = 1e3 if thetaE_amp is not None else 1.0
+        lens_colors = ['k', '0.45', 'C3']
+        for i, z in enumerate(zs):
+            ax.plot(np.real(z) * scale, np.imag(z) * scale, marker='*',
+                    ls='none', ms=13, mec='w', mew=0.6,
+                    color=lens_colors[i % len(lens_colors)],
+                    label=f'Lens {i + 1}', zorder=5)
 
     ax.invert_xaxis()
     ax.set_aspect('equal')
