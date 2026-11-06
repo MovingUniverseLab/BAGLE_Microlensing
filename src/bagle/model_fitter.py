@@ -49,9 +49,9 @@ from bagle.dynesty.utils import quantile as _quantile
 import re
 from itertools import groupby
 
-from bagle import jax_physics
-import jax
-import jax.numpy as jnp
+#from bagle import jax_physics
+#import jax
+#import jax.numpy as jnp
 
 from matplotlib import logging
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -4194,13 +4194,13 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 #########################
 ### PyMC Solver       ###
 #########################
-import pymc as pm
-import pytensor.tensor as pt
-from pytensor.gradient import DisconnectedType
-from pytensor.graph.op import Op
-from pytensor.graph.basic import Apply
-from pytensor.link.jax.ops import JAXOp
-from pytensor.tensor.type import TensorType
+#import pymc as pm
+#import pytensor.tensor as pt
+#from pytensor.gradient import DisconnectedType
+#from pytensor.graph.op import Op
+#from pytensor.graph.basic import Apply
+#from pytensor.link.jax.ops import JAXOp
+#from pytensor.tensor.type import TensorType
 
 def _prior_period(prior):
     """Infer period for wrapped angle parameters from prior support."""
@@ -4270,77 +4270,77 @@ def scipy_to_pymc(prior, name, wrapped=False):
     return rv
 
 
-class LogLikelihoodOp(Op):
-    """PyTensor Op wrapping MicrolensSolver.log_likely().
+# class LogLikelihoodOp(Op):
+#     """PyTensor Op wrapping MicrolensSolver.log_likely().
 
-    When ``use_jax_grad=True`` and the fitter layout is supported by
-    :mod:`bagle.jax_physics`, evaluates (and differentiates) a jitted Gaussian
-    photometry likelihood.  GP and astrometry configurations fall back to the
-    black-box ``log_likely`` without gradients.
-    """
+#     When ``use_jax_grad=True`` and the fitter layout is supported by
+#     :mod:`bagle.jax_physics`, evaluates (and differentiates) a jitted Gaussian
+#     photometry likelihood.  GP and astrometry configurations fall back to the
+#     black-box ``log_likely`` without gradients.
+#     """
 
-    __props__ = ('fitter', 'param_names', 'use_jax_grad')
+#     __props__ = ('fitter', 'param_names', 'use_jax_grad')
 
-    def __init__(self, fitter, param_names, use_jax_grad=True):
-        self.fitter = fitter
-        self.param_names = tuple(param_names)
-        self.use_jax_grad = bool(use_jax_grad)
-        self._jax_loglik = None
-        self._jax_ctx = None
-        if self.use_jax_grad:
-            self._jax_loglik, self._jax_ctx = jax_physics.build_jax_loglik_fn(fitter)
+#     def __init__(self, fitter, param_names, use_jax_grad=True):
+#         self.fitter = fitter
+#         self.param_names = tuple(param_names)
+#         self.use_jax_grad = bool(use_jax_grad)
+#         self._jax_loglik = None
+#         self._jax_ctx = None
+#         if self.use_jax_grad:
+#             self._jax_loglik, self._jax_ctx = jax_physics.build_jax_loglik_fn(fitter)
 
-        return
+#         return
 
-    def make_node(self, param_vec):
-        param_vec = pt.as_tensor_variable(param_vec)
-        outputs = [pt.dscalar()]
-        return Apply(self, [param_vec], outputs)
+#     def make_node(self, param_vec):
+#         param_vec = pt.as_tensor_variable(param_vec)
+#         outputs = [pt.dscalar()]
+#         return Apply(self, [param_vec], outputs)
 
-    def perform(self, node, inputs, output_storage):
-        param_vec = np.asarray(inputs[0], dtype=np.float64)
-        if self._jax_loglik is not None:
-            logp = float(self._jax_loglik(param_vec))
-        else:
-            logp = self.fitter.log_likely(dict(zip(self.param_names, param_vec)))
-        output_storage[0][0] = np.array(logp, dtype=np.float64)
+#     def perform(self, node, inputs, output_storage):
+#         param_vec = np.asarray(inputs[0], dtype=np.float64)
+#         if self._jax_loglik is not None:
+#             logp = float(self._jax_loglik(param_vec))
+#         else:
+#             logp = self.fitter.log_likely(dict(zip(self.param_names, param_vec)))
+#         output_storage[0][0] = np.array(logp, dtype=np.float64)
 
-        return
+#         return
 
-    def pullback(self, inputs, outputs, output_gradients):
-        if self._jax_loglik is None:
-            raise NotImplementedError(
-                'No JAX gradient for this likelihood configuration '
-                '(layout not registered or blocked parameters). '
-                'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
-                'supported by bagle.jax.'
-            )
-        if isinstance(output_gradients[0].type, DisconnectedType):
-            return [DisconnectedType()()]
+#     def pullback(self, inputs, outputs, output_gradients):
+#         if self._jax_loglik is None:
+#             raise NotImplementedError(
+#                 'No JAX gradient for this likelihood configuration '
+#                 '(layout not registered or blocked parameters). '
+#                 'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
+#                 'supported by bagle.jax.'
+#             )
+#         if isinstance(output_gradients[0].type, DisconnectedType):
+#             return [DisconnectedType()()]
 
-        n = len(self.param_names)
-        input_type = TensorType('float64', shape=(n,))
-        output_type = TensorType('float64', shape=())
-        jax_loglik = self._jax_loglik
+#         n = len(self.param_names)
+#         input_type = TensorType('float64', shape=(n,))
+#         output_type = TensorType('float64', shape=())
+#         jax_loglik = self._jax_loglik
 
-        def vjp_fn(param_vec, cotangent):
-            def restricted(param_vec):
-                return (jax_loglik(param_vec).astype('float64'),)
+#         def vjp_fn(param_vec, cotangent):
+#             def restricted(param_vec):
+#                 return (jax_loglik(param_vec).astype('float64'),)
 
-            _, vjp = jax.vjp(restricted, param_vec)
-            return vjp((cotangent.astype('float64'),))
+#             _, vjp = jax.vjp(restricted, param_vec)
+#             return vjp((cotangent.astype('float64'),))
 
-        vjp_op = JAXOp(
-            [input_type, output_type],
-            [input_type],
-            vjp_fn,
-            name='vjp_microlens_loglik',
-        )
-        return vjp_op(
-            inputs[0],
-            output_gradients[0],
-            return_list=True,
-        )
+#         vjp_op = JAXOp(
+#             [input_type, output_type],
+#             [input_type],
+#             vjp_fn,
+#             name='vjp_microlens_loglik',
+#         )
+#         return vjp_op(
+#             inputs[0],
+#             output_gradients[0],
+#             return_list=True,
+#         )
 
 
 class MicrolensPyMCModel:
@@ -5392,19 +5392,30 @@ def save_params(model, file):
 
         return pvalue
         
-    for ff in range(len(model.fitter_param_names)):
-        pname = model.fitter_param_names[ff]
-        pvalu = get_param_value(pname)
-
+    # Filter-indexed names (xS0_E, b_sff, ...) are per-filter arrays on
+    # the model. One line per filter; a length-1 array prints as a scalar.
+    filt_names = set(getattr(model, 'filt_param_names', []) or [])
+    for pname in model.fitter_param_names:
         fmt_str = '{0:s} = {1:.2f}'
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
         if pname == 'thetaE':
-            fmt_str = '{0:s}'
+            pvalu = get_param_value(pname)
             print(f'thetaE = {np.around(pvalu, 2)}', file=file)
+            continue
+
+        if pname in filt_names:
+            values = np.asarray(getattr(model, pname), dtype=float).reshape(-1)
         else:
-            print(fmt_str.format(pname, pvalu), file=file)
+            values = np.asarray(get_param_value(pname), dtype=float).reshape(-1)
+
+        if values.size == 1:
+            print(fmt_str.format(pname, float(values[0])), file=file)
+            continue
+
+        for rr, value in enumerate(values):
+            print(fmt_str.format(f'{pname}{rr + 1}', float(value)), file=file)
 
     for ff in range(len(model.phot_param_names)):
         pname = model.phot_param_names[ff]
