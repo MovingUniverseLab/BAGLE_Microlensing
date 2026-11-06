@@ -9418,7 +9418,10 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+        # xS0 is the source at t0; the lens CoM is anchored at t0_com.
+        xS0_at_com = shift_source_reference(self.xS0, self.muS,
+                                            self.t0, self.t0_com)
+        self.xL0_com = xS0_at_com - (self.thetaS0_com * 1e-3)
 
         return
 
@@ -10193,9 +10196,12 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-                     
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
 
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         PSPL_Param().__init__()
         return
@@ -12197,9 +12203,10 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
-
-
+        # xS0 is the source at t0; the lens CoM is anchored at t0_com.
+        xS0_at_com = shift_source_reference(self.xS0, self.muS,
+                                            self.t0, self.t0_com)
+        self.xL0_com = xS0_at_com - (self.thetaS0_com * 1e-3) #arcseconds
 
         return
 
@@ -16248,8 +16255,6 @@ class PSTL_PhotAstrom_EllOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
         self.p = p
         mL_23 = (self.mLs + self.mLt) * units.Msun
         p = (2 * np.pi * np.sqrt(self.a_AU_23 ** 3 / (const.G * mL_23))).to('day')
-        self.t0_com = t0
-        self.xL0_com = self.xL0
         self.p_23 = p.value # Period in days
         self.omega_sec = omega_sec
         self.big_omega_ter = big_omega_ter

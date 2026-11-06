@@ -83,6 +83,9 @@ FIXED_VALUE = 0.0
 # Floor for a non-finite JAX log-likelihood (G-06).
 _LN_L_FLOOR = -1.0e300
 
+# Minimum independent JAXNS live points in parameter-estimation mode.
+_JAXNS_MIN_INDEPENDENT_LIVE = 5
+
 
 def _floor_nonfinite_lnL(value):
     """Replace a non-finite host log-likelihood with ``_LN_L_FLOOR``.
@@ -5627,7 +5630,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         random_seed : int, optional
             PRNG seed.
         n_live_points : int, optional
-            JAXNS live points, or SMC-NUTS particle count.
+            JAXNS live points, or SMC-NUTS particle count. JAXNS runs in
+            parameter-estimation mode, which splits the live points into
+            ``n_live_points / (n_params + 1)`` independent points; the count
+            is raised (with a warning) to keep at least
+            ``_JAXNS_MIN_INDEPENDENT_LIVE`` of them.
         max_samples : int, optional
             JAXNS maximum nested samples.
         dlogz : float, optional
@@ -6013,9 +6020,22 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         # Same NumPyro model / factors as the NUTS path.
         model_builder = MicrolensNumPyroModel(self)
 
+        # Parameter-estimation mode keeps k = n_params phantom samples per
+        # live point, so only n_live / (k + 1) live points are independent.
+        # Too few (c <~ 3) breaks jaxns' live-point count and gives NaN logZ.
+        n_phantom = len(self.fitter_param_names)
+        n_live = max(self.n_live_points,
+                     _JAXNS_MIN_INDEPENDENT_LIVE * (n_phantom + 1))
+        if n_live > self.n_live_points:
+            warnings.warn(
+                f'JAXNS: raising n_live_points from {self.n_live_points} to '
+                f'{n_live} so parameter-estimation mode keeps at least '
+                f'{_JAXNS_MIN_INDEPENDENT_LIVE} independent live points for '
+                f'{n_phantom} parameters.')
+
         # Forward BAGLE knobs into jaxns DefaultNestedSampler.
         constructor_kwargs = dict(
-            num_live_points=self.n_live_points,
+            num_live_points=n_live,
             max_samples=self.max_samples,
             devices=jax.devices('cpu')[:1],
             difficult_model=True,

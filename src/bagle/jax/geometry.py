@@ -446,8 +446,10 @@ def derive_pstl_photastrom_ellorbs_param2(
     """
     Keplerian PSTL PhotAstrom EllOrbs Param2 sky tracks (traced).
 
-    The host sets ``t0_com = t0`` and ``xL0_com = xL0`` for this
-    parameterization, so the lens CoM moves from the input ``t0``.
+    ``xS0`` is the source position at the geometric ``t0``. The 1-2 CoM
+    closest approach (``t0_com``, ``u0_com``) follows the PSBL EllOrbs
+    Param2 parent, and the lens CoM sits at ``u0_com`` from the source at
+    ``t0_com``.
 
     Parameters
     ----------
@@ -471,7 +473,7 @@ def derive_pstl_photastrom_ellorbs_param2(
     tuple
         Same layout as :func:`derive_pstl_photastrom_ellorbs_param1`.
     """
-    (_u0, _th, tE, _pE, _pN, xS0, xL0, muS, muL, thetaE_amp,
+    (_u0, thetaE_hat, tE, _pE, _pN, xS0, _xL0, muS, muL, thetaE_amp,
      piS, piL) = derive_pspl_photastrom_reduced(
         t0, u0_amp, tE, thetaE, piS, piE_E, piE_N, xS0_E, xS0_N,
         muS_E, muS_N)
@@ -489,9 +491,25 @@ def derive_pstl_photastrom_ellorbs_param2(
     m2 = q_12 / (1.0 + q_12)
     m3 = q_13 / (1.0 + q_12)
 
-    off1, off2, off3, _alpha = pstl_keplerian_lens_offsets(
+    off1, off2, off3, alpha12_rad = pstl_keplerian_lens_offsets(
         t, mLp, mLs, mLt, dL, omega_pri, omega_sec, big_omega_sec,
         big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23)
+
+    # Geometric -> CoM closest approach (PSBL EllOrbs Param2 parent).
+    phi = alpha12_rad - jnp.arctan2(piE_E, piE_N)
+    qeff = (1.0 - q_12) / (1.0 + q_12)
+    t0_com = t0 + 0.5 * qeff * tE * a_12 * jnp.cos(phi) / thetaE_amp
+    u0_amp_com = u0_amp + 0.5 * qeff * a_12 * jnp.sin(phi) / thetaE_amp
+    u0_hat_com = u0_hat_from_thetaE_hat_jax(thetaE_hat,
+                                            u0_amp_com * thetaE_amp)
+    u0_com = jnp.abs(u0_amp_com) * u0_hat_com
+
+    # Lens CoM at t0_com: u0_com from the source there (xS0 is at t0).
+    dt_com = (t0_com - t0) / _DAYS_PER_YEAR
+    xL0_com = xS0 + muS * dt_com * 1e-3 - u0_com * thetaE_amp * 1e-3
+
+    # Re-anchor the lens CoM at t0 so one t0 drives both tracks.
+    xL0 = xL0_com - muL * dt_com * 1e-3
 
     thetaE_as = thetaE_amp * 1e-3
     return (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
