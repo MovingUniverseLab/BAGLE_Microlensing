@@ -4061,6 +4061,8 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
                  pi_ref_frame,
                  b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
+        # Set before super().__init__ so it is reshaped per filter.
+        self.pi_ref_frame = pi_ref_frame
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                             piE_E, piE_N,
@@ -4068,8 +4070,6 @@ class PSPL_PhotAstromParam3_RefPar(PSPL_PhotAstromParam3):
                             muS_E, muS_N,
                             b_sff, mag_base,
                             raL=raL, decL=decL, obsLocation=obsLocation)
-
-        self.pi_ref_frame = pi_ref_frame
 
         return
 
@@ -4353,6 +4353,8 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
                  pi_ref_frame,
                  b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
+        # Set before super().__init__ so it is reshaped per filter.
+        self.pi_ref_frame = pi_ref_frame
 
         super().__init__(t0, u0_amp, tE, thetaE, piS,
                             piE_E, piE_N,
@@ -4360,8 +4362,6 @@ class PSPL_PhotAstromParam4_RefPar(PSPL_PhotAstromParam4):
                             muS_E, muS_N,
                             b_sff, mag_base,
                             raL=raL, decL=decL, obsLocation=obsLocation)
-
-        self.pi_ref_frame = pi_ref_frame
 
         return
 
@@ -5207,8 +5207,11 @@ class PSPL_PhotAstromParam8(PSPL_PhotAstromParam1):
                           'xL0_E', 'xL0_N',
                           'xS0_E', 'xS0_N',
                           'muL_E', 'muL_N',
-                          'muS_E', 'muS_N']
-    phot_param_names = ['b_sff', 'mag_base']
+                          'muS_E', 'muS_N',
+                          'b_sff', 'mag_base']
+    # A single xS0 pair at t_ref is broadcast to every filter.
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['t0', 'beta', 'u0_amp', 'tE', 'dS',
                               'thetaE_E', 'thetaE_N',
                               'piE_E', 'piE_N',
@@ -5276,8 +5279,8 @@ class PSPL_PhotAstromParam8(PSPL_PhotAstromParam1):
         mag_base_arr = np.atleast_1d(np.asarray(mag_base, dtype=float)).ravel()
         mag_src = mag_base_arr - 2.5 * np.log10(b_sff_arr)
 
-        # PSPL_Param.__init__ (called inside Param1.__init__) validates every
-        # name in phot_param_names, so mag_base must exist before that call.
+        # PSPL_Param.__init__ (called inside Param1.__init__) reshapes every
+        # name in filt_param_names, so mag_base must exist before that call.
         self.mag_base = mag_base_arr
 
         super().__init__(mL, t0, beta, dL, dL_dS,
@@ -5291,7 +5294,8 @@ class PSPL_PhotAstromParam8(PSPL_PhotAstromParam1):
         self.mag_base = mag_base_arr
 
         # Convenience scalar components of the lens position at t0.
-        self.xL0_E, self.xL0_N = self.xL0
+        # xL0 has one identical row per filter.
+        self.xL0_E, self.xL0_N = self.xL0[0]
 
         return
 
