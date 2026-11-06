@@ -5072,8 +5072,11 @@ class PSPL_PhotAstromParam7_RefPar(PSPL_PhotAstromParam7):
     fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
                           'log10_piE', 'phi_muRel',
                           'xS0_E', 'xS0_N',
-                          'muS_E', 'muS_N', 'pi_ref_frame']
-    phot_param_names = ['b_sff', 'mag_base']
+                          'muS_E', 'muS_N',
+                          'pi_ref_frame',
+                          'b_sff', 'mag_base']
+    filt_param_names = ['xS0_E', 'xS0_N', 'pi_ref_frame', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'astrom', 'both', 'phot']
     additional_param_names = ['thetaE_amp', 'piE_E', 'piE_N',
                               'mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -5090,6 +5093,8 @@ class PSPL_PhotAstromParam7_RefPar(PSPL_PhotAstromParam7):
                  pi_ref_frame,
                  b_sff, mag_base,
                  raL=None, decL=None, obsLocation='earth'):
+        # Set before super().__init__ so it is reshaped per filter.
+        self.pi_ref_frame = pi_ref_frame
 
         super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
                          log10_piE, phi_muRel,
@@ -5097,8 +5102,6 @@ class PSPL_PhotAstromParam7_RefPar(PSPL_PhotAstromParam7):
                          muS_E, muS_N,
                          b_sff, mag_base,
                          raL=raL, decL=decL, obsLocation=obsLocation)
-
-        self.pi_ref_frame = pi_ref_frame
 
         return
 
