@@ -518,6 +518,7 @@ from bagle.model import (
     _complex_to_vec,
     astrom_param_view,
     phot_param_view,
+    shift_source_reference,
     validate_param_declaration,
 )
 from abc import ABC
@@ -9223,17 +9224,19 @@ root_tol : float
         # Angular separation vector between source and lens (vector from lens to source)
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
 
+        # Lens CoM at t0_com, from the input source position (at t0_com).
+        thetaS0_com = self.u0_com * self.thetaE_amp
+        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
+
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
         # xL0 matches xS0: always (n_filters, 2).
         self.xL0_E = self.xL0[:, 0]
         self.xL0_N = self.xL0[:, 1]
-
-        thetaS0_com = self.u0_com * self.thetaE_amp
-        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
-
-        #self.xL0_com = self.xL0_com
-        #self.xL0_com = self.xL0[1]
 
         return
 
@@ -11348,6 +11351,11 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
 
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
         PSPL_Param().__init__()
         return
 
@@ -13329,6 +13337,11 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         PSPL_Param().__init__()
         return

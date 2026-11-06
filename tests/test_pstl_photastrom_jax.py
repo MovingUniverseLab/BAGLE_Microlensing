@@ -5,7 +5,33 @@ import pytest
 pytest.importorskip('jax')
 import jax.numpy as jnp
 
+from bagle import model as mn
 from bagle import model_jax as mj
+from bagle.jax.pstl import triple_lens_poly_coeffs
+
+
+def test_factor_poly_coeffs_match_host_expanded():
+    """Factor-built JAX coefficients equal the host's expanded polynomial."""
+    rng = np.random.default_rng(1)
+    n = 100
+
+    # Random caustic-frame configurations (lens 1/2 at +/-a, lens 3 at r3).
+    w = rng.normal(size=n) + 1j * rng.normal(size=n)
+    a = np.abs(rng.normal(size=n)) + 0.1
+    r3 = rng.normal(size=n) + 1j * rng.normal(size=n)
+    e1 = rng.uniform(0.2, 0.6, size=n)
+    e2 = rng.uniform(0.05, 0.3, size=n)
+    args = (w, np.conj(w), a, r3, np.conj(r3), e1, e2)
+
+    new = np.stack([np.asarray(c) for c in triple_lens_poly_coeffs(*args)],
+                   axis=1)
+    host = np.stack([np.asarray(c) for c in
+                     mn.PSTL._triple_lens_poly_coeffs(*args)], axis=1)
+
+    # Relative to the largest coefficient of each polynomial.
+    scale = np.max(np.abs(host), axis=1, keepdims=True)
+    assert np.max(np.abs(new - host) / scale) < 1e-12
+    return None
 
 
 def _pstl_photastrom_kw(mLt=2.0):

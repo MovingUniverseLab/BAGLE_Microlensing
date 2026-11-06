@@ -5,7 +5,7 @@ Synthetic photometry and astrometry come from ``PSTL_PhotAstrom_noPar_Param1``
 with ``dmag_Lp_Lt`` set so the tertiary carries light. The solver must carry
 ``dmag_Lp_Lt1`` as a fitted parameter with a default prior, match host and
 JAX log-likelihoods, and recover both lens magnitude differences with a
-fit from an offset start.
+gradient fit from an offset start.
 """
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ def test_dmag_Lp_Lt_is_fitted_with_default_prior(tmp_path):
 
 
 def test_dmag_Lp_Lt_host_vs_jax_and_recovery(tmp_path):
-    """Host/JAX lnL agree; a fit recovers both lens dmags."""
+    """Host/JAX lnL agree; a gradient fit recovers both lens dmags."""
     fitter, cube = _solver(tmp_path)
     names = list(fitter.fitter_param_names)
     fn, _ctx = build_explicit_jax_loglik_fn(fitter)
@@ -118,15 +118,21 @@ def test_dmag_Lp_Lt_host_vs_jax_and_recovery(tmp_path):
     assert lnL_true - lnL_off > 10.0
 
     # Fit (dmag_Lp_Ls1, dmag_Lp_Lt1) from an offset start, rest at truth.
-    # Derivative-free: jit-compiling the PSTL gradient takes about a minute.
     def neg_lnl(x):
         """Negative lnL over the two lens dmags."""
         v = vec_true.at[i_ls].set(x[0]).at[i_lt].set(x[1])
-        return -float(fn(v))
+        return -fn(v)
+
+    val_grad = jax.jit(jax.value_and_grad(neg_lnl))
+
+    def fun(x):
+        """SciPy wrapper returning value and gradient as NumPy."""
+        val, grad = val_grad(jnp.asarray(x))
+        return float(val), np.asarray(grad, dtype=float)
 
     x0 = np.array([TRUTH['dmag_Lp_Ls'] + 1.0, TRUTH['dmag_Lp_Lt'] - 1.0])
-    res = minimize(neg_lnl, x0, method='Nelder-Mead',
-                   options=dict(xatol=1e-5, fatol=1e-6, maxiter=2000))
+    res = minimize(fun, x0, jac=True, method='L-BFGS-B',
+                   bounds=[(-20.0, 20.0), (-20.0, 20.0)])
     assert res.success
     np.testing.assert_allclose(
         res.x, [TRUTH['dmag_Lp_Ls'], TRUTH['dmag_Lp_Lt']], atol=1e-3)

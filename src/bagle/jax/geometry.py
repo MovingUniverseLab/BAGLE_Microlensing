@@ -377,9 +377,9 @@ def derive_pstl_photastrom_ellorbs_param1(
     """
     Keplerian PSTL PhotAstrom EllOrbs Param1 sky tracks (traced).
 
-    ``thetaE`` is from ``mLp + mLs`` (PSBL parent). The source track uses
-    the geometric-midpoint ``t0`` from ``fc.convert_u0_t0_psbl`` (COM ->
-    geom_mid), as the host does; the lens CoM moves from ``t0_com``.
+    ``thetaE`` is from ``mLp + mLs`` (PSBL parent). ``xS0`` is the source
+    position at ``t0_com``, so the source and the lens CoM both move from
+    ``t0_com``.
 
     Parameters
     ----------
@@ -390,7 +390,7 @@ def derive_pstl_photastrom_ellorbs_param1(
     t0_com : float
         Closest approach to the 1-2 CoM (MJD).
     xS0_E, xS0_N : float
-        Source position (arcsec).
+        Source position at ``t0_com`` (arcsec).
     beta_com : float
         Impact parameter about the 1-2 CoM (mas).
     muL_E, muL_N, muS_E, muS_N : float
@@ -405,7 +405,7 @@ def derive_pstl_photastrom_ellorbs_param1(
     Returns
     -------
     t0 : jnp.ndarray
-        Reference time shared by the source and lens tracks (MJD).
+        Reference time shared by the source and lens tracks (``t0_com``).
     xS0, xL0 : jnp.ndarray, shape (2,)
         Source and lens-CoM positions at ``t0`` (arcsec).
     muS, muL : jnp.ndarray, shape (2,)
@@ -423,29 +423,19 @@ def derive_pstl_photastrom_ellorbs_param1(
     geom = derive_psbl_photastrom_param1(
         mLp, mLs, t0_com, xS0_E, xS0_N, beta_com, muL_E, muL_N,
         muS_E, muS_N, dL, dS, a_12, 0.0)
-    (_u0, _th, tE, piE_E, piE_N, xS0, xL0_com, muS, muL, thetaE_amp,
+    (_u0, _th, _tE, _pE, _pN, xS0, xL0_com, muS, muL, thetaE_amp,
      piS, piL, m1, m2, _x1, _x2, _mLp, _mLs) = geom
     m3 = mLt / (mLp + mLs)
 
-    # Lens offsets about the CoM (arcsec) and the snapshot 1-2 angle.
-    off1, off2, off3, alpha12_rad = pstl_keplerian_lens_offsets(
+    # Lens offsets about the CoM (arcsec).
+    off1, off2, off3, _alpha12 = pstl_keplerian_lens_offsets(
         t, mLp, mLs, mLt, dL, omega_pri, omega_sec, big_omega_sec,
         big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23)
 
-    # COM -> geometric-midpoint t0 (fc.convert_u0_t0_psbl).
-    q = mLs / mLp
-    phi = alpha12_rad - jnp.arctan2(piE_E, piE_N)
-    d = a_12 * (1.0 - q) / (2.0 * (1.0 + q)) / thetaE_amp
-    sign = jnp.where(q > 1.0, -1.0, 1.0)
-    t0 = t0_com + sign * tE * d * jnp.cos(phi)
-
-    # Re-anchor the lens CoM to t0 so one t0 drives both tracks.
-    xL0 = xL0_com + muL * ((t0 - t0_com) / _DAYS_PER_YEAR) * 1e-3
-
-    # Offsets in Einstein radii for pstl_sky_images.
+    # Offsets in Einstein radii for pstl_sky_images; both tracks from t0_com.
     thetaE_as = thetaE_amp * 1e-3
-    return (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
-            off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
+    return (t0_com, xS0, xL0_com, muS, muL, thetaE_amp, piS, piL, m1, m2,
+            m3, off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
 
 
 def derive_pstl_photastrom_ellorbs_param2(

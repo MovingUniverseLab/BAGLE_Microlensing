@@ -8608,17 +8608,19 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # Angular separation vector between source and lens (vector from lens to source)
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
 
+        # Lens CoM at t0_com, from the input source position (at t0_com).
+        thetaS0_com = self.u0_com * self.thetaE_amp
+        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
+
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
         # xL0 matches xS0: always (n_filters, 2).
         self.xL0_E = self.xL0[:, 0]
         self.xL0_N = self.xL0[:, 1]
-
-        thetaS0_com = self.u0_com * self.thetaE_amp
-        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
-
-        #self.xL0_com = self.xL0_com
-        #self.xL0_com = self.xL0[1]
 
         return
 
@@ -10720,6 +10722,11 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
 
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
         PSPL_Param().__init__()
         return
 
@@ -12699,6 +12706,11 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
         self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
         self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
+
+        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
+        self.xS0 = shift_source_reference(self.xS0, self.muS,
+                                          self.t0_com, self.t0)
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         PSPL_Param().__init__()
         return
@@ -32004,6 +32016,30 @@ def fratio2dmag(flux_ratio):
     dmag = -2.5 * np.log10(flux_ratio)
 
     return dmag
+
+def shift_source_reference(xS0, muS, t_from, t_to):
+    """
+    Move a source reference position along its proper motion.
+
+    Parameters
+    ----------
+    xS0 : array_like, shape = [N_filters, 2]
+        Source position at ``t_from`` (arcsec).
+    muS : array_like, shape = [2]
+        Source proper motion (mas/yr).
+    t_from, t_to : float
+        Reference times (MJD).
+
+    Returns
+    -------
+    xS0_to : numpy array, shape = [N_filters, 2]
+        Source position at ``t_to`` (arcsec), without parallax.
+    """
+    # Linear source motion between the two reference times (mas -> arcsec).
+    dt_yr = (t_to - t_from) / days_per_year
+    xS0_to = np.asarray(xS0, dtype=float) + np.asarray(muS) * dt_yr * 1e-3
+    return xS0_to
+
 
 def u0_hat_from_thetaE_hat(thetaE_hat, beta):
     """
