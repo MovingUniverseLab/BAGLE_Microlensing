@@ -146,12 +146,44 @@ def derive_psbl_param4_heliocentric(
     sep,
     alpha_deg,
 ):
-    """Heliocentric t0, u0_amp from COM-frame PSBL PhotAstrom Param4 inputs."""
+    """
+    Geometric-midpoint t0, u0_amp from CoM-frame PSBL Param4 inputs.
+
+    JAX version of ``bagle.model.convert_u0_amp_t0_psbl(..., 'COM')``.
+
+    Parameters
+    ----------
+    t0_com, u0_amp_com : float
+        Closest approach (MJD) and signed impact parameter (Einstein units)
+        about the lens center of mass.
+    tE, thetaE : float
+        Einstein crossing time (days) and angular Einstein radius (mas).
+    piE_E, piE_N : float
+        Microlensing parallax components (set the motion direction).
+    q, sep, alpha_deg : float
+        Mass ratio ``mLs / mLp``, separation (mas), and binary-axis angle
+        (deg East of North, secondary -> primary).
+
+    Returns
+    -------
+    t0, u0_amp : float
+        Closest approach and signed impact parameter about the geometric
+        midpoint.
+    """
+
+    # Motion direction and the positive-u0_amp direction.
+    thetaE_hat = jnp.stack([piE_E, piE_N]) / jnp.hypot(piE_E, piE_N)
+    u0_hat_pos = u0_hat_from_thetaE_hat_jax(thetaE_hat, 1.0)
+
+    # Binary axis toward the primary; the CoM sits d_com along it from the
+    # midpoint (Einstein units, negative for q > 1).
     alpha_rad = alpha_deg * jnp.pi / 180.0
-    phi_rad = alpha_rad - jnp.arctan2(piE_E, piE_N)
-    qeff = (1.0 - q) / (1.0 + q)
-    t0 = t0_com - 0.5 * qeff * tE * sep * jnp.cos(phi_rad) / thetaE
-    u0_amp = u0_amp_com - 0.5 * qeff * sep * jnp.sin(phi_rad) / thetaE
+    e_alpha = jnp.stack([jnp.sin(alpha_rad), jnp.cos(alpha_rad)])
+    d_com = 0.5 * (1.0 - q) / (1.0 + q) * sep / thetaE
+
+    # Moving from the CoM to the midpoint shifts by -d_com along the axis.
+    t0 = t0_com - d_com * tE * jnp.dot(e_alpha, thetaE_hat)
+    u0_amp = u0_amp_com + d_com * jnp.dot(e_alpha, u0_hat_pos)
     return t0, u0_amp
 
 
@@ -446,10 +478,12 @@ def derive_pstl_photastrom_ellorbs_param2(
     """
     Keplerian PSTL PhotAstrom EllOrbs Param2 sky tracks (traced).
 
-    ``xS0`` is the source position at the geometric ``t0``. The 1-2 CoM
-    closest approach (``t0_com``, ``u0_com``) follows the PSBL EllOrbs
-    Param2 parent, and the lens CoM sits at ``u0_com`` from the source at
-    ``t0_com``.
+    ``xS0`` is the source position at the geometric ``t0``. ``t0`` /
+    ``u0_amp`` refer to the 1-2 midpoint at ``t0`` (the source is ``u0``
+    from the midpoint's position at that instant), as in the PSBL EllOrbs
+    Param2 parent. The 1-2 CoM closest approach (``t0_com``, ``u0_com``)
+    follows from the orbit at ``t0``, and the lens CoM sits at ``u0_com``
+    from the source at ``t0_com``.
 
     Parameters
     ----------
@@ -491,18 +525,25 @@ def derive_pstl_photastrom_ellorbs_param2(
     m2 = q_12 / (1.0 + q_12)
     m3 = q_13 / (1.0 + q_12)
 
-    off1, off2, off3, alpha12_rad = pstl_keplerian_lens_offsets(
+    off1, off2, off3, _alpha12 = pstl_keplerian_lens_offsets(
         t, mLp, mLs, mLt, dL, omega_pri, omega_sec, big_omega_sec,
         big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23, tp_23, a_23)
 
-    # Geometric -> CoM closest approach (PSBL EllOrbs Param2 parent).
-    phi = alpha12_rad - jnp.arctan2(piE_E, piE_N)
-    qeff = (1.0 - q_12) / (1.0 + q_12)
-    t0_com = t0 + 0.5 * qeff * tE * a_12 * jnp.cos(phi) / thetaE_amp
-    u0_amp_com = u0_amp + 0.5 * qeff * a_12 * jnp.sin(phi) / thetaE_amp
-    u0_hat_com = u0_hat_from_thetaE_hat_jax(thetaE_hat,
-                                            u0_amp_com * thetaE_amp)
-    u0_com = jnp.abs(u0_amp_com) * u0_hat_com
+    # 1-2 midpoint offset from the 1-2 CoM at t0 (Einstein radii).
+    thetaE_as = thetaE_amp * 1e-3
+    o1_t0, o2_t0, _, _ = pstl_keplerian_lens_offsets(
+        jnp.atleast_1d(t0), mLp, mLs, mLt, dL, omega_pri, omega_sec,
+        big_omega_sec, big_omega_ter, i_12, e_12, tp_12, a_12, i_23, e_23,
+        tp_23, a_23)
+    d_mid = 0.5 * (o1_t0[0] + o2_t0[0]) / thetaE_as
+
+    # Geometric midpoint at t0 -> CoM closest approach (as in
+    # bagle.frame_convert.convert_u0_amp_t0_psbl_orbit): at t0 the source is u0 from
+    # the midpoint, i.e. u0 + d_mid from the CoM.
+    u0_hat_pos = u0_hat_from_thetaE_hat_jax(thetaE_hat, 1.0)
+    u_com = u0_amp * u0_hat_pos + d_mid
+    t0_com = t0 - tE * jnp.dot(u_com, thetaE_hat)
+    u0_com = u_com - jnp.dot(u_com, thetaE_hat) * thetaE_hat
 
     # Lens CoM at t0_com: u0_com from the source there (xS0 is at t0).
     dt_com = (t0_com - t0) / _DAYS_PER_YEAR
@@ -511,7 +552,6 @@ def derive_pstl_photastrom_ellorbs_param2(
     # Re-anchor the lens CoM at t0 so one t0 drives both tracks.
     xL0 = xL0_com - muL * dt_com * 1e-3
 
-    thetaE_as = thetaE_amp * 1e-3
     return (t0, xS0, xL0, muS, muL, thetaE_amp, piS, piL, m1, m2, m3,
             off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
 

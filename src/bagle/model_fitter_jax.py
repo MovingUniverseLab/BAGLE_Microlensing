@@ -654,6 +654,8 @@ class MicrolensSolver(Solver):
         'mL': ('make_gen', 0, 100),
         'mLp': ('make_gen', 0, 100),
         'mLs': ('make_gen', 0, 100),
+        'mSp': ('make_gen', 0, 100),
+        'mSs': ('make_gen', 0, 100),
         'mLt': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_geotr': ('make_t0_gen', None, None),

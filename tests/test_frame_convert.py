@@ -550,6 +550,68 @@ def test_convert_u0_t0_psbl():
     assert(np.allclose(phot, phot_geom, rtol=1e-15))
 
 
+@pytest.mark.parametrize("mu_deg", [31.0, 149.0, 211.0, 329.0])
+@pytest.mark.parametrize("q", [0.5, 2.0])
+@pytest.mark.parametrize("coords_in,coords_out", [
+    ("prim_center", "geom_mid"), ("geom_mid", "prim_center"),
+    ("COM", "geom_mid"), ("geom_mid", "COM"), ("COM", "prim_center")])
+def test_convert_u0_t0_psbl_geometry(mu_deg, q, coords_in, coords_out):
+    """
+    convert_u0_t0_psbl matches the explicit binary geometry.
+
+    The lens points sit on the binary axis e_alpha = (sin alpha, cos alpha):
+    primary at +sep/2, CoM at +sep (1-q) / (2 (1+q)) from the midpoint. The
+    source moves along mu_hat, so moving the reference point by a vector D
+    delays t0 by tE (D . mu_hat) and removes D's perpendicular part from u0.
+    Motion in all four quadrants catches sign errors that depend on the side
+    of mu_hat the u0 vector lies on.
+    """
+    tE, thetaE, sep, alpha = 100.0, 5.0, 3.0, np.deg2rad(70.0)
+
+    # Motion direction and the binary angle relative to it.
+    mu_hat = np.array([np.sin(np.deg2rad(mu_deg)), np.cos(np.deg2rad(mu_deg))])
+    phi = alpha - np.arctan2(mu_hat[0], mu_hat[1])
+
+    # Lens points relative to the midpoint, in Einstein units.
+    e_alpha = np.array([np.sin(alpha), np.cos(alpha)])
+    frac = {"geom_mid": 0.0, "prim_center": 0.5, "COM": 0.5 * (1 - q) / (1 + q)}
+    shift = (frac[coords_out] - frac[coords_in]) * sep / thetaE * e_alpha
+
+    # Expected closest approach about the output point.
+    u0_in = 0.2 * model.u0_hat_from_thetaE_hat(mu_hat, 1.0)
+    t0_expect = 10.0 + tE * (shift @ mu_hat)
+    u0_expect = u0_in - (shift - (shift @ mu_hat) * mu_hat)
+
+    ux, uy, t0 = fc.convert_u0_t0_psbl(10.0, u0_in[0], u0_in[1], tE, thetaE, q,
+                                       phi, sep, mu_hat[0], mu_hat[1],
+                                       coords_in=coords_in, coords_out=coords_out)
+    np.testing.assert_allclose([ux, uy, t0], [*u0_expect, t0_expect],
+                               rtol=0, atol=1e-12)
+
+    # The reverse transform recovers the input.
+    ux_b, uy_b, t0_b = fc.convert_u0_t0_psbl(t0, ux, uy, tE, thetaE, q, phi, sep,
+                                             mu_hat[0], mu_hat[1],
+                                             coords_in=coords_out,
+                                             coords_out=coords_in)
+    np.testing.assert_allclose([ux_b, uy_b, t0_b], [*u0_in, 10.0],
+                               rtol=0, atol=1e-12)
+    return None
+
+
+def test_convert_u0_t0_psbl_zero_u0():
+    """A source passing straight through the input point gives finite output."""
+    mu_hat = np.array([0.6, -0.8])
+    ux, uy, t0 = fc.convert_u0_t0_psbl(0.0, 0.0, 0.0, 100.0, 5.0, 0.5, 0.7, 3.0,
+                                       mu_hat[0], mu_hat[1],
+                                       coords_in="prim_center",
+                                       coords_out="geom_mid")
+    assert np.all(np.isfinite([ux, uy, t0]))
+
+    # The output u0 is perpendicular to the motion.
+    assert abs(ux * mu_hat[0] + uy * mu_hat[1]) < 1e-12
+    return None
+
+
 def compare_bagle_to_mulens(ra, dec, t_mjd,
                             t0_h, u0_h, tE_h,
                             piEE_h, piEN_h,

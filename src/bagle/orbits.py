@@ -13,35 +13,73 @@ class Orbit(object):
 
     def oal2xy(self, t, mass=None, dist=None, accel=False):
         """
-        This is for binaris orbiting each other and moving linearly together.
-        Given a Orbit And a Linear motion, get the 2D position (x,y) at time epochs.
-        Based on paper Koren et al. 2015
-        
-        Input:
-        epochs -- epoch with detections
+        Projected on-sky positions of both binary components about their CoM.
 
-        Return:
-        x -- x in arcsec
-        y -- y in arcsec
+        Uses the Thiele-Innes constants (Koren et al. 2016) to map the orbit
+        onto the plane of the sky. The centre-of-mass motion is not included;
+        add it separately.
 
-        An example call is:
+        Parameters
+        ----------
+        t : array_like
+            Epochs, in the same time units as ``self.p`` and ``self.tp``
+            (days in the BAGLE models).
+        mass, dist, accel : optional
+            Unused; kept for backward compatibility.
 
-        orb = orbits.Orbit()
-        orb.w = omega           # degree. The argument of periastron of the primary star's orbit. The secondary will be directly 180 degrees across
-        orb.o = big           # degree (the longitude of the ascending node of the secondary star's orbit) - It is also the same as the primary
-        orb.i = incl            # degree (Inclination angle of the system)
-        
-        orb.e = e_mag           # Eccentricity of the Keplerian Orbit
-        orb.p = p               # Days (Orbital Period of the system)
-        orb.tp = tp             # the time of the periastron passage in days
-        orb.aleph = aleph       # semi-major axis of primary in arcsec
-        orb.aleph2 = aleph      # semi-major axis of secondary in arcsec
-        if accel=True:
-            orb.ax = ax
-            orb.ay = ay
+        Returns
+        -------
+        x, y : numpy array, shape = [len(t)]
+            East and North offsets of the primary from the centre of mass,
+            in the units of ``self.aleph`` (arcsec in the BAGLE models).
+        x2, y2 : numpy array, shape = [len(t)]
+            East and North offsets of the secondary, in the units of
+            ``self.aleph2``.
 
+        Notes
+        -----
+        Required attributes:
 
-            
+        * ``w`` -- argument of periastron of the primary (deg).
+        * ``o`` -- longitude of the ascending node, Omega (deg).
+        * ``i`` -- inclination (deg).
+        * ``e`` -- eccentricity; values outside [0, 1] return (-1e8, -1e8).
+        * ``p``, ``tp`` -- period and time of periastron.
+        * ``aleph``, ``aleph2`` -- semi-major axes of the primary and the
+          secondary about the centre of mass.
+
+        Angle conventions:
+
+        * Omega is the position angle of the ascending node, measured from
+          North through East. Both components share the same line of nodes
+          and the same ascending node at PA = Omega.
+        * The ascending node is where a component crosses the plane of the
+          sky moving toward +Z, the line-of-sight coordinate
+          ``Z = conC * X + conH * Y`` (taken as pointing away from the
+          observer).
+        * ``w`` is measured in the orbital plane from the ascending node to
+          the primary's periastron, in the direction of orbital motion.
+        * The secondary uses ``w + 180``: its periastron is ``w + 180``
+          from the ascending node, or equivalently ``w`` beyond the node
+          at PA = Omega + 180.
+        * i = 0 is face-on with motion from North through East (position
+          angle increasing); 0 < i < 90 is prograde, i = 90 edge-on, and
+          i > 90 retrograde (position angle decreasing). For i = 0 the
+          primary's periastron is at PA = Omega + w and the secondary's at
+          PA = Omega + w + 180.
+
+        Examples
+        --------
+        >>> orb = orbits.Orbit()
+        >>> orb.w = omega       # deg
+        >>> orb.o = big_omega   # deg
+        >>> orb.i = incl        # deg
+        >>> orb.e = e_mag
+        >>> orb.p = p           # days
+        >>> orb.tp = tp         # days
+        >>> orb.aleph = aleph   # arcsec
+        >>> orb.aleph2 = aleph2 # arcsec
+        >>> x, y, x2, y2 = orb.oal2xy(t)
         """
 
         
@@ -391,6 +429,106 @@ def a_to_P(mass, a):
     G_units = c.G.to("AU3/(M_sun*year2)").value
     period = (a**3*4*(np.pi**2)/G_units/mass)**(1/2)
     return period
+
+
+def relative_state_to_elements(t0, r_ENZ, v_ENZ, a):
+    """
+    Keplerian elements (``Orbit.oal2xy`` convention) from a relative state.
+
+    Parameters
+    ----------
+    t0 : float
+        Epoch of the state (MJD).
+    r_ENZ : array_like, shape (3,)
+        Position of the secondary relative to the primary at ``t0``: East,
+        North, and line of sight (any length unit L).
+    v_ENZ : array_like, shape (3,)
+        Velocity of the secondary relative to the primary at ``t0`` (L / yr).
+    a : float
+        Semi-major axis of the relative orbit (L). Must exceed ``|r| / 2``
+        for a bound orbit.
+
+    Returns
+    -------
+    e : float
+        Eccentricity.
+    i : float
+        Inclination (deg).
+    big_omega : float
+        Longitude of the ascending node (deg), ``Orbit.o``.
+    omega_pri : float
+        Argument of periastron of the primary's orbit (deg), ``Orbit.w``.
+    p : float
+        Period (days).
+    tp : float
+        Time of periastron (MJD).
+
+    Notes
+    -----
+    ``Orbit.oal2xy`` places a body at ``aleph * (P X + Q Y)`` with
+    ``X = cos E - e``, ``Y = sqrt(1 - e^2) sin E`` and, in (North, East,
+    line of sight) components,
+
+    * ``P = (cos w cos O - sin w sin O cos i, cos w sin O + sin w cos O cos i,
+      sin w sin i)``,
+    * ``Q = (-sin w cos O - cos w sin O cos i, -sin w sin O + cos w cos O cos i,
+      cos w sin i)``,
+
+    so the orbit normal is ``W = P x Q = (sin O sin i, -cos O sin i, cos i)``.
+    The secondary uses ``w + 180``, so the secondary-minus-primary orbit has
+    ``w_rel = w_pri + 180`` and semi-major axis ``aleph + aleph2``. The
+    elements are recovered from the angular momentum (``W``), the
+    eccentricity vector (``P``; the position at ``t0`` for circular orbits),
+    and the true anomaly at ``t0``.
+    """
+    # Work in (North, East, line of sight) to match the Thiele-Innes terms.
+    r = np.array([r_ENZ[1], r_ENZ[0], r_ENZ[2]], dtype=float)
+    v = np.array([v_ENZ[1], v_ENZ[0], v_ENZ[2]], dtype=float)
+    r_amp = np.linalg.norm(r)
+    if not 0.5 * r_amp < a:
+        raise ValueError(f"Unbound orbit: a = {a} must exceed "
+                         f"|r|/2 = {0.5 * r_amp}")
+
+    # Gravitational parameter from vis-viva (L^3 / yr^2) and mean motion.
+    GM = np.dot(v, v) / (2.0 / r_amp - 1.0 / a)
+    n = np.sqrt(GM / a ** 3)  # rad / yr
+
+    # Orbit normal -> inclination and node.
+    h = np.cross(r, v)
+    W = h / np.linalg.norm(h)
+    i = np.arccos(np.clip(W[2], -1.0, 1.0))
+    big_omega = np.arctan2(W[0], -W[1])
+
+    # Periastron direction of the relative orbit; for circular orbits the
+    # position at t0 is used (so t0 is the periastron time).
+    e_vec = np.cross(v, h) / GM - r / r_amp
+    e = np.linalg.norm(e_vec)
+    if e > 1e-12:
+        P = e_vec / e
+    else:
+        e = 0.0
+        P = r / r_amp
+
+    # Argument of periastron from the node: P = cos w n + sin w (W x n).
+    node = np.array([np.cos(big_omega), np.sin(big_omega), 0.0])
+    omega_rel = np.arctan2(np.dot(P, np.cross(W, node)), np.dot(P, node))
+
+    # True -> eccentric -> mean anomaly at t0.
+    Q = np.cross(W, P)
+    nu = np.arctan2(np.dot(r, Q), np.dot(r, P))
+    E = 2.0 * np.arctan2(np.sqrt(1.0 - e) * np.sin(0.5 * nu),
+                         np.sqrt(1.0 + e) * np.cos(0.5 * nu))
+    M = E - e * np.sin(E)
+
+    # Periastron time and period in days.
+    tp = t0 - M / n * days_per_year
+    p = 2.0 * np.pi / n * days_per_year
+
+    # The primary's argument of periastron is 180 deg from the relative orbit's.
+    omega_pri = (np.rad2deg(omega_rel) - 180.0) % 360.0
+
+    return e, np.rad2deg(i), np.rad2deg(big_omega) % 360.0, omega_pri, p, tp
+
 
 def add_positions(ss):
     """

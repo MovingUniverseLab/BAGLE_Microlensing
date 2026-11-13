@@ -110,8 +110,8 @@ CANONICAL: dict[str, Any] = {
     "tp": 40.0,
     "a": 1.0,
     "log_a": math.log10(1.0),
-    "mass_source_p": 1.0,
-    "mass_source_s": 1.0,
+    "mSp": 1.0,
+    "mSs": 1.0,
     "fratio_bin": [1.0],
     "radiusS": 1e-3,
     "gamma": [0.5],
@@ -4203,51 +4203,11 @@ def _refresh_derived_geometry(instance) -> None:
         return None
 
     if orbit is True and hasattr(instance, "get_me_some_orbital_parameters"):
-        if hasattr(instance, "aleph") and hasattr(instance, "aleph_sec"):
-            instance.sep = float(instance.aleph) + float(instance.aleph_sec)
-        ecc, i, o, w, p, tp = instance.get_me_some_orbital_parameters(
-            instance.t0,
-            instance.sep,
-            instance.r_s,
-            instance.a_s,
-            instance.v_para,
-            instance.v_perp,
-            instance.v_rad,
-        )
-        instance.w = w
-        instance.o = o
-        instance.i = i
-        instance.e = ecc
-        instance.tp = tp
-        instance.p = p
-        instance.piE_amp = np.linalg.norm(instance.piE)
-        instance.thetaE_hat = instance.piE / instance.piE_amp
-        instance.muRel_hat = instance.thetaE_hat
-        instance.u0_hat = u0_hat_from_thetaE_hat(
-            instance.thetaE_hat, instance.u0_amp
-        )
-        instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
-        instance.m1 = 1.0 / (1.0 + instance.q)
-        instance.m2 = instance.q / (1.0 + instance.q)
-        import bagle.orbits as orbits
-
-        orb = orbits.Orbit()
-        orb.w = w
-        orb.o = o
-        orb.i = i
-        orb.e = ecc
-        orb.tp = tp
-        orb.aleph2 = instance.aleph_sec
-        orb.aleph = instance.aleph
-        orb.p = p
-        x, y, x2, y2 = orb.oal2xy(np.array([tp]))
-        instance.alpha_rad = np.arctan2(x - x2, y - y2)[0]
-        instance.alpha = np.rad2deg(instance.alpha_rad)
-        instance.phi_rho1_rad = instance.alpha
-        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
-        instance.phi_rad = instance.phi_rho1_rad - instance.phi_piE_rad
-        instance.phi = np.rad2deg(instance.phi_rad)
-        return
+        # Phot-only Keplerian orbits derive aleph / aleph_sec, the orbit
+        # elements and the CoM track from (sep, r_s, a_s, v_*): rebuild them
+        # with the constructor.
+        _refresh_fspl_by_reinit(instance)
+        return None
 
     if phot_only and hasattr(instance, "xL1_over_theta") and hasattr(instance, "phi"):
         instance.piE_amp = np.linalg.norm(instance.piE)

@@ -1875,7 +1875,9 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
     q : float
         Ratio between M_2/M_1.
     phi : float
-        Angle between mu_rel and the binary axis in radians.
+        Angle between mu_rel and the binary axis in radians: the position
+        angle (East of North) of the secondary -> primary direction minus
+        that of mu_rel (BAGLE's ``phi_rad = alpha_rad - PA(thetaE_hat)``).
     sep : float
         Separation between primary and secondary of binary in mas.
     mu_rel_x : float
@@ -1913,67 +1915,174 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
         Time of closest approach between source and lens specified in coords_out in days.
     """
     
-    if d_mas is not None:
-        d = d_mas/theta_E
-        sign = 1
-    else:
-        d = None
-    
-    if coords_in is None and d is None:
+    if coords_in is None and d_mas is None:
         raise Exception('Must specify coord system or distance along binary axis')
-    
-    if coords_in is not None and d is not None:
+
+    if coords_in is not None and d_mas is not None:
         raise Exception('Can only specify default coordinate transform or distance along binary axis, not both')
-    
-    # Uses one of the default coord transforms if a distance is not specified
-    if d is None:
+
+    if d_mas is not None:
+        # User-supplied shift toward the primary (Einstein units).
+        d = d_mas / theta_E
+    else:
         valid_coords = ['geom_mid', 'prim_center', 'COM']
         if coords_in not in valid_coords or coords_out not in valid_coords:
             raise Exception('coord_in and coord_out must be one of: {}'.format(valid_coords))
-    
-        q_prime = (1 - q)/(2*(1 + q))
-        if coords_in == 'geom_mid' and coords_out == 'prim_center':
-            d = sep/(2*theta_E)
-            sign = -1
-        elif coords_in == 'prim_center' and coords_out == 'geom_mid':
-            d = -sep/(2*theta_E)
-            sign = 1
-        elif coords_in == 'geom_mid' and coords_out == 'COM':
-            d = sep*q_prime/theta_E
-            sign = -1
-            # If q > 1, then COM is closer to secondary than primary
-            # so the transformation flips
-            if q > 1:
-                sign *= -1
-        elif coords_in == 'COM' and coords_out == 'geom_mid':
-            d = sep*q_prime/theta_E
-            sign = 1
-            # If q > 1, then COM is closer to secondary than primary
-            # so the transformation flips
-            if q > 1:
-                sign *= -1
-    
-    if u0_x_in == 0:
-        u0_x_in_hat = 0
-    else:
-        u0_x_in_hat = u0_x_in/np.abs(u0_x_in)
-    
-    if u0_y_in == 0:
-        u0_y_in_hat = 0
-    else:
-        u0_y_in_hat = u0_y_in/np.abs(u0_y_in)
-    
-    z = np.array([0, 0, 1])
-    mu_rel_arr = np.array([mu_rel_x, mu_rel_y, 0])
-    u0_in_arr = np.array([u0_x_in, u0_y_in, 0])
-    mu_rel_arr_hat = mu_rel_arr/np.sqrt(mu_rel_arr[0]**2 + mu_rel_arr[1]**2)
-    u0_in_arr_hat = u0_in_arr/np.sqrt(u0_in_arr[0]**2 + u0_in_arr[1]**2)
-    
-    C = np.dot(np.cross(mu_rel_arr_hat, u0_in_arr_hat), z)
 
-    u0_x_out = u0_x_in + sign*C*d*np.sin(phi)*u0_x_in_hat
-    u0_y_out = u0_y_in + sign*C*d*np.sin(phi)*u0_y_in_hat
-    
-    t0_out = t0_in + sign*tE*d*np.cos(phi)
-    
+        # Each reference point's offset from the geometric midpoint toward
+        # the primary (Einstein units). For q > 1 the CoM offset is negative.
+        offset = {'geom_mid': 0.0,
+                  'prim_center': 0.5 * sep / theta_E,
+                  'COM': 0.5 * (1 - q) / (1 + q) * sep / theta_E}
+        d = offset[coords_out] - offset[coords_in]
+
+    # Unit vectors along mu_rel and 90 deg East of it (position angle + 90).
+    # The binary axis (toward the primary) is cos(phi) mu_hat + sin(phi) perp_hat.
+    mu_amp = np.hypot(mu_rel_x, mu_rel_y)
+    mu_hat = np.array([mu_rel_x, mu_rel_y]) / mu_amp
+    perp_hat = np.array([mu_hat[1], -mu_hat[0]])
+
+    # The source passes the output point d*cos(phi)*tE later, and its
+    # closest-approach vector loses the perpendicular part of the shift.
+    t0_out = t0_in + d * np.cos(phi) * tE
+    u0_x_out = u0_x_in - d * np.sin(phi) * perp_hat[0]
+    u0_y_out = u0_y_in - d * np.sin(phi) * perp_hat[1]
+
     return u0_x_out, u0_y_out, t0_out
+
+
+def keplerian_point_offset(orb, t, coords):
+    """
+    Offset of a binary-lens reference point from the lens CoM at time t.
+
+    Parameters
+    ----------
+    orb : bagle.orbits.Orbit
+        Lens orbit (see :func:`bagle.model.keplerian_lens_orbit`).
+    t : float
+        Time (MJD).
+    coords : {'geom_mid', 'prim_center', 'COM'}
+        Geometric midpoint of the two lenses, the primary, or the CoM.
+
+    Returns
+    -------
+    offset : numpy array, shape = [2]
+        (E, N) offset of the point from the CoM, in the units of
+        ``orb.aleph``.
+    """
+    # Primary (x, y) and secondary (x2, y2) offsets from the CoM.
+    x, y, x2, y2 = orb.oal2xy(np.array([t]))
+
+    if coords == 'prim_center':
+        offset = np.array([x[0], y[0]])
+    elif coords == 'geom_mid':
+        offset = 0.5 * np.array([x[0] + x2[0], y[0] + y2[0]])
+    elif coords == 'COM':
+        offset = np.zeros(2)
+    else:
+        raise ValueError("coords must be 'geom_mid', 'prim_center' or 'COM', "
+                         f"not {coords!r}")
+
+    return offset
+
+
+def convert_u0_amp_t0_psbl_orbit(t0_in, u0_amp_in, tE, thetaE_hat, orb, thetaE_orb,
+                                 coords_in, coords_out):
+    """
+    Move a closest approach between reference points of an orbiting binary lens.
+
+    Parameters
+    ----------
+    t0_in : float
+        Reference time of the input point (MJD); see Notes.
+    u0_amp_in : float
+        Signed impact parameter about the input point at ``t0_in`` (Einstein
+        units), with the :func:`bagle.model.u0_hat_from_thetaE_hat` sign
+        convention.
+    tE : float
+        Einstein crossing time (days).
+    thetaE_hat : array_like, shape (2,)
+        Unit vector along the source-lens relative proper motion (E, N).
+    orb : bagle.orbits.Orbit
+        Lens orbit (see :func:`bagle.model.keplerian_lens_orbit`).
+    thetaE_orb : float
+        The Einstein radius in the units of ``orb.aleph`` (e.g.
+        ``thetaE_amp * 1e-3`` for orbits in arcsec, 1.0 for orbits in
+        Einstein radii).
+    coords_in, coords_out : {'geom_mid', 'prim_center', 'COM'}
+        Input and output lens reference points.
+
+    Returns
+    -------
+    t0_out : float
+        Reference time of the output point (MJD).
+    u0_amp_out : float
+        Signed impact parameter about the output point at ``t0_out``
+        (Einstein units).
+
+    Notes
+    -----
+    The CoM moves on a straight line, so ``(t0_com, u0_com)`` is a true
+    closest approach. The primary and the geometric midpoint orbit the CoM,
+    so for them ``(t0, u0)`` is defined at an instant: at time ``t0`` the
+    source sits at ``u0 * thetaE`` from the point's position *at that time*,
+    and ``u0`` is perpendicular to the relative proper motion. That ``t0`` is
+    a reference epoch, not a closest-approach time, and in general differs
+    from ``t0_com``. Parallax is not included (it moves the source relative
+    to every lens point equally).
+
+    With ``d(t)`` the point's offset from the CoM (Einstein units) and the
+    source track about the CoM ``u0_com + (t - t0_com) / tE * thetaE_hat``:
+
+    * point -> CoM is explicit: ``t0_com = t0 - tE * d(t0) . thetaE_hat``
+      and ``u0_com = u0 + d_perp(t0)``.
+    * CoM -> point solves ``(t0 - t0_com) / tE = d(t0) . thetaE_hat`` for
+      ``t0``; the root is unique when the point's orbital speed along
+      ``thetaE_hat`` is below the relative proper motion.
+
+    Without orbital motion this reduces to
+    :func:`bagle.model.convert_u0_amp_t0_psbl`.
+    """
+    from scipy import optimize
+
+    # bagle.model imports this module at load time, so import it lazily.
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    thetaE_hat = np.asarray(thetaE_hat, dtype=float)
+
+    # Direction of positive u0_amp.
+    u0_hat_pos = u0_hat_from_thetaE_hat(thetaE_hat, 1.0)
+
+    def offset(t, coords):
+        """Point offset from the CoM at time t (Einstein units)."""
+        return keplerian_point_offset(orb, t, coords) / thetaE_orb
+
+    # Input point -> CoM. At t0_in the source is u0_in from the point, which
+    # is d_in from the CoM; split that vector along / across the motion.
+    u_com = u0_amp_in * u0_hat_pos + offset(t0_in, coords_in)
+    t0_com = t0_in - tE * np.dot(u_com, thetaE_hat)
+    u0_com = u_com - np.dot(u_com, thetaE_hat) * thetaE_hat
+
+    if coords_out == 'COM':
+        t0_out = t0_com
+        u_out = u0_com
+    else:
+        # CoM -> output point: the time when source - point is perpendicular
+        # to the motion. |d| <= aleph + aleph_sec scaled by (1 + e) brackets it.
+        def along(t):
+            return (t - t0_com) / tE - np.dot(offset(t, coords_out), thetaE_hat)
+
+        d_max = (orb.aleph + orb.aleph2) * (1 + orb.e) / thetaE_orb
+        half_width = tE * d_max + 1e-6
+        t0_out = optimize.brentq(along, t0_com - half_width, t0_com + half_width,
+                                 xtol=1e-10, rtol=1e-14)
+
+        # Source relative to the point at t0_out (perpendicular to the motion).
+        u_out = (u0_com + (t0_out - t0_com) / tE * thetaE_hat
+                 - offset(t0_out, coords_out))
+        u_out = u_out - np.dot(u_out, thetaE_hat) * thetaE_hat
+
+    # Signed amplitude along the positive-u0_amp direction.
+    u0_amp_out = np.dot(u_out, u0_hat_pos)
+
+    return t0_out, u0_amp_out

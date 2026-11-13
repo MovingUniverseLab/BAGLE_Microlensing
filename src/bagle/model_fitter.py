@@ -180,6 +180,8 @@ class MicrolensSolver(Solver):
         'mL': ('make_gen', 0, 100),
         'mLp': ('make_gen', 0, 100),
         'mLs': ('make_gen', 0, 100),
+        'mSp': ('make_gen', 0, 100),
+        'mSs': ('make_gen', 0, 100),
         'mLt': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
@@ -857,14 +859,12 @@ class MicrolensSolver(Solver):
 
 
 
-
     def warn_unmatched_suffixed_priors(self):
         """Warn when a suffixed prior in ``self.priors`` is not fitted.
 
         Compares the keys of ``self.priors`` (including ones the user
-        assigned after the defaults) with ``self.fitter_param_names``
-        (the names MultiNest, PyMC, and NumPyro actually sample).
-
+        assigned after the defaults) with ``self.fitter_param_names``.
+        
         Returns
         -------
         None
@@ -2001,65 +2001,6 @@ class MicrolensSolver(Solver):
         for name, value in [*zip(self.all_param_names, values), *lnL_terms.items()]:
             print(f'{name:13s} = {value:f}')
         return None
-
-    def evaluate_loglik_jax(self, cube):
-        """Evaluate log-likelihood via the JAX registry.
-
-        Parameters
-        ----------
-        cube : array_like or mapping
-            Fitted values in ``fitter_param_names`` order, or a mapping
-            keyed by those names. ``xS0_E`` and ``xS0_N`` are arrays
-            with one entry per filter.
-
-        Returns
-        -------
-        lnL : float
-            Log-likelihood. The NumPy likelihood is used when no JAX
-            function is registered.
-        """
-        import jax_physics 
-
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
-        if fn is None:
-            return float(self.log_likely(cube))
-        # Fitted values as the float vector the JAX likelihood takes.
-        vec = self.to_param_vector(self.to_param_dict(cube))
-        return float(fn(vec))
-
-    def grad_loglik_jax(self, cube):
-        """Gradient of the log-likelihood with respect to fitter parameters.
-
-        Parameters
-        ----------
-        cube : array_like or mapping
-            Fitted values in ``fitter_param_names`` order, or a mapping
-            keyed by those names. ``xS0_E`` and ``xS0_N`` are arrays
-            with one entry per filter.
-
-        Returns
-        -------
-        grad : ndarray
-            Gradient of the log-likelihood. Shape is
-            ``(len(fitter_param_names),)``.
-
-        Raises
-        ------
-        NotImplementedError
-            No JAX log-likelihood is registered for this fitter.
-        """
-        import jax
-        import jax.numpy as jnp
-        import jax_physics
-
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
-        if fn is None:
-            raise NotImplementedError(
-                "No JAX log-likelihood for this fitter configuration."
-            )
-        # Fitted values as the float vector the JAX likelihood takes.
-        vec = self.to_param_vector(self.to_param_dict(cube))
-        return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
                  physLive, posterior, stats, maxLogLike, logZ, logZerr, foo):
