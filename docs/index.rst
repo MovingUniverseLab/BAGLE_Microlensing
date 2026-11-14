@@ -45,6 +45,7 @@ only, astrometry only, or joint fitting of photometry and astrometry
    multi_location
    resolved_layouts
    new_models
+   gulls
    api_docs
    citation
 

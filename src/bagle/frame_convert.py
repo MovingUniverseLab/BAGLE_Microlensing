@@ -19,7 +19,7 @@ from matplotlib.ticker import MaxNLocator
 # Converters for Different Packages
 #
 ##############
-def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
+def get_pylima_model(bagle_model, times_mjd=None, verbose=False, *, filt_idx=0):
     """
     Using an input BAGLE model, return a pyLIMA model. This utility function does
     all the appropriate frame conversions.
@@ -27,11 +27,15 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     Parameters
     ----------
     bagle_model : BAGLE model instance
-        An instance of a BAGLE model. PSPL and photometry-only FSPL
-        models are supported.
+        An instance of a BAGLE model. PSPL, photometry-only FSPL, and the
+        Gulls Beginner FSBL/BFSBL families are supported.
 
     times_mjd : None or array
-        An array of times in MJD that is not really used.
+        Query times in MJD. Required for Gulls models; they become the pyLIMA
+        telescope epochs. The telescope sorts and removes duplicate epochs.
+    filt_idx : int, optional
+        Gulls filter index (default 0). Sets both source fluxes and blend flux.
+        Other model families retain their existing behavior.
     verbose : bool, optional
         If `True`, print conversion mode details.
 
@@ -45,6 +49,10 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
         pyLIMA telescope object attached to the generated event.
 
     """
+
+    if getattr(bagle_model, 'parallax_convention', None) == 'gulls_beginner':
+        from bagle.gulls_frame_convert import to_pylima
+        return to_pylima(bagle_model, times_mjd=times_mjd, filt_idx=filt_idx)
 
     from pyLIMA import event
     from pyLIMA.models import generate_model
@@ -256,7 +264,7 @@ def get_pylima_model(bagle_model, times_mjd=None, verbose=False):
     return pylima_mod, pylima_par, pylima_tel
 
 
-def get_mulens_model(bagle_model):
+def get_mulens_model(bagle_model, *, filt_idx=0):
     """
     Return a MuLensModel matched to the input BAGLE model.
 
@@ -266,12 +274,22 @@ def get_mulens_model(bagle_model):
     Parameters
     ----------
     bagle_model : BAGLE model instance
+        Gulls Beginner FSBL/BFSBL models are also supported, with an analytic
+        effective observer. Destination queries use JD, not MJD.
+    filt_idx : int, optional
+        Gulls filter index (default 0). Selects the binary-source flux ratio.
 
     Returns
     -------
     mulens_mod : MuLens model
-        MuLensModel model instance configured with BAGLE-equivalent parameters.
+        MulensModel model instance configured with BAGLE-equivalent parameters.
+        For Gulls, ``source_fluxes`` and ``blend_flux`` use flux =
+        10**(-0.4 * magnitude). Its parameters alone omit the effective observer.
     """
+    if getattr(bagle_model, 'parallax_convention', None) == 'gulls_beginner':
+        from bagle.gulls_frame_convert import to_mulens
+        return to_mulens(bagle_model, filt_idx=filt_idx)
+
     import MulensModel
 
     c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg, frame='icrs')
@@ -327,7 +345,7 @@ def get_mulens_model(bagle_model):
     return mulens_mod
 
 
-def get_vbm_model(bagle_model, verbose=False):
+def get_vbm_model(bagle_model, verbose=False, *, times_mjd=None, filt_idx=0):
     """
     Return a VBMicrolensing matched to the input BAGLE model.
 
@@ -342,14 +360,36 @@ def get_vbm_model(bagle_model, verbose=False):
     bagle_model : BAGLE model instance
     verbose : bool, optional
         Print which VBM parameter path was used.
+    times_mjd : array, optional
+        Required for Gulls FSBL/BFSBL models. The sampled effective Roman
+        observer contains these epochs; a new query grid needs reconversion.
+    filt_idx : int, optional
+        Gulls filter index (default 0), selecting the binary-source flux ratio.
 
     Returns
     -------
     vbm_mod : VBMicrolensing.VBMicrolensing
         Configured VBM instance (coords / parallax flags as needed).
     vbm_par : list of float
-        Parameter vector for the matching VBM light-curve method.
+        Parameter vector for the matching VBM light-curve method. For Gulls,
+        use ``BinaryLightCurveParallax`` (one source) or
+        ``BinSourceBinLensLightCurve`` (two sources), with query times
+        ``times_mjd - 49999.5`` (JD minus 2450000). The first output is the
+        combined source magnification; baseline flux needs the BAGLE blend.
+
+    Notes
+    -----
+    Gulls conversion retains the historical observer/sign convention and
+    loads its ephemeris into VBM, rather than applying the Earth frame
+    conversion below. It uses uniform brightness, Tol=1e-4 and RelTol=1e-6.
+    The binary-source routine uses a bounded near-static orbit, below
+    5e-10 Einstein radii over the exported grid, and rejects unequal source
+    radii at lens q=1 (a destination parameterization limitation).
     """
+    if getattr(bagle_model, 'parallax_convention', None) == 'gulls_beginner':
+        from bagle.gulls_frame_convert import to_vbm
+        return to_vbm(bagle_model, times_mjd=times_mjd, filt_idx=filt_idx)
+
     import VBMicrolensing
 
     #####
