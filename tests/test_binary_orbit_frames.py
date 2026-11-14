@@ -3,14 +3,17 @@ Reference-frame definitions for Keplerian (EllOrbs / CircOrbs) binary lenses.
 
 Every orbiting binary-lens class stores:
 
-* ``t0``, ``u0_amp``, ``u0``, ``xL0``: the geometric midpoint of the two lenses
-  *at time t0*. At ``t0`` the unlensed source sits at ``u0 * thetaE`` from the
-  midpoint's position at that instant, with ``u0`` perpendicular to the
-  relative proper motion.
+* ``t0_mid``, ``u0_amp_mid``, ``xL0_mid``: the geometric midpoint of the two
+  lenses *at time t0_mid*. At ``t0_mid`` the unlensed source sits at
+  ``u0_amp_mid * thetaE`` from the midpoint's position at that instant,
+  perpendicular to the relative proper motion. These are lazy (root-solved
+  on first access) unless the midpoint pair is the input.
 * ``t0_com``, ``u0_amp_com``, ``u0_com``, ``xL0_com``: the lens center of mass,
   which moves on a straight line, so this is a true closest approach.
-* Primary-frame classes (Param7) take ``t0_p`` / ``beta_p`` with the same
-  instantaneous definition about the primary.
+* ``t0_p``, ``u0_amp_p``: the same instantaneous definition about the primary
+  (inputs for Param7, lazy otherwise).
+* The internal ``t0`` / ``u0_amp`` / ``xL0`` are the CoM values, except for
+  the midpoint-input classes (Param2, Param3), which keep the midpoint pair.
 
 These tests read the lens and source positions back from the models and
 check each definition, then check that a CoM-input class and a
@@ -33,12 +36,14 @@ ORBIT = dict(omega_pri=40.0, big_omega_sec=110.0, i=60.0, e=0.3,
 # thetaE / piE parameterizations (Param2, 3, 4, 8).
 REDUCED = dict(tE=60.0, thetaE=3.0, log10_thetaE=np.log10(3.0), piS=0.125,
                piE_E=0.08, piE_N=-0.06, xS0_E=[0.001], xS0_N=[-0.002],
+               xS0_com_E=[0.001], xS0_com_N=[-0.002],
                muS_E=-2.0, muS_N=1.5, q=0.5, b_sff=[0.8], mag_src=[19.0],
                mag_base=[19.0 + 2.5 * np.log10(0.8)], dmag_Lp_Ls=[20.0],
                radiusS=1e-6)
 
 # Mass / distance parameterizations (Param1, 7).
-PHYSICAL = dict(mLp=3.0, mLs=1.5, xS0_E=[0.001], xS0_N=[-0.002], muL_E=2.0,
+PHYSICAL = dict(mLp=3.0, mLs=1.5, xS0_com_E=[0.001], xS0_com_N=[-0.002],
+                xS0_p_E=[0.001], xS0_p_N=[-0.002], muL_E=2.0,
                 muL_N=-1.0, muS_E=-3.0, muS_N=-6.0, dL=2400.0, dS=8000.0,
                 b_sff=[0.8], mag_src=[19.0], dmag_Lp_Ls=[20.0], radiusS=1e-6)
 
@@ -170,19 +175,22 @@ def test_orbit_frame_definitions(mod, name, frame_vals, frame, t_name, u_name):
     assert getattr(m, t_name) == frame_vals[t_name]
     assert getattr(m, u_name) == frame_vals[u_name]
 
-    # The input xS0 is the source position at the input reference time.
+    # The input xS0 (xS0_E, xS0_com_E or xS0_p_E) is the source position at
+    # the input reference time.
     src = m.get_source_astrometry_unlensed(np.array([frame_vals[t_name]]))
     vals = PHYSICAL if "mLp" in type(m).fitter_param_names else REDUCED
-    np.testing.assert_allclose(np.ravel(src), [vals["xS0_E"][0], vals["xS0_N"][0]],
+    x_names = [n for n in type(m).fitter_param_names if n.startswith("xS0")]
+    np.testing.assert_allclose(np.ravel(src),
+                               [vals[x_names[0]][0], vals[x_names[1]][0]],
                                rtol=0, atol=1e-12)
+    u0_hat_pos = model.u0_hat_from_thetaE_hat(m.thetaE_hat, 1.0)
 
-    # Geometric midpoint at t0, and the stored lens position there.
-    assert_closest_approach(m, "geom_mid", m.t0, m.u0)
-    _, points = positions(m, m.t0)
-    np.testing.assert_allclose(m.xL0[0] / (m.thetaE_amp * 1e-3),
+    # Geometric midpoint at t0_mid, and the stored lens position there.
+    assert_closest_approach(m, "geom_mid", m.t0_mid, m.u0_amp_mid * u0_hat_pos)
+    _, points = positions(m, m.t0_mid)
+    np.testing.assert_allclose(m.xL0_mid[0] / (m.thetaE_amp * 1e-3),
                                points["geom_mid"], rtol=0, atol=1e-7)
-    np.testing.assert_allclose(m.u0, m.u0_amp * model.u0_hat_from_thetaE_hat(
-        m.thetaE_hat, 1.0), rtol=0, atol=1e-12)
+    np.testing.assert_allclose(m.u0, m.u0_amp * u0_hat_pos, rtol=0, atol=1e-12)
 
     # CoM closest approach, and the CoM position at t0_com.
     assert_closest_approach(m, "COM", m.t0_com, m.u0_com)
@@ -190,9 +198,14 @@ def test_orbit_frame_definitions(mod, name, frame_vals, frame, t_name, u_name):
     np.testing.assert_allclose(m.xL0_com[0] / (m.thetaE_amp * 1e-3),
                                points["COM"], rtol=0, atol=1e-7)
 
-    # Primary-frame inputs hold at t0_p.
-    if frame == "prim_center":
-        assert_closest_approach(m, "prim_center", m.t0_p, m.u0_p)
+    # Internal frame: the midpoint pair for midpoint inputs, else the CoM.
+    internal = "t0_mid" if frame == "geom_mid" else "t0_com"
+    assert m.t0 == getattr(m, internal)
+    if frame != "geom_mid":
+        np.testing.assert_array_equal(m.xL0, m.xL0_com)
+
+    # Primary pair (input for Param7, lazy otherwise) holds at t0_p.
+    assert_closest_approach(m, "prim_center", m.t0_p, m.u0_amp_p * u0_hat_pos)
 
     # The binary axis is reported at t0 (secondary -> primary).
     _, points = positions(m, m.t0)
@@ -208,12 +221,13 @@ def test_orbit_frame_definitions(mod, name, frame_vals, frame, t_name, u_name):
     ("PSBL_PhotAstrom_noPar_EllOrbs_Param8", "PSBL_PhotAstrom_noPar_EllOrbs_Param3"),
 ])
 def test_com_and_geometric_inputs_agree(mod, com_name, geo_name):
-    """A geometric-input model built from a CoM model's t0 / u0 matches it."""
+    """A geometric-input model built from a CoM model's _mid values matches it."""
     m_com = build(mod, com_name, dict(t0_com=T0, u0_amp_com=0.15))
 
-    # Geometric inputs take xS0 at t0, where m_com.xS0 has been carried.
-    vals = {**REDUCED, **ORBIT, "t0": m_com.t0, "u0_amp": m_com.u0_amp,
-            "xS0_E": m_com.xS0[:, 0], "xS0_N": m_com.xS0[:, 1]}
+    # Geometric inputs take xS0 at t0_mid (the lazy midpoint epoch).
+    xS_mid = m_com.get_source_astrometry_unlensed(np.array([m_com.t0_mid]))
+    vals = {**REDUCED, **ORBIT, "t0": m_com.t0_mid, "u0_amp": m_com.u0_amp_mid,
+            "xS0_E": xS_mid[:, 0], "xS0_N": xS_mid[:, 1]}
     cls = getattr(mod, geo_name)
     m_geo = cls(*[vals[n] for n in cls.fitter_param_names], raL=268.0,
                 decL=-29.0)
@@ -430,4 +444,194 @@ def test_phot_orbit_matches_vbm_kepler(name, state):
     ey = np.array([-ex[1], ex[0]])
     np.testing.assert_allclose([rel_dot @ ex / m.sep, -(rel_dot @ ey) / m.sep],
                                [m.v_para, m.v_perp], rtol=1e-5)
+    return None
+
+
+# ----------------------------------------------------------------------
+# Binary source + binary lens (BSBL / BFSBL) frames.
+# ----------------------------------------------------------------------
+BSBL_VALS = dict(mLp=10.0, mLs=4.0, t0_com=T0, t0_p=T0, beta_com=1.2, beta_p=1.2,
+                 u0_amp_com=0.25, tE=250.0, thetaE=4.0, piS=0.12, piE_E=0.03,
+                 piE_N=0.02, q=0.4, muL_E=-3.0, muL_N=1.5, muS_E=1.0, muS_N=-0.5,
+                 dL=2000.0, dS=8000.0, omegaL_pri=40.0, big_omegaL_sec=20.0,
+                 iL=55.0, eL=0.3, tpL=T0 + 30.0, aL=3.5, sepL=3.5,
+                 omegaS_pri=100.0, big_omegaS_sec=70.0, iS=30.0, eS=0.2,
+                 pS=2500.0, tpS=T0 - 100.0, alephS=1.0, aleph_secS=1.6, aS=2.6,
+                 mSp=1.0, mSs=0.6, mag_src_pri=[17.0, 18.0],
+                 mag_src_sec=[18.0, 19.0], b_sff=[0.9, 0.8],
+                 dmag_Lp_Ls=[0.0, 0.0], fratio_bin=[0.4, 0.4],
+                 mag_base=[16.8, 17.9], radiusS_pri=1e-6, radiusS_sec=1e-6,
+                 alphaL=70.0, sepS=2.5, alphaS=200.0, qS=0.6,
+                 xS0_com_E=[1e-3, 2e-3], xS0_com_N=[-1e-3, 5e-4],
+                 xS0_p_E=[1e-3, 2e-3], xS0_p_N=[-1e-3, 5e-4])
+
+BSBL_KEP = [f"{fam}_PhotAstrom_noPar_{kind}Orbs_Param{n}"
+            for fam in ("BSBL", "BFSBL") for n in (1, 2, 3)
+            for kind in ("Ell", "Circ")]
+
+
+def bsbl_points(m, t, fi=1):
+    """
+    Source and lens reference points of a BSBL model at t (mas).
+
+    Parameters
+    ----------
+    m : model instance
+        BSBL / BFSBL PhotAstrom model.
+    t : float or array_like
+        Time(s) (MJD).
+    fi : int, optional
+        Filter index.
+
+    Returns
+    -------
+    src : dict
+        ``'p'`` (primary) and ``'com'`` source positions, shape [N, 2].
+    lens : dict
+        ``'p'``, ``'mid'`` and ``'com'`` lens positions, shape [N, 2].
+    """
+    t = np.atleast_1d(np.asarray(t, dtype=float))
+    S = m.get_resolved_source_astrometry_unlensed(t, filt_idx=fi) * 1e3
+    L = m.get_resolved_lens_astrometry(t, filt_idx=fi) * 1e3
+
+    # CoMs weighted by the mass ratios.
+    q = m.mLs / m.mLp
+    src = {"p": S[:, 0], "com": (S[:, 0] + m.qS * S[:, 1]) / (1 + m.qS)}
+    lens = {"p": L[:, 0], "mid": 0.5 * (L[:, 0] + L[:, 1]),
+            "com": (L[:, 0] + q * L[:, 1]) / (1 + q)}
+
+    return src, lens
+
+
+def assert_bsbl_pair(m, t0, u0_amp, src_pt, lens_pt):
+    """
+    At t0 the source point minus the lens point is u0_amp thetaE, perpendicular.
+
+    Parameters
+    ----------
+    m : model instance
+    t0 : float
+    u0_amp : float
+    src_pt : {'p', 'com'}
+    lens_pt : {'p', 'mid', 'com'}
+
+    Returns
+    -------
+    None
+    """
+    src, lens = bsbl_points(m, t0)
+    rel = (src[src_pt] - lens[lens_pt])[0] / m.thetaE_amp
+    u0_hat_pos = model.u0_hat_from_thetaE_hat(m.thetaE_hat, 1.0)
+    np.testing.assert_allclose(rel, u0_amp * u0_hat_pos, rtol=0, atol=1e-9)
+    return None
+
+
+@MODULES
+@pytest.mark.parametrize("name", BSBL_KEP)
+def test_bsbl_keplerian_frames(mod, name):
+    """Input, internal (CoM), lazy midpoint and primary frames of BSBL orbits."""
+    if not hasattr(mod, name):
+        pytest.skip(f"{name} is not in {mod.__name__}")
+    cls = getattr(mod, name)
+    m = cls(*[BSBL_VALS[n] for n in cls.fitter_param_names])
+
+    # The CoM-CoM pair is a true closest approach at t0_com.
+    tt = np.linspace(m.t0_com - 300, m.t0_com + 300, 120001)
+    src, lens = bsbl_points(m, tt)
+    d = np.hypot(*(src["com"] - lens["com"]).T)
+    assert abs(tt[np.argmin(d)] - m.t0_com) < 0.01
+    assert_bsbl_pair(m, m.t0_com, m.u0_amp_com, "com", "com")
+
+    # Internal frame is the CoM pair; xS0_com / xL0_com are the CoMs there.
+    assert m.t0 == m.t0_com and m.u0_amp == m.u0_amp_com
+    src, lens = bsbl_points(m, m.t0_com)
+    np.testing.assert_allclose(m.xS0_com[1] * 1e3, src["com"][0], atol=1e-9)
+    np.testing.assert_allclose(m.xL0_com[1] * 1e3, lens["com"][0], atol=1e-9)
+
+    # The inputs are honored in their own frame.
+    if "t0_p" in cls.fitter_param_names:
+        assert m.t0_p == T0
+        src, _ = bsbl_points(m, T0)
+        np.testing.assert_allclose(src["p"][0], [2.0, 0.5], atol=1e-9)
+    else:
+        assert m.t0_com == T0
+        np.testing.assert_allclose(m.xS0_com[1] * 1e3, [2.0, 0.5], atol=1e-9)
+
+    # Lazy midpoint and primary pairs follow the instantaneous definition.
+    assert_bsbl_pair(m, m.t0_mid, m.u0_amp_mid, "p", "mid")
+    _, lens = bsbl_points(m, m.t0_mid)
+    np.testing.assert_allclose(m.xL0_mid[1] * 1e3, lens["mid"][0], atol=1e-9)
+    assert_bsbl_pair(m, m.t0_p, m.beta_p / m.thetaE_amp, "p", "p")
+
+    # Source mass ratio, and the axes at t0 (lens: sec -> pri; source:
+    # pri -> sec).
+    np.testing.assert_allclose(m.qS, m.mSs / m.mSp, rtol=1e-12)
+    src, lens = bsbl_points(m, m.t0)
+    S = m.get_resolved_source_astrometry_unlensed(np.array([m.t0]), 1)[0]
+    L = m.get_resolved_lens_astrometry(np.array([m.t0]), 1)[0]
+    dl, ds = L[0] - L[1], S[1] - S[0]
+    np.testing.assert_allclose(m.alphaL_rad, np.arctan2(dl[0], dl[1]), atol=1e-9)
+    np.testing.assert_allclose(np.cos(m.alphaS_rad - np.arctan2(ds[0], ds[1])),
+                               1.0, atol=1e-12)
+    return None
+
+
+@MODULES
+@pytest.mark.parametrize("name", ["BSBL_PhotAstrom_noPar_Param2",
+                                  "BFSBL_PhotAstrom_noPar_Param2"])
+def test_bsbl_static_param2_frames(mod, name):
+    """Static BSBL Param2: primary inputs, midpoint internal frame, CoM pair."""
+    if not hasattr(mod, name):
+        pytest.skip(f"{name} is not in {mod.__name__}")
+    cls = getattr(mod, name)
+    m = cls(*[BSBL_VALS[n] for n in cls.fitter_param_names])
+
+    # xS0_p is the primary source at t0_p; the primary pair holds there.
+    src, _ = bsbl_points(m, m.t0_p)
+    np.testing.assert_allclose(src["p"][0], [2.0, 0.5], atol=1e-9)
+    assert_bsbl_pair(m, m.t0_p, m.beta_p / m.thetaE_amp, "p", "p")
+
+    # Internal midpoint pair (signed u0_amp), with _mid aliases.
+    assert_bsbl_pair(m, m.t0, m.u0_amp, "p", "mid")
+    assert m.t0_mid == m.t0 and m.u0_amp_mid == m.u0_amp
+
+    # CoM-CoM pair from qS and the lens masses.
+    assert_bsbl_pair(m, m.t0_com, m.u0_amp_com, "com", "com")
+    src, lens = bsbl_points(m, m.t0_com)
+    np.testing.assert_allclose(m.xS0_com[1] * 1e3, src["com"][0], atol=1e-9)
+    np.testing.assert_allclose(m.xL0_com[1] * 1e3, lens["com"][0], atol=1e-9)
+    return None
+
+
+# ----------------------------------------------------------------------
+# frame_convert.convert_u0_amp_t0_bsbl_orbit round trips.
+# ----------------------------------------------------------------------
+def test_bsbl_orbit_converter_round_trips():
+    """Pairs convert to the CoM and back; one source matches the PSBL wrapper."""
+    from bagle import frame_convert as fc
+
+    orbL = model.keplerian_lens_orbit(40.0, 20.0, 55.0, 0.3, T0 + 30.0, 900.0,
+                                      2e-3, 1.5e-3)
+    orbS = model.keplerian_lens_orbit(100.0, 70.0, 30.0, 0.2, T0 - 100.0, 2500.0,
+                                      1e-3, 1.6e-3)
+    th_hat = np.array([0.6, 0.8])
+    kw = dict(tE=250.0, thetaE_hat=th_hat, thetaE_orb=4e-3)
+
+    for lens_pt, src_pt in [("geom_mid", "prim_center"), ("prim_center", "prim_center"),
+                            ("COM", "prim_center"), ("geom_mid", "COM")]:
+        t_c, u_c = fc.convert_u0_amp_t0_bsbl_orbit(
+            T0, 0.3, orbL=orbL, orbS=orbS, lens_in=lens_pt, lens_out="COM",
+            src_in=src_pt, src_out="COM", **kw)
+        t_b, u_b = fc.convert_u0_amp_t0_bsbl_orbit(
+            t_c, u_c, orbL=orbL, orbS=orbS, lens_in="COM", lens_out=lens_pt,
+            src_in="COM", src_out=src_pt, **kw)
+        np.testing.assert_allclose([t_b, u_b], [T0, 0.3], rtol=0, atol=1e-8)
+
+    # A single source reproduces the PSBL wrapper exactly.
+    for pts in [("COM", "geom_mid"), ("geom_mid", "COM"), ("prim_center", "COM")]:
+        a = fc.convert_u0_amp_t0_psbl_orbit(T0, -0.2, 250.0, th_hat, orbL, 4e-3,
+                                            *pts)
+        b = fc.convert_u0_amp_t0_bsbl_orbit(T0, -0.2, 250.0, th_hat, orbL, None,
+                                            4e-3, lens_in=pts[0], lens_out=pts[1])
+        np.testing.assert_array_equal(a, b)
     return None

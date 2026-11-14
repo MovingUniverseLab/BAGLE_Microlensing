@@ -42,6 +42,11 @@ CANONICAL: dict[str, Any] = {
     "dL_dS": 0.5,
     "xS0_E": 0.0,
     "xS0_N": 0.0,
+    "xS0_com_E": 0.0,
+    "xS0_com_N": 0.0,
+    "xS0_p_E": 0.0,
+    "xS0_p_N": 0.0,
+    "qS": 0.5,
     "muS_E": 0.0,
     "muS_N": 0.0,
     "muL_E": 1.0,
@@ -4107,6 +4112,13 @@ def _refresh_derived_geometry(instance) -> None:
             piE_N = float(getattr(instance, "piE_N", instance.piE[1]))
         instance.piE = np.array([piE_E, piE_N], dtype=np.float64)
 
+    # Keplerian PhotAstrom binaries derive their CoM / lazy midpoint frames
+    # in the constructor; rebuild them with it instead of by hand.
+    if (getattr(instance, "orbitFlag", False) == "Keplerian"
+            and getattr(instance, "astrometryFlag", False)):
+        _refresh_fspl_by_reinit(instance)
+        return None
+
     # Prefer fitter names so derived ``beta_com`` on Param8 CircOrbs does not
     # skip the Param4/8 heliocentric refresh path.
     fitter = getattr(instance, "fitter_param_names", ())
@@ -4395,6 +4407,10 @@ _ARRAY_COMPONENT: dict[str, tuple[str, int]] = {
     "piE_N": ("piE", 1),
     "xS0_E": ("xS0", 0),
     "xS0_N": ("xS0", 1),
+    "xS0_com_E": ("xS0_com", 0),
+    "xS0_com_N": ("xS0_com", 1),
+    "xS0_p_E": ("xS0_p", 0),
+    "xS0_p_N": ("xS0_p", 1),
     "muS_E": ("muS", 0),
     "muS_N": ("muS", 1),
     "muL_E": ("muL", 0),

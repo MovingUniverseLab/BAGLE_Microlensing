@@ -46,7 +46,8 @@ VALS = dict(
     t0_prim=57000.0, u0_amp=0.1, u0_amp_com=0.1, u0_amp_prim=0.1,
     beta=0.4, beta_com=0.4, beta_p=0.4, tE=100.0, thetaE=5.0,
     log10_thetaE=np.log10(5.0), piS=0.25, piE_E=0.05, piE_N=0.03,
-    piEN_piEE=0.6, xS0_E=0.0, xS0_N=0.01, muL_E=0.0, muL_N=0.0, muS_E=4.0,
+    piEN_piEE=0.6, xS0_E=0.0, xS0_N=0.01, xS0_com_E=0.0, xS0_com_N=0.01,
+    xS0_p_E=0.0, xS0_p_N=0.01, qS=0.5, muL_E=0.0, muL_N=0.0, muS_E=4.0,
     muS_N=-3.0, dL=2000.0, dS=4000.0, q=0.5, alpha=90.0, alphaL=90.0,
     alphaS=30.0, phi=40.0, phi_L=40.0, phi_S=20.0, omega_pri=30.0,
     big_omega_sec=20.0, i=40.0, e=0.2, tp=56950.0, omegaL_pri=30.0,
@@ -59,7 +60,8 @@ VALS = dict(
     delta_muS_sec_N=0.3, radiusS=1e-4, radiusS_pri=1e-4, radiusS_sec=1e-4,
     n_outline=20, fratio_bin=0.5, mag_src=18.0, mag_base=18.0,
     mag_src_pri=18.0, mag_src_sec=18.75, b_sff=1.0, dmag_Lp_Ls=20.0)
-FILT = {"xS0_E", "xS0_N", "b_sff", "mag_src", "mag_base", "mag_src_pri",
+FILT = {"xS0_E", "xS0_N", "xS0_com_E", "xS0_com_N", "xS0_p_E", "xS0_p_N",
+        "b_sff", "mag_src", "mag_base", "mag_src_pri",
         "mag_src_sec", "dmag_Lp_Ls", "fratio_bin"}
 XS0_IN = np.array([0.0, 0.01])  # arcsec
 
@@ -166,9 +168,9 @@ def in_einstein(m, pos):
     return pos
 
 
-def source_pos(m, t):
+def source_pos(m, t, point="p"):
     """
-    Unlensed primary-source position (Einstein radii).
+    Unlensed source reference position (Einstein radii).
 
     Parameters
     ----------
@@ -176,17 +178,23 @@ def source_pos(m, t):
         BAGLE model.
     t : ndarray, shape (N_times,)
         Times (MJD).
+    point : {'p', 'com'}, optional
+        Primary source, or the source CoM (weighted by ``qS``) of a
+        binary-source PhotAstrom model.
 
     Returns
     -------
     xS : ndarray, shape (N_times, 2)
-        Primary source (the only source for single-source models).
+        Source point (the only source for single-source models).
     """
     if not m.astrometryFlag:
         u = m.get_u(t)
         return u[:, 0] if u.ndim == 3 else u
     if hasattr(m, "get_resolved_source_astrometry_unlensed"):
-        return in_einstein(m, m.get_resolved_source_astrometry_unlensed(t)[:, 0])
+        xS = in_einstein(m, m.get_resolved_source_astrometry_unlensed(t))
+        if point == "com":
+            return (xS[:, 0] + m.qS * xS[:, 1]) / (1.0 + m.qS)
+        return xS[:, 0]
     return in_einstein(m, m.get_source_astrometry_unlensed(t))
 
 
@@ -218,9 +226,9 @@ def lens_point(m, t, frame):
     return lens[:, 0]
 
 
-def closest_approach(m, frame, t_center):
+def closest_approach(m, frame, t_center, src="p"):
     """
-    Closest approach of the primary source to a lens reference point.
+    Closest approach of a source point to a lens reference point.
 
     Parameters
     ----------
@@ -230,6 +238,8 @@ def closest_approach(m, frame, t_center):
         Reference point.
     t_center : float
         Center of the search window (MJD).
+    src : {'p', 'com'}, optional
+        Primary source or source CoM.
 
     Returns
     -------
@@ -244,13 +254,13 @@ def closest_approach(m, frame, t_center):
     # the along-track offset as a time shift and the cross-track distance.
     if m.orbitFlag and frame != "CoM":
         tt = np.array([t_center])
-        rel = (source_pos(m, tt) - lens_point(m, tt, frame))[0]
+        rel = (source_pos(m, tt, src) - lens_point(m, tt, frame))[0]
         along = rel @ m.thetaE_hat
         return t_center - m.tE * along, np.hypot(*(rel - along * m.thetaE_hat))
 
     # Rectilinear tracks: fine grid over +-2 tE.
     t = np.linspace(t_center - 2.0 * m.tE, t_center + 2.0 * m.tE, 40001)
-    d = np.hypot(*(source_pos(m, t) - lens_point(m, t, frame)).T)
+    d = np.hypot(*(source_pos(m, t, src) - lens_point(m, t, frame)).T)
     k = np.argmin(d)
     return t[k], d[k]
 
@@ -292,7 +302,7 @@ def xs0_doc_time(pc, default):
         ``t0`` / ``t0_com`` / ``t0_p`` ... as written in the docstring.
     """
     doc = inspect.getdoc(pc) or ""
-    m = re.search(r"xS0_E\s*:.*?at t\s*=\s*(t0\w*)", doc, re.S)
+    m = re.search(r"xS0(?:_com|_p)?_E\s*:.*?at t\s*=\s*(t0\w*)", doc, re.S)
     return m.group(1) if m else default
 
 
@@ -322,26 +332,35 @@ def measure(leafname):
     if u_name.startswith("beta"):
         u_in = u_in / m.thetaE_amp
 
-    # Input frame: closest approach to the named reference point.
-    t_ci, d_ci = closest_approach(m, frame, t_in)
+    # Binary-source CoM inputs use the source CoM; all others the primary.
+    binary_src = m.astrometryFlag and hasattr(
+        m, "get_resolved_source_astrometry_unlensed")
+    src = "com" if (binary_src and t_name == "t0_com") else "p"
 
-    # Internal: closest approach to the actual lens midpoint.
-    t_cg, d_cg = closest_approach(m, "geometric", m.t0)
+    # Input frame: closest approach to the named reference point.
+    t_ci, d_ci = closest_approach(m, frame, t_in, src)
+
+    # Midpoint frame (t0_mid: the internal frame for static / linear models,
+    # a lazy attribute for Keplerian ones).
+    t0_mid = m.t0_mid
+    t_cg, d_cg = closest_approach(m, "geometric", t0_mid)
 
     res = dict(m=m, pc=pc, t_name=t_name, u_name=u_name, frame=frame,
-               t_in=t_in, u_in=u_in, t0=m.t0, u0=abs(m.u0_amp), t_ci=t_ci,
-               d_ci=d_ci, t_cg=t_cg, d_cg=d_cg, dxL0=None, dxS0=None)
+               t_in=t_in, u_in=u_in, t0=t0_mid, u0=abs(m.u0_amp_mid),
+               t_ci=t_ci, d_ci=d_ci, t_cg=t_cg, d_cg=d_cg, dxL0=None,
+               dxS0=None, src=src)
     if not m.astrometryFlag:
         return res
 
-    # Internal xL0 (first filter) vs the actual midpoint at t0.
-    geo0 = lens_point(m, np.array([m.t0]), "geometric")[0]
-    res["dxL0"] = np.hypot(*(in_einstein(m, m.xL0[0]) - geo0))
+    # xL0_mid (first filter) vs the actual midpoint at t0_mid.
+    res["xL0_mid"] = np.asarray(m.xL0_mid)[0]
+    geo0 = lens_point(m, np.array([t0_mid]), "geometric")[0]
+    res["dxL0"] = np.hypot(*(in_einstein(m, res["xL0_mid"]) - geo0))
 
     # Source vs the input xS0 at its documented time (mas).
     res["xs0_time"] = xs0_doc_time(pc, t_name)
     t_doc = getattr(m, res["xs0_time"], t_in)
-    xS_doc = source_pos(m, np.array([t_doc]))[0]
+    xS_doc = source_pos(m, np.array([t_doc]), src)[0]
     res["dxS0"] = m.thetaE_amp * np.hypot(*(xS_doc - in_einstein(m, XS0_IN)))
     return res
 
@@ -452,30 +471,31 @@ def plot_case(label, leafname, r, outfile):
                 alpha=alpha, label=f"lens CoM {tag}")
         return None
 
-    draw_lenses(t0, True, "@ internal t0")
+    draw_lenses(t0, True, "@ t0_mid")
     if moving and t_in != t0:
         draw_lenses(t_in, False, f"@ input {r['t_name']}")
 
     # Input: reference point and source at the input time, and the actual
     # closest approach to that reference point.
     ref_in = at(lens_point, t_in, r["frame"])
-    xS_in = at(source_pos, t_in)
+    xS_in = at(source_pos, t_in, r["src"])
     ax.plot(*ref_in, "o", mfc="none", mec="C0", ms=13, mew=2,
             label=f"input reference ({r['frame']}) @ {r['t_name']}")
     ax.plot(*xS_in, "o", color="C0", ms=8, label=f"source @ input {r['t_name']}")
     ax.plot(*np.stack([ref_in, xS_in]).T, "--", color="C0", lw=1.5)
-    xS_ci = at(source_pos, r["t_ci"])
+    xS_ci = at(source_pos, r["t_ci"], r["src"])
     ax.plot(*xS_ci, "v", color="C0", ms=9,
             label=f"actual closest approach to {r['frame']}")
 
     # Internal: xL0, source at t0, and the actual closest approach to the
     # lens midpoint. Phot-only models have no xL0 (lens origin = 0).
-    xL0 = in_einstein(m, m.xL0[0]) - origin if m.astrometryFlag else -origin
+    xL0 = (in_einstein(m, r["xL0_mid"]) - origin if m.astrometryFlag
+           else -origin)
     if m.astrometryFlag:
         ax.plot(*xL0, "D", mfc="none", mec="C3", ms=10, mew=2,
-                label="internal xL0")
+                label="xL0_mid")
     xS_t0 = at(source_pos, t0)
-    ax.plot(*xS_t0, "s", color="C3", ms=8, label="source @ internal t0")
+    ax.plot(*xS_t0, "s", color="C3", ms=8, label="source @ t0_mid")
     ax.plot(*np.stack([xL0, xS_t0]).T, "--", color="C3", lw=1.5)
     xS_cg = at(source_pos, r["t_cg"])
     ax.plot(*xS_cg, "^", color="C3", ms=9,
@@ -496,9 +516,9 @@ def plot_case(label, leafname, r, outfile):
         f"{'OK' if inp_ok else 'MISMATCH'}\n"
         f"  closest approach at {r['t_name']} {r['t_ci'] - t_in:+.2f} d\n"
         f"  |u| there {r['d_ci']:.4f}  (input {r['u_in']:.4f})\n"
-        f"INTERNAL (geometric t0, u0_amp)  {'OK' if int_ok else 'MISMATCH'}\n"
-        f"  closest approach at t0 {r['t_cg'] - t0:+.2f} d\n"
-        f"  |u| there {r['d_cg']:.4f}  (u0_amp {r['u0']:.4f})")
+        f"MIDPOINT (t0_mid, u0_amp_mid)  {'OK' if int_ok else 'MISMATCH'}\n"
+        f"  closest approach at t0_mid {r['t_cg'] - t0:+.2f} d\n"
+        f"  |u| there {r['d_cg']:.4f}  (u0_amp_mid {r['u0']:.4f})")
     if r["dxL0"] is not None:
         txt += f"\n  |xL0 - midpoint| {r['dxL0']:.4f}"
     if r["dxS0"] is not None:
@@ -516,7 +536,7 @@ def plot_case(label, leafname, r, outfile):
     ax.set_ylim(mid[1] - half, mid[1] + half)
     ax.set_aspect("equal")
     ax.set_xlabel(r"East ($\theta_E$, lens frame; origin = midpoint @ "
-                  r"internal $t_0$)")
+                  r"$t_{0,\rm mid}$)")
     ax.set_ylabel(r"North ($\theta_E$)")
     ax.set_title(f"{label}\n{leafname}", fontsize=10)
     ax.legend(fontsize=7.5, loc="upper left", bbox_to_anchor=(1.02, 1.0),
@@ -591,7 +611,7 @@ def write_report(case_rows, all_rows):
 
     lines.append("## Representative cases\n")
     lines.append("| # | Case | Class | Input frame | Input honored | "
-                 "Internal geometric |")
+                 "Midpoint frame |")
     lines.append("|---|---|---|---|---|---|")
     for k, label, leafname, r, fig, inp_ok, int_ok in case_rows:
         lines.append(f"| {k} | {label} | `{leafname}` | {r['frame']} "
@@ -636,37 +656,41 @@ def write_report(case_rows, all_rows):
 
 TEMPLATE_HEAD = """# Binary-lens reference-frame audit
 
-**Convention under test.** Internally, `self.t0`, `self.u0` / `u0_amp` and
-`self.xL0` always describe the source's closest approach to the
-**geometric midpoint** of the lens pair, and every class also stores the
-lens **CoM** closest approach (`t0_com`, `u0_amp_com`, `xL0_com`) where
-masses exist. Inputs may be given about the midpoint, the CoM, or the
-**primary**, and must be honored in that frame. For orbiting lenses the
-midpoint and primary move, so their `(t0, u0)` are defined at an instant:
-at `t0` the unlensed source is `u0` from the point's position *at that
-time*, perpendicular to the relative proper motion. The CoM moves on a
-straight line, so its closest approach is exact. Lens orbits are always
-evaluated about the CoM.
+**Convention under test.** Every binary class stores three frames, named by
+suffix: `_com` (source CoM to lens CoM), `_p` (primary source to primary
+lens) and `_mid` (primary source to the lens **geometric midpoint**).
+Inputs may be given in any of them and must be honored in that frame,
+including the input `xS0` (`xS0_E` / `xS0_com_E` / `xS0_p_E`) at the input
+`t0*`. The internal `self.t0` / `u0_amp` / `xL0` are the midpoint pair for
+static, linear and accelerated classes, and the CoM pair for Keplerian
+classes (except the midpoint-input Param2 / Param3). For orbiting binaries
+the midpoint and primaries move, so their `(t0, u0)` are defined at an
+instant: at `t0` the source point is `u0` from the lens point's position
+*at that time*, perpendicular to the relative proper motion. Those pairs
+are root-solved lazily (`t0_mid`, `u0_amp_mid`, `xL0_mid`, `t0_p`, ...).
+The CoMs move on straight lines, so the CoM pair is an exact closest
+approach. Orbits are always evaluated about the CoMs.
 
-**Result.** All PSBL / FSBL parameterizations, static and Keplerian
-(including phot-only), now honor their input frame and keep the internal
-geometric frame. The remaining failures are the binary-source BSBL / BFSBL
-classes and the primary-input linear / accelerated orbit classes (see
-Remaining issues).
+**Result.** All PSBL / FSBL and BSBL / BFSBL parameterizations, static and
+Keplerian (including phot-only), honor their input frame and fill the
+midpoint frame consistently. The remaining failures are the primary-input
+linear / accelerated orbit classes (see Remaining issues).
 
 ## Method
 
 `make_binary_frame_audit.py` (this directory) builds one model per binary-
 lens Param class in `bagle.model_jax` (PSBL, FSBL, BSBL, BFSBL; FSBL/BFSBL
 exist only there), with parallax switched off so tracks are straight. For
-each reference point it measures where the (primary) source passes:
+each reference point it measures where the source point passes (the
+source CoM for binary-source `_com` inputs, else the primary source):
 
 * the **input reference point** (midpoint, CoM = mass-weighted, or primary)
   — the time should equal the input `t0*` and the separation the input
   `u0*` / `beta* / thetaE`;
-* the **actual lens midpoint** — the time should equal the internal
-  `self.t0`, the separation `|self.u0_amp|`, and `self.xL0` should be the
-  midpoint at `self.t0`;
+* the **actual lens midpoint** — the time should equal `t0_mid`, the
+  separation `|u0_amp_mid|`, and `xL0_mid` should be the midpoint at
+  `t0_mid` (for static / linear classes these alias the internal `t0`,
+  `u0_amp`, `xL0`);
 * the input **`xS0`** at the time named in the docstring.
 
 Static points and the CoM use the true closest approach on a fine time grid.
@@ -711,24 +735,28 @@ CASE_NOTES = {
         "comes from the orbit at `t0` (`convert_u0_amp_t0_psbl_orbit`), so "
         "`xL0` is the midpoint at `t0` and the inputs hold at that instant.",
     "PSBL_PhotAstrom_noPar_EllOrbs_Param1":
-        "CoM inputs (`t0_com`, `beta_com`) with a Keplerian orbit. CoM inputs "
-        "exact; the geometric `t0` solves for the instant when the source - "
-        "midpoint vector is perpendicular to the motion.",
+        "CoM inputs (`t0_com`, `beta_com`, `xS0_com_E/N`) with a Keplerian "
+        "orbit. The CoM pair is the internal frame; `t0_mid` solves (lazily) "
+        "for the instant when the source - midpoint vector is perpendicular "
+        "to the motion.",
     "PSBL_PhotAstrom_noPar_EllOrbs_Param4":
-        "CoM inputs (`t0_com`, `u0_amp_com`) with a Keplerian orbit. Both "
-        "frames exact (geometric `t0` at the orbit configuration at `t0`).",
+        "CoM inputs (`t0_com`, `u0_amp_com`, `xS0_com_E/N`) with a Keplerian "
+        "orbit. CoM pair internal; midpoint pair lazy and exact.",
     "PSBL_PhotAstrom_noPar_EllOrbs_Param7":
-        "Primary inputs with a Keplerian orbit: primary at `t0_p` → CoM → "
-        "midpoint at `t0`. Both frames exact.",
+        "Primary inputs (`t0_p`, `beta_p`, `xS0_p_E/N`) with a Keplerian "
+        "orbit: primary at `t0_p` → CoM (explicit, internal) → midpoint "
+        "(lazy). Both frames exact.",
     "PSBL_Phot_noPar_EllOrbs_Param1":
         "Phot-only Keplerian orbit. `t0` / `u0_amp` are geometric at `t0`; "
         "the source track (`get_complex_pos`, `get_u`) runs from the CoM "
         "closest approach `t0_com` / `u0_com`, since the lenses orbit the "
         "CoM.",
     "BSBL_PhotAstrom_noPar_EllOrbs_Param1":
-        "Binary source and binary lens, both orbiting. Neither the input "
-        "nor the internal frame is consistent; the BSBL/BFSBL orbit classes "
-        "need their own design pass (CircOrbs Param3 is badly broken).",
+        "Binary source and binary lens, both orbiting. CoM-CoM inputs "
+        "(`t0_com`, `beta_com`, `xS0_com_E/N`), measured with the source "
+        "CoM; the CoM pair is internal and the midpoint pair (primary source "
+        "to lens midpoint) is lazy. Both frames exact. Converted with "
+        "`convert_u0_amp_t0_bsbl_orbit`.",
 }
 
 TEMPLATE_TAIL = """## Fixes applied
@@ -772,6 +800,18 @@ TEMPLATE_TAIL = """## Fixes applied
    `PSPL_PhotAstromParam5`, BSBL / BFSBL `LinOrbs` / `AccOrbs` Param1,
    BSBL / BFSBL `CircOrbs_Param3`, the BSPL GP orbit classes and the FSBL
    limb GP classes; `EllOrbs_Param4` passes a true `mag_base` to its parent.
+10. **Keplerian internal frame = CoM.** Keplerian PhotAstrom classes keep
+    the CoM pair as `t0` / `u0_amp` / `xL0` (and `xS0` at `t0_com`); the
+    midpoint (`t0_mid`, `u0_amp_mid`, `beta_mid`, `xL0_mid`) and primary
+    (`t0_p`, `u0_amp_p`, `beta_p`, `xS0_p`) pairs are root-solved on first
+    access (`bagle.binary_frames`). Construction never root-solves.
+11. **BSBL / BFSBL** Keplerian Param1 / 2 / 3 and static Param2 rebuilt on
+    `frame_convert.convert_u0_amp_t0_bsbl_orbit` (both orbits), with
+    `_com` / `_p` input names (`beta_com`, `xS0_com_E/N`, `xS0_p_E/N`),
+    the source mass ratio `qS` (a new static Param2 input), signed
+    `u0_amp`, and `alphaL` / `alphaS` at `t0`.
+12. **Input renames** follow the suffix rule: PSBL / FSBL Keplerian
+    Param1 / 4 / 8 take `xS0_com_E/N`, Param7 takes `xS0_p_E/N`.
 
 Regression tests: `tests/test_binary_frames_vs_vbm.py` (static classes vs
 VBMicrolensing in three motion directions), `tests/test_binary_orbit_frames.py`
@@ -780,8 +820,6 @@ VBMicrolensing in three motion directions), `tests/test_binary_orbit_frames.py`
 
 ## Remaining issues
 
-* **BSBL / BFSBL** static Param2 and all orbit classes are inconsistent in
-  both frames.
 * **Linear / accelerated primary-input classes** (`LinOrbs` / `AccOrbs`
   Param6 / Param7): internal frame correct, input frame not honored. Their
   `get_resolved_lens_astrometry` branch places the primary at

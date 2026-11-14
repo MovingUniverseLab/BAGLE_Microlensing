@@ -2041,7 +2041,78 @@ def convert_u0_amp_t0_psbl_orbit(t0_in, u0_amp_in, tE, thetaE_hat, orb, thetaE_o
       ``thetaE_hat`` is below the relative proper motion.
 
     Without orbital motion this reduces to
-    :func:`bagle.model.convert_u0_amp_t0_psbl`.
+    :func:`bagle.model.convert_u0_amp_t0_psbl`. This is
+    :func:`convert_u0_amp_t0_bsbl_orbit` with a single (static) source.
+    """
+    t0_out, u0_amp_out = convert_u0_amp_t0_bsbl_orbit(
+        t0_in, u0_amp_in, tE, thetaE_hat, orb, None, thetaE_orb,
+        lens_in=coords_in, lens_out=coords_out)
+
+    return t0_out, u0_amp_out
+
+
+def convert_u0_amp_t0_bsbl_orbit(t0_in, u0_amp_in, tE, thetaE_hat, orbL, orbS,
+                                 thetaE_orb, lens_in, lens_out, src_in='COM',
+                                 src_out='COM'):
+    """
+    Move a closest approach between reference points of orbiting binaries.
+
+    Generalizes :func:`convert_u0_amp_t0_psbl_orbit` to a binary source:
+    both the lens point and the source point may orbit their own CoM.
+
+    Parameters
+    ----------
+    t0_in : float
+        Reference time of the input pair (MJD); see Notes.
+    u0_amp_in : float
+        Signed impact parameter of the input source point about the input
+        lens point at ``t0_in`` (Einstein units), with the
+        :func:`bagle.model.u0_hat_from_thetaE_hat` sign convention.
+    tE : float
+        Einstein crossing time (days).
+    thetaE_hat : array_like, shape (2,)
+        Unit vector along the source-lens relative proper motion (E, N).
+    orbL : bagle.orbits.Orbit or None
+        Lens orbit about the lens CoM; ``None`` for a single lens.
+    orbS : bagle.orbits.Orbit or None
+        Source orbit about the source CoM; ``None`` for a single source.
+    thetaE_orb : float
+        The Einstein radius in the units of ``orb.aleph`` (e.g.
+        ``thetaE_amp * 1e-3`` for orbits in arcsec). Both orbits must use
+        the same units.
+    lens_in, lens_out : {'geom_mid', 'prim_center', 'COM'}
+        Input and output lens reference points.
+    src_in, src_out : {'prim_center', 'COM'}, optional
+        Input and output source reference points (default ``'COM'``).
+
+    Returns
+    -------
+    t0_out : float
+        Reference time of the output pair (MJD).
+    u0_amp_out : float
+        Signed impact parameter of the output pair at ``t0_out`` (Einstein
+        units).
+
+    Notes
+    -----
+    With ``d_L(t)`` and ``d_S(t)`` the lens and source points' offsets from
+    their CoMs (Einstein units), the source point relative to the lens point
+    is ``u(t) = u_com(t) + d_S(t) - d_L(t)``, where the CoM-CoM separation
+    ``u_com(t) = u0_com + (t - t0_com) / tE * thetaE_hat`` is a straight
+    line. A pair's ``(t0, u0)`` is defined at an instant: ``u(t0)`` is
+    perpendicular to ``thetaE_hat`` and ``u0_amp = u(t0) . u0_hat_+``.
+
+    * Input pair -> CoM pair is explicit.
+    * CoM pair -> output pair solves
+      ``(t0 - t0_com) / tE + (d_S(t0) - d_L(t0)) . thetaE_hat = 0``. The
+      root is unique when the points' orbital speeds along ``thetaE_hat``
+      stay below the relative proper motion. Otherwise the sign change
+      nearest ``t0_in`` is used.
+
+    Raises
+    ------
+    ValueError
+        If no root exists in the bracket.
     """
     from scipy import optimize
 
@@ -2053,33 +2124,55 @@ def convert_u0_amp_t0_psbl_orbit(t0_in, u0_amp_in, tE, thetaE_hat, orb, thetaE_o
     # Direction of positive u0_amp.
     u0_hat_pos = u0_hat_from_thetaE_hat(thetaE_hat, 1.0)
 
-    def offset(t, coords):
-        """Point offset from the CoM at time t (Einstein units)."""
+    def point_offset(orb, t, coords):
+        """Offset of a reference point from its CoM at t (Einstein units)."""
+        if orb is None or coords == 'COM':
+            return np.zeros(2)
         return keplerian_point_offset(orb, t, coords) / thetaE_orb
 
-    # Input point -> CoM. At t0_in the source is u0_in from the point, which
-    # is d_in from the CoM; split that vector along / across the motion.
-    u_com = u0_amp_in * u0_hat_pos + offset(t0_in, coords_in)
+    def rel_offset(t, lens, src):
+        """Source point minus lens point, relative to the CoM-CoM line."""
+        return point_offset(orbS, t, src) - point_offset(orbL, t, lens)
+
+    # Input pair -> CoM pair. At t0_in, u_com = u_in - (d_S - d_L).
+    u_com = u0_amp_in * u0_hat_pos - rel_offset(t0_in, lens_in, src_in)
     t0_com = t0_in - tE * np.dot(u_com, thetaE_hat)
     u0_com = u_com - np.dot(u_com, thetaE_hat) * thetaE_hat
 
-    if coords_out == 'COM':
+    if lens_out == 'COM' and src_out == 'COM':
         t0_out = t0_com
         u_out = u0_com
     else:
-        # CoM -> output point: the time when source - point is perpendicular
-        # to the motion. |d| <= aleph + aleph_sec scaled by (1 + e) brackets it.
+        # CoM pair -> output pair: when u(t) is perpendicular to the motion.
         def along(t):
-            return (t - t0_com) / tE - np.dot(offset(t, coords_out), thetaE_hat)
+            return ((t - t0_com) / tE
+                    + np.dot(rel_offset(t, lens_out, src_out), thetaE_hat))
 
-        d_max = (orb.aleph + orb.aleph2) * (1 + orb.e) / thetaE_orb
+        # |d| <= (aleph + aleph_sec)(1 + e) for each orbit brackets the root.
+        d_max = 0.0
+        for orb in (orbL, orbS):
+            if orb is not None:
+                d_max += (orb.aleph + orb.aleph2) * (1 + orb.e) / thetaE_orb
         half_width = tE * d_max + 1e-6
-        t0_out = optimize.brentq(along, t0_com - half_width, t0_com + half_width,
-                                 xtol=1e-10, rtol=1e-14)
 
-        # Source relative to the point at t0_out (perpendicular to the motion).
+        # Sample the bracket; take the sign change nearest t0_in.
+        grid = np.linspace(t0_com - half_width, t0_com + half_width, 257)
+        vals = np.array([along(t) for t in grid])
+        idx = np.nonzero(np.sign(vals[:-1]) * np.sign(vals[1:]) <= 0)[0]
+        if len(idx) == 0:
+            raise ValueError('No (t0, u0) for the requested reference points: '
+                             'the orbit never makes the source - point vector '
+                             'perpendicular to the relative motion.')
+        k = idx[np.argmin(np.abs(grid[idx] - t0_in))]
+        if vals[k] == 0:
+            t0_out = grid[k]
+        else:
+            t0_out = optimize.brentq(along, grid[k], grid[k + 1],
+                                     xtol=1e-10, rtol=1e-14)
+
+        # Source point relative to the lens point at t0_out.
         u_out = (u0_com + (t0_out - t0_com) / tE * thetaE_hat
-                 - offset(t0_out, coords_out))
+                 + rel_offset(t0_out, lens_out, src_out))
         u_out = u_out - np.dot(u_out, thetaE_hat) * thetaE_hat
 
     # Signed amplitude along the positive-u0_amp direction.

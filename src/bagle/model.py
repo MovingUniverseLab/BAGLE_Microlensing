@@ -514,6 +514,8 @@ import erfa
 import copy
 
 from bagle import frame_convert as fc
+from bagle.binary_frames import (BinaryFramesMixin, KeplerianFrame,
+                                 clear_lazy_frames)
 from bagle import fspl_contour
 from bagle import orbits as orbits
 from bagle import parallax
@@ -2683,13 +2685,27 @@ class PSPL_Param(ABC):
         # (n_filters, 2), including one filter, so xS0[filt_idx]
         # is that filter's East/North origin.
         if hasattr(self, 'xS0_E') and hasattr(self, 'xS0_N'):
-            stacked = np.stack([self.xS0_E, self.xS0_N], axis=-1)
+            # A subclass may pass xS0_E / xS0_N without listing them as
+            # filter parameters; broadcast them to n_filters here.
+            comps = [np.broadcast_to(
+                np.asarray(getattr(self, name), dtype=float).ravel(),
+                (n_filters,)) for name in ('xS0_E', 'xS0_N')]
+            stacked = np.stack(comps, axis=-1)
             self.xS0 = stacked
         elif hasattr(self, 'xS0'):
             # A class that passed one East/North pair as xS0.
             arr = np.asarray(self.xS0, dtype=float)
             if arr.shape == (2,):
                 self.xS0 = arr.reshape(1, 2)
+
+        # Source positions given in the CoM (_com) or primary (_p)
+        # frame stack the same way, into xS0_com / xS0_p.
+        for prefix in ('xS0_com', 'xS0_p'):
+            if (prefix + '_E' in self.filt_param_names
+                    and hasattr(self, prefix + '_E')):
+                stacked = np.stack([getattr(self, prefix + '_E'),
+                                    getattr(self, prefix + '_N')], axis=-1)
+                setattr(self, prefix, stacked)
 
         # A scalar fixed phot parameter is repeated to (n_filters,).
         for param in self.fixed_phot_param_names:
@@ -6534,7 +6550,7 @@ class PSPL_GP_PhotAstromParam4_2(PSPL_PhotAstromParam4):
 #
 # --------------------------------------------------
 
-class PSBL(PSPL):
+class PSBL(PSPL, BinaryFramesMixin):
     """
     Contains methods for model a PSBL photometry + astrometry.
     This is a Data-type class in our hierarchy. It is abstract and should not
@@ -8437,11 +8453,11 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -8499,36 +8515,39 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``beta_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``beta_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``beta_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_com',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'beta_com',
         'muL_E',
         'muL_N',
@@ -8546,14 +8565,15 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src',
+                        'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
                  beta_com, muL_E, muL_N,
                  omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
@@ -8561,8 +8581,11 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
+        self.xS0_com_E = xS0_com_E
+        self.xS0_com_N = xS0_com_N
+        # Internal source position: at t0 = t0_com (option C).
+        self.xS0_E = xS0_com_E
+        self.xS0_N = xS0_com_N
         self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
@@ -8667,14 +8690,11 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-        # CoM closest approach -> geometric midpoint at t0.
+        # Internal frame = lens CoM (the input frame); the midpoint and
+        # primary pairs are root-solved lazily (see Notes).
         self.q = self.mLs / self.mLp
-        self.t0, self.u0_amp = fc.convert_u0_amp_t0_psbl_orbit(
-            self.t0_com, self.u0_amp_com, self.tE, self.thetaE_hat, orb,
-            self.thetaE_amp * 1e-3, 'COM', 'geom_mid')
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+        self.xS0_com = np.array(self.xS0)
+        set_keplerian_com_frame(self, orb, None, self.xS0_com)
 
         # Binary axis (secondary -> primary) and projected separation at t0.
         self.alpha_rad, sep_t0 = keplerian_binary_axis(orb, self.t0)
@@ -8682,23 +8702,6 @@ class PSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.sep_t0 = sep_t0 * 1e3  # mas
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
         self.phi = np.rad2deg(self.phi_rad)
-
-        # Angular separation vector between source and lens (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Lens CoM at t0_com, from the input source position (at t0_com).
-        thetaS0_com = self.u0_com * self.thetaE_amp
-        self.xL0_com = self.xS0 - (thetaS0_com * 1e-3)
-
-        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
-        self.xS0 = shift_source_reference(self.xS0, self.muS,
-                                          self.t0_com, self.t0)
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        # xL0 matches xS0: always (n_filters, 2).
-        self.xL0_E = self.xL0[:, 0]
-        self.xL0_N = self.xL0[:, 1]
 
         return
 
@@ -8715,11 +8718,11 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         Masses of the lenses (Msun)
     t0_com : float
         Time of closest approach between the source and binary lens system's COM
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on the sky at t = t0_com (arcseconds) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -8775,36 +8778,39 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``beta_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``beta_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``beta_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_com',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'beta_com',
         'muL_E',
         'muL_N',
@@ -8821,20 +8827,20 @@ class PSBL_PhotAstrom_CircOrbs_Param1(PSBL_PhotAstrom_EllOrbs_Param1):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
                  beta_com, muL_E, muL_N,
                  omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         e = 0
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
+        super().__init__(mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
                          beta_com, muL_E, muL_N,
                          omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                          b_sff, mag_src, dmag_Lp_Ls,
@@ -9359,29 +9365,29 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
     Notes
     -----
-    Inputs ``t0`` / ``u0_amp`` refer to the geometric midpoint of the lenses
-    at ``t0`` (defined below).
+    Inputs ``t0``, ``u0_amp`` and ``xS0_E`` / ``xS0_N`` are in the lens
+    geometric-midpoint frame, defined at an instant: at ``t0`` the source
+    minus the midpoint (at that instant) is perpendicular to the relative
+    proper motion, ``u0_amp`` is that offset, and ``xS0`` is the source
+    position at ``t0``. ``t0`` is a reference epoch, not a closest approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
+    * The input midpoint pair is the internal frame: ``t0_mid``, ``u0_amp_mid``,
+      ``beta_mid`` and ``xL0_mid`` equal ``t0``, ``u0_amp``, ``beta`` and ``xL0``.
     * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+      straight line, and the source passes it at ``t0_com`` with impact
+      parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
+      ``xL0_com`` and ``xS0_com`` are the lens CoM and the source at
+      ``t0_com``. The lens orbits are evaluated about the CoM.
+    * ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` describe the primary lens at an
+      instant and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0',
@@ -9538,18 +9544,22 @@ class PSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE[0], self.piE[1])
         self.phi = np.rad2deg(self.phi_rad)
 
-        # Geometric midpoint at t0 -> CoM closest approach.
+        # Geometric midpoint at t0 (the input frame) -> CoM closest approach.
         self.t0_com, self.u0_amp_com = fc.convert_u0_amp_t0_psbl_orbit(
             self.t0, self.u0_amp, self.tE, self.thetaE_hat, orb,
             self.thetaE_amp * 1e-3, 'geom_mid', 'COM')
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        # xS0 is the source at t0; the lens CoM is anchored at t0_com.
+
+        # xS0 is the source at t0; the CoM frame is anchored at t0_com.
         xS0_at_com = shift_source_reference(self.xS0, self.muS,
                                             self.t0, self.t0_com)
-        self.xL0_com = xS0_at_com - (self.thetaS0_com * 1e-3)
+        set_keplerian_com_frame(self, orb, None, xS0_at_com,
+                                set_internal=False)
+
+        # The input midpoint pair stays the internal frame (no root solve).
+        self.t0_mid = self.t0
+        self.u0_amp_mid = self.u0_amp
+        self.beta_mid = self.beta
+        self.xL0_mid = self.xL0
 
         return
 
@@ -9630,29 +9640,29 @@ class PSBL_PhotAstrom_CircOrbs_Param2(PSBL_PhotAstrom_EllOrbs_Param2):
 
     Notes
     -----
-    Inputs ``t0`` / ``u0_amp`` refer to the geometric midpoint of the lenses
-    at ``t0`` (defined below).
+    Inputs ``t0``, ``u0_amp`` and ``xS0_E`` / ``xS0_N`` are in the lens
+    geometric-midpoint frame, defined at an instant: at ``t0`` the source
+    minus the midpoint (at that instant) is perpendicular to the relative
+    proper motion, ``u0_amp`` is that offset, and ``xS0`` is the source
+    position at ``t0``. ``t0`` is a reference epoch, not a closest approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
+    * The input midpoint pair is the internal frame: ``t0_mid``, ``u0_amp_mid``,
+      ``beta_mid`` and ``xL0_mid`` equal ``t0``, ``u0_amp``, ``beta`` and ``xL0``.
     * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+      straight line, and the source passes it at ``t0_com`` with impact
+      parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
+      ``xL0_com`` and ``xS0_com`` are the lens CoM and the source at
+      ``t0_com``. The lens orbits are evaluated about the CoM.
+    * ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` describe the primary lens at an
+      instant and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0',
@@ -10241,29 +10251,29 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
 
     Notes
     -----
-    Inputs ``t0`` / ``u0_amp`` refer to the geometric midpoint of the lenses
-    at ``t0`` (defined below).
+    Inputs ``t0``, ``u0_amp`` and ``xS0_E`` / ``xS0_N`` are in the lens
+    geometric-midpoint frame, defined at an instant: at ``t0`` the source
+    minus the midpoint (at that instant) is perpendicular to the relative
+    proper motion, ``u0_amp`` is that offset, and ``xS0`` is the source
+    position at ``t0``. ``t0`` is a reference epoch, not a closest approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
+    * The input midpoint pair is the internal frame: ``t0_mid``, ``u0_amp_mid``,
+      ``beta_mid`` and ``xL0_mid`` equal ``t0``, ``u0_amp``, ``beta`` and ``xL0``.
     * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+      straight line, and the source passes it at ``t0_com`` with impact
+      parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
+      ``xL0_com`` and ``xS0_com`` are the lens CoM and the source at
+      ``t0_com``. The lens orbits are evaluated about the CoM.
+    * ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` describe the primary lens at an
+      instant and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0',
@@ -10364,23 +10374,25 @@ class PSBL_PhotAstrom_EllOrbs_Param3(PSBL_PhotAstromParam3):
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.phi = np.rad2deg(self.phi_rad)
 
-        # Geometric midpoint at t0 -> CoM closest approach.
+        # Geometric midpoint at t0 (the input frame) -> CoM closest approach.
         self.t0_com, self.u0_amp_com = fc.convert_u0_amp_t0_psbl_orbit(
             self.t0, self.u0_amp, self.tE, self.thetaE_hat, orb,
             self.thetaE_amp * 1e-3, 'geom_mid', 'COM')
 
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-
-        # xS0 is the source at the input t0; the lens CoM is placed at t0_com.
-        xS0_at_com = shift_source_reference(self.xS0, self.muS,
-                                            self.t0, self.t0_com)
-        self.xL0_com = xS0_at_com - (self.thetaS0_com * 1e-3)
-
         # Lens midpoint at t0.
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        # xS0 is the source at the input t0; the CoM frame is at t0_com.
+        xS0_at_com = shift_source_reference(self.xS0, self.muS,
+                                            self.t0, self.t0_com)
+        set_keplerian_com_frame(self, orb, None, xS0_at_com,
+                                set_internal=False)
+
+        # The input midpoint pair stays the internal frame (no root solve).
+        self.t0_mid = self.t0
+        self.u0_amp_mid = self.u0_amp
+        self.beta_mid = self.beta
+        self.xL0_mid = self.xL0
 
         PSPL_Param().__init__()
         return
@@ -10466,29 +10478,29 @@ class PSBL_PhotAstrom_CircOrbs_Param3(PSBL_PhotAstrom_EllOrbs_Param3):
 
     Notes
     -----
-    Inputs ``t0`` / ``u0_amp`` refer to the geometric midpoint of the lenses
-    at ``t0`` (defined below).
+    Inputs ``t0``, ``u0_amp`` and ``xS0_E`` / ``xS0_N`` are in the lens
+    geometric-midpoint frame, defined at an instant: at ``t0`` the source
+    minus the midpoint (at that instant) is perpendicular to the relative
+    proper motion, ``u0_amp`` is that offset, and ``xS0`` is the source
+    position at ``t0``. ``t0`` is a reference epoch, not a closest approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
+    * The input midpoint pair is the internal frame: ``t0_mid``, ``u0_amp_mid``,
+      ``beta_mid`` and ``xL0_mid`` equal ``t0``, ``u0_amp``, ``beta`` and ``xL0``.
     * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+      straight line, and the source passes it at ``t0_com`` with impact
+      parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
+      ``xL0_com`` and ``xS0_com`` are the lens CoM and the source at
+      ``t0_com``. The lens orbits are evaluated about the CoM.
+    * ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` describe the primary lens at an
+      instant and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0',
@@ -10787,11 +10799,11 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -10842,29 +10854,32 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``u0_amp_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``u0_amp_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0_com',
@@ -10874,8 +10889,8 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         'piS',
         'piE_E',
         'piE_N',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'omega_pri',
         'big_omega_sec',
         'i',
@@ -10889,7 +10904,7 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -10901,7 +10916,8 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
 
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
+                 piE_E, piE_N, xS0_com_E, xS0_com_N, omega_pri, big_omega_sec,
+                 i, e, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -10954,25 +10970,26 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.b_sff = b_sff
         self.mag_src = mag_src
         self.dmag_Lp_Ls = dmag_Lp_Ls
+        # Input source position at t0_com (stacked to xS0_com).
+        self.xS0_com_E = xS0_com_E
+        self.xS0_com_N = xS0_com_N
 
         # The static parent takes the baseline magnitude.
         mag_base = (np.asarray(mag_src, dtype=float)
                     + 2.5 * np.log10(np.asarray(b_sff, dtype=float)))
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         piE_E, piE_N, xS0_com_E, xS0_com_N, muS_E, muS_N,
                          q, self.a, self.alpha,
                          b_sff, mag_base, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        # CoM closest approach -> geometric midpoint at t0 (replaces the
-        # static parent's fixed-axis conversion).
-        self.t0, self.u0_amp = fc.convert_u0_amp_t0_psbl_orbit(
-            self.t0_com, self.u0_amp_com, self.tE, self.thetaE_hat, orb,
-            self.thetaE_amp * 1e-3, 'COM', 'geom_mid')
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+        # Internal frame = lens CoM (the input frame); the midpoint and
+        # primary pairs are root-solved lazily (see Notes). This replaces
+        # the static parent's fixed-axis midpoint conversion.
+        set_keplerian_com_frame(self, orb, None, self.xS0_com)
+        self.xS0 = np.array(self.xS0_com)
+        self.xS0_E = self.xS0[:, 0]
+        self.xS0_N = self.xS0[:, 1]
 
         # Binary axis (secondary -> primary) and projected separation at t0.
         self.alpha_rad, sep_t0 = keplerian_binary_axis(orb, self.t0)
@@ -10981,17 +10998,6 @@ class PSBL_PhotAstrom_EllOrbs_Param4(PSBL_PhotAstromParam4):
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.phi = np.rad2deg(self.phi_rad)
 
-        # CoM closest-approach vector.
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3) #arcseconds
-
-        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
-        self.xS0 = shift_source_reference(self.xS0, self.muS,
-                                          self.t0_com, self.t0)
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         PSPL_Param().__init__()
         return
@@ -11024,11 +11030,11 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
 
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -11079,29 +11085,32 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``u0_amp_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``u0_amp_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0_com',
@@ -11111,8 +11120,8 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         'piS',
         'piE_E',
         'piE_N',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'omega_pri',
         'big_omega_sec',
         'i',
@@ -11125,7 +11134,7 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -11136,14 +11145,14 @@ class PSBL_PhotAstrom_CircOrbs_Param4(PSBL_PhotAstrom_EllOrbs_Param4):
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
+                 piE_E, piE_N, xS0_com_E, xS0_com_N,
                  omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         e=0
         super().__init__(t0_com, u0_amp_com, tE, thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N,
+                         piE_E, piE_N, xS0_com_E, xS0_com_N,
                          omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                          q,
                          b_sff, mag_src, dmag_Lp_Ls,
@@ -12286,11 +12295,11 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
     t0_p : float
         Reference epoch (MJD.DDD) of the primary frame; not a closest-approach
         time (see Notes).
-    xS0_E : array
+    xS0_p_E : array
         R.A. of source position on sky at t = t0_p (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_p_N : array
         Dec. of source position on sky at t = t0_p (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -12353,40 +12362,39 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
 
     Notes
     -----
-    Inputs ``t0_p`` / ``beta_p`` refer to the primary at ``t0_p``: at that
-    time the unlensed source is ``beta_p`` (mas) from the primary's position,
-    perpendicular to the relative proper motion.
+    Inputs ``t0_p``, ``beta_p`` and ``xS0_p_E`` / ``xS0_p_N`` are in the
+    primary-lens frame, defined at an instant: at ``t0_p`` the source minus
+    the primary lens (at that instant) is perpendicular to the relative
+    proper motion, ``beta_p`` is that offset, and ``xS0_p`` is the source
+    position at ``t0_p``. ``t0_p`` is a reference epoch, not a closest
+    approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
-    * ``t0_p`` is likewise a reference epoch for the primary: at ``t0_p`` the
-      unlensed source minus the primary is perpendicular to the motion, with
-      length ``|beta_p|`` (mas).
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_p',
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'beta_p',
         'muL_E',
         'muL_N',
@@ -12404,14 +12412,14 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_p_E', 'xS0_p_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
     paramPhotFlag = True
 
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
                  beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
@@ -12419,8 +12427,11 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
+        self.xS0_p_E = xS0_p_E
+        self.xS0_p_N = xS0_p_N
+        # Stacked into xS0 by PSPL_Param; moved to t0_com below.
+        self.xS0_E = xS0_p_E
+        self.xS0_N = xS0_p_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -12520,17 +12531,21 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.u0_amp_p = self.beta_p / self.thetaE_amp  # in Einstein units
         self.u0_p = np.abs(self.u0_amp_p) * self.u0_hat_p
 
-        # Primary at t0_p -> CoM closest approach -> geometric midpoint at t0.
+        # Primary at t0_p -> CoM closest approach (explicit).
         self.q = self.mLs / self.mLp
         self.t0_com, self.u0_amp_com = fc.convert_u0_amp_t0_psbl_orbit(
             self.t0_p, self.u0_amp_p, self.tE, self.thetaE_hat, orb,
             self.thetaE_amp * 1e-3, 'prim_center', 'COM')
-        self.t0, self.u0_amp = fc.convert_u0_amp_t0_psbl_orbit(
-            self.t0_com, self.u0_amp_com, self.tE, self.thetaE_hat, orb,
-            self.thetaE_amp * 1e-3, 'COM', 'geom_mid')
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # xS0_p is the source at the input t0_p; carry it to t0_com.
+        xS0_at_com = shift_source_reference(self.xS0_p, self.muS,
+                                            self.t0_p, self.t0_com)
+
+        # Internal frame = lens CoM; the midpoint pair is root-solved lazily.
+        set_keplerian_com_frame(self, orb, None, xS0_at_com)
+        self.xS0 = np.array(xS0_at_com)
+        self.xS0_E = self.xS0[:, 0]
+        self.xS0_N = self.xS0[:, 1]
 
         # Binary axis (secondary -> primary) and projected separation at t0.
         self.alpha_rad, sep_t0 = keplerian_binary_axis(orb, self.t0)
@@ -12538,26 +12553,6 @@ class PSBL_PhotAstrom_EllOrbs_Param7(PSPL_Param):
         self.sep_t0 = sep_t0 * 1e3  # mas
         self.phi_rad = self.alpha_rad - self.phi_piE_rad
         self.phi = np.rad2deg(self.phi_rad)
-
-        # Angular separation vector between source and lens (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # xS0 is the source at the input t0_p; source tracks run from t0.
-        self.xS0 = shift_source_reference(self.xS0, self.muS,
-                                          self.t0_p, self.t0)
-
-        # Lens midpoint at t0.
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        # CoM closest-approach vector.
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        # xS0 is the source at t0; the lens CoM is anchored at t0_com.
-        xS0_at_com = shift_source_reference(self.xS0, self.muS,
-                                            self.t0, self.t0_com)
-        self.xL0_com = xS0_at_com - (self.thetaS0_com * 1e-3) #arcseconds
 
         return
 
@@ -12574,11 +12569,11 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
     t0_p : float
         Reference epoch (MJD.DDD) of the primary frame; not a closest-approach
         time (see Notes).
-    xS0_E : array
+    xS0_p_E : array
         R.A. of source position on sky at t = t0_p (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_p_N : array
         Dec. of source position on sky at t = t0_p (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -12639,40 +12634,39 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
 
     Notes
     -----
-    Inputs ``t0_p`` / ``beta_p`` refer to the primary at ``t0_p``: at that
-    time the unlensed source is ``beta_p`` (mas) from the primary's position,
-    perpendicular to the relative proper motion.
+    Inputs ``t0_p``, ``beta_p`` and ``xS0_p_E`` / ``xS0_p_N`` are in the
+    primary-lens frame, defined at an instant: at ``t0_p`` the source minus
+    the primary lens (at that instant) is perpendicular to the relative
+    proper motion, ``beta_p`` is that offset, and ``xS0_p`` is the source
+    position at ``t0_p``. ``t0_p`` is a reference epoch, not a closest
+    approach.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
-    * ``t0_p`` is likewise a reference epoch for the primary: at ``t0_p`` the
-      unlensed source minus the primary is perpendicular to the motion, with
-      length ``|beta_p|`` (mas).
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_p',
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'beta_p',
         'muL_E',
         'muL_N',
@@ -12689,20 +12683,20 @@ class PSBL_PhotAstrom_CircOrbs_Param7(PSBL_PhotAstrom_EllOrbs_Param7):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_p_E', 'xS0_p_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
 
     paramAstromFlag = True
     orbitFlag='Keplerian'
     paramPhotFlag = True
 
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
                  beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N, dL, dS,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         e = 0
         super().__init__(
-            mLp, mLs, t0_p, xS0_E, xS0_N,
+            mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
             beta_p, muL_E, muL_N, omega_pri, big_omega_sec, i, e, tp, a,
             muS_E, muS_N, dL, dS,
             b_sff, mag_src, dmag_Lp_Ls,
@@ -12955,11 +12949,11 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -13009,29 +13003,32 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``u0_amp_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``u0_amp_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0_com',
@@ -13041,8 +13038,8 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         'piS',
         'piE_E',
         'piE_N',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'omega_pri',
         'big_omega_sec',
         'i',
@@ -13056,7 +13053,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -13067,7 +13064,7 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
+                 piE_E, piE_N, xS0_com_E, xS0_com_N,
                  omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
@@ -13117,21 +13114,23 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.alpha_rad, _ = keplerian_binary_axis(orb, t0_com)
         self.alpha = np.rad2deg(self.alpha_rad)
 
+        # Input source position at t0_com (stacked to xS0_com).
+        self.xS0_com_E = xS0_com_E
+        self.xS0_com_N = xS0_com_N
+
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N, muS_E, muS_N,
+                         piE_E, piE_N, xS0_com_E, xS0_com_N, muS_E, muS_N,
                          q, self.a, self.alpha,
                          b_sff, mag_src, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=root_tol)
 
-        # CoM closest approach -> geometric midpoint at t0 (replaces the
-        # static parent's fixed-axis conversion).
-        self.t0, self.u0_amp = fc.convert_u0_amp_t0_psbl_orbit(
-            self.t0_com, self.u0_amp_com, self.tE, self.thetaE_hat, orb,
-            self.thetaE_amp * 1e-3, 'COM', 'geom_mid')
-        self.beta = self.u0_amp * self.thetaE_amp
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+        # Internal frame = lens CoM (the input frame); the midpoint and
+        # primary pairs are root-solved lazily (see Notes). This replaces
+        # the static parent's fixed-axis midpoint conversion.
+        set_keplerian_com_frame(self, orb, None, self.xS0_com)
+        self.xS0 = np.array(self.xS0_com)
+        self.xS0_E = self.xS0[:, 0]
+        self.xS0_N = self.xS0[:, 1]
 
         # Binary axis (secondary -> primary) and projected separation at t0.
         self.alpha_rad, sep_t0 = keplerian_binary_axis(orb, self.t0)
@@ -13140,17 +13139,6 @@ class PSBL_PhotAstrom_EllOrbs_Param8(PSBL_PhotAstromParam8):
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.phi = np.rad2deg(self.phi_rad)
 
-        # CoM closest-approach vector.
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-        self.u0_com = np.abs(self.u0_amp_com) * self.u0_hat_com
-        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
-
-        # Source tracks run from self.t0, so carry xS0 from t0_com to t0.
-        self.xS0 = shift_source_reference(self.xS0, self.muS,
-                                          self.t0_com, self.t0)
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         PSPL_Param().__init__()
         return
@@ -13183,11 +13171,11 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         The microlensing parallax in the East direction in units of thetaE
     piE_N : float
         The microlensing parallax in the North direction in units of thetaE
-    xS0_E : array
+    xS0_com_E : array
         R.A. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
+    xS0_com_N : array
         Dec. of source position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
@@ -13240,29 +13228,32 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
 
     Notes
     -----
-    Inputs ``t0_com`` / ``u0_amp_com`` are the closest approach to the lens
-    center of mass (CoM).
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in
+    the lens center-of-mass (CoM) frame: the source passes the lens CoM at
+    ``t0_com`` with impact parameter ``u0_amp_com``, and ``xS0_com`` is the
+    source position at ``t0_com``.
 
-    Reference epochs (positions are before parallax, in the SSB frame):
+    Reference frames (positions are before parallax, in the SSB frame):
 
-    * ``t0_com`` is the only true closest approach. The lens CoM moves on a
-      straight line, and the unlensed source passes it at ``t0_com`` with
-      impact parameter ``u0_amp_com`` (vector ``u0_com``, ``beta_com`` in mas);
-      ``xL0_com`` is the CoM at ``t0_com``. The lens orbits are evaluated about
-      the CoM.
-    * ``t0`` is a reference epoch, not a closest-approach time. It is the
-      instant at which the unlensed source minus the geometric midpoint of the
-      lenses (at that same instant) is perpendicular to the relative proper
-      motion; that offset is ``u0_amp`` (vector ``u0``, ``beta`` in mas), and
-      ``xL0`` is the midpoint at ``t0``. The midpoint orbits the CoM, so ``t0``
-      differs from ``t0_com`` by ``tE`` times the midpoint's offset from the CoM
-      along the motion (typically days).
+    * The internal frame of Keplerian models is the CoM frame. ``t0``,
+      ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and ``xS0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com``, ``xL0_com`` and ``xS0_com``.
+      ``t0_com`` is the only true closest approach: the lens CoM moves on a
+      straight line, and the lens orbits are evaluated about it.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      source relative to the geometric midpoint of the lenses. The midpoint
+      orbits the CoM, so they are defined at an instant: at ``t0_mid`` the
+      source minus the midpoint (at that instant) is perpendicular to the
+      relative proper motion. They are a reference epoch, not a closest
+      approach, and are root-solved on first access.
+      ``t0_p``, ``u0_amp_p``, ``beta_p`` and ``xS0_p`` do the same for the
+      primary lens.
     * ``alpha`` / ``phi`` (binary axis, secondary -> primary) and ``sep_t0``
-      (projected separation) are evaluated at ``t0``, the same epoch as ``u0``
-      and ``xL0``, so all geometric-midpoint quantities share one frame.
-      ``sep`` is the semi-major axis ``a``.
+      (projected separation) are evaluated at ``t0``. ``sep`` is the
+      semi-major axis ``a``.
 
-    Frames are converted with :func:`bagle.frame_convert.convert_u0_amp_t0_psbl_orbit`.
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
 
     fitter_param_names = [
@@ -13273,8 +13264,8 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         'piS',
         'piE_E',
         'piE_N',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'omega_pri',
         'big_omega_sec',
         'i',
@@ -13287,7 +13278,7 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
         'mag_src',
         'dmag_Lp_Ls',
     ]
-    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
+    filt_param_names = ['xS0_com_E', 'xS0_com_N', 'b_sff', 'mag_src', 'dmag_Lp_Ls']
     filt_param_usage = ['astrom', 'astrom', 'both', 'phot', 'both']
     additional_param_names = ['mL', 'piL', 'piRel',
                               'muL_E', 'muL_N',
@@ -13298,14 +13289,14 @@ class PSBL_PhotAstrom_CircOrbs_Param8(PSBL_PhotAstrom_EllOrbs_Param8):
     orbitFlag = 'Keplerian'
 
     def __init__(self, t0_com, u0_amp_com, tE, log10_thetaE, piS,
-                 piE_E, piE_N, xS0_E, xS0_N,
+                 piE_E, piE_N, xS0_com_E, xS0_com_N,
                  omega_pri, big_omega_sec, i, tp, a, muS_E, muS_N,
                  q,
                  b_sff, mag_src, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         e=0
         super().__init__(t0_com, u0_amp_com, tE, log10_thetaE, piS,
-                         piE_E, piE_N, xS0_E, xS0_N,
+                         piE_E, piE_N, xS0_com_E, xS0_com_N,
                          omega_pri, big_omega_sec, i, e, tp, a, muS_E, muS_N,
                          q,
                          b_sff, mag_src, dmag_Lp_Ls,
@@ -20726,10 +20717,12 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
-        self.mass_sources = ((4 * np.pi ** 2 * self.sep_AU ** 3) / (const.G * (self.p * units.day) ** 2)).to('Msun')
-        self.mass_source_primary = (self.aleph_sec / self.sep) * self.mass_sources.value  # Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
-        q_source = self.mass_source_primary / self.mass_source_secondary
+        self.mS = ((4 * np.pi ** 2 * self.sep_AU ** 3)
+                   / (const.G * (self.p * units.day) ** 2)).to('Msun').value
+        self.mSp = (self.aleph_sec / self.sep) * self.mS  # Msun
+        self.mSs = self.mS - self.mSp  # Msun
+        self.qS = self.mSs / self.mSp
+        q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
@@ -20967,10 +20960,12 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
-        self.mass_sources = ((4 * np.pi ** 2 * self.sep_AU ** 3) / (const.G * (self.p * units.day) ** 2)).to('Msun')
-        self.mass_source_primary = (self.aleph_sec / self.sep) * self.mass_sources.value  # Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
-        q_source = self.mass_source_primary / self.mass_source_secondary
+        self.mS = ((4 * np.pi ** 2 * self.sep_AU ** 3)
+                   / (const.G * (self.p * units.day) ** 2)).to('Msun').value
+        self.mSp = (self.aleph_sec / self.sep) * self.mS  # Msun
+        self.mSs = self.mS - self.mSp  # Msun
+        self.qS = self.mSs / self.mSp
+        q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
@@ -21257,10 +21252,12 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
 
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
-        self.mass_sources = ((4 * np.pi ** 2 * self.sep_AU ** 3) / (const.G * (self.p * units.day) ** 2)).to('Msun')
-        self.mass_source_primary = (self.aleph_sec / self.sep) * self.mass_sources.value  # Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
-        q_source = self.mass_source_primary / self.mass_source_secondary
+        self.mS = ((4 * np.pi ** 2 * self.sep_AU ** 3)
+                   / (const.G * (self.p * units.day) ** 2)).to('Msun').value
+        self.mSp = (self.aleph_sec / self.sep) * self.mS  # Msun
+        self.mSs = self.mS - self.mSp  # Msun
+        self.qS = self.mSs / self.mSp
+        q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
@@ -21479,9 +21476,9 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
         self.a_AU = self.dS * (self.a * 1e-3) * units.AU # AU semi-major
 
-        mass_sources = (mSp + mSs) * units.Msun
+        mS = (mSp + mSs) * units.Msun
 
-        p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mass_sources))).to('day')
+        p = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mS))).to('day')
 
         self.p = p.value  # Period in Days
 
@@ -21605,10 +21602,12 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
-        self.mass_sources = ((4 * np.pi ** 2 * self.sep_AU ** 3) / (const.G * (self.p * units.day) ** 2)).to('Msun')
-        self.mass_source_primary = (self.aleph_sec / self.sep) * self.mass_sources.value  # Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
-        q_source = self.mass_source_primary / self.mass_source_secondary
+        self.mS = ((4 * np.pi ** 2 * self.sep_AU ** 3)
+                   / (const.G * (self.p * units.day) ** 2)).to('Msun').value
+        self.mSp = (self.aleph_sec / self.sep) * self.mS  # Msun
+        self.mSs = self.mS - self.mSp  # Msun
+        self.qS = self.mSs / self.mSp
+        q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
         self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
 
@@ -24708,20 +24707,21 @@ class BSBL_PhotAstromParam2(PSPL_Param):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0_p : float
-        Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : array
-        R.A. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        Time of closest approach between the PRIMARY SOURCE and the PRIMARY
+        LENS (MJD.DDD). Both binaries are static, so this is a true closest
+        approach.
+    xS0_p_E : array
+        R.A. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+    xS0_p_N : array
+        Dec. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
     beta_p : float
-        Angular distance between the source PRIMARY position
-        and the PRIMARY center of the lenses on the plane of the sky (mas). 
-        Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+        Angular distance between the PRIMARY SOURCE and the PRIMARY LENS on
+        the plane of the sky at t0_p (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
@@ -24749,6 +24749,10 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         measured in degrees East of North.
         Example, alphaL = 90 will place the source primary to the East 
         and the source secondary to the West.
+    qS : float
+        Source mass ratio, secondary / primary (mSs / mSp). Only used to
+        place the source center of mass for the ``_com`` attributes; it does
+        not change the light curve.
     mag_src_pri: array or list
         Photometric magnitude of the first (primary) source. This must be passed in as a
         list or array, with one entry for each photometric filter.
@@ -24775,13 +24779,29 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    Inputs ``t0_p``, ``beta_p`` and ``xS0_p_E`` / ``xS0_p_N`` are in the
+    primary-primary frame (primary source and primary lens).
+
+    * The internal frame is the primary source relative to the lens
+      geometric midpoint: ``t0``, ``u0_amp`` / ``u0``, ``beta``, ``xL0`` and
+      ``xS0`` (the primary source at ``t0``). ``t0_mid``, ``u0_amp_mid``,
+      ``beta_mid`` and ``xL0_mid`` are aliases of these.
+    * ``t0_com``, ``u0_amp_com`` / ``u0_com`` and ``beta_com`` are the
+      closest approach of the source CoM to the lens CoM; ``xS0_com`` and
+      ``xL0_com`` are the two CoMs at ``t0_com``. The source CoM uses
+      ``qS``, the lens CoM uses ``mLp`` / ``mLs``.
+    * Both binaries are static, so every pair is a true closest approach
+      and all conversions are explicit.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_p',
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'beta_p',
         'muL_E',
         'muL_N',
@@ -24793,14 +24813,15 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         'alphaL',
         'sepS',
         'alphaS',
+        'qS',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
@@ -24812,16 +24833,19 @@ class BSBL_PhotAstromParam2(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = False
 
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
-                 sepL, alphaL, sepS, alphaS,
+                 sepL, alphaL, sepS, alphaS, qS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_p = t0_p
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
+        self.xS0_p_E = xS0_p_E
+        self.xS0_p_N = xS0_p_N
+        # Stacked into xS0 by PSPL_Param; moved from t0_p to t0 below.
+        self.xS0_E = xS0_p_E
+        self.xS0_N = xS0_p_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -24833,6 +24857,7 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.sepS = sepS
         self.alphaS = alphaS
         self.alphaS_rad = self.alphaS * np.pi / 180.0
+        self.qS = qS
         self.mag_src_pri = np.array([mag_src_pri])
         self.mag_src_sec = np.array([mag_src_sec])
         self.b_sff = b_sff
@@ -24926,9 +24951,12 @@ class BSBL_PhotAstromParam2(PSPL_Param):
                                                            mu_rel_y=self.muRel[1], coords_in='prim_center',
                                                            coords_out='geom_mid')
         self.u0 = np.array([u0_x_out, u0_y_out])
-        self.u0_amp = np.sqrt(self.u0[0] ** 2 + self.u0[1] ** 2)
-        self.u0_hat = self.u0 / self.u0_amp
         self.t0 = t0_out
+
+        # Signed amplitude (Gould convention) along the positive-u0 direction.
+        u0_hat_pos = u0_hat_from_thetaE_hat(self.thetaE_hat, 1.0)
+        self.u0_amp = np.dot(self.u0, u0_hat_pos)
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
         self.beta = self.u0_amp * self.thetaE_amp
 
         # Angular separation vector between source and lens (vector from lens to source).
@@ -24936,6 +24964,12 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         # source primary position. Apologies for the mixed systems, but this is best
         # for fitting purposes.
         self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+
+        # xS0_p is the primary source at t0_p; carry it to the internal t0.
+        self.xS0 = shift_source_reference(self.xS0_p, self.muS,
+                                          self.t0_p, self.t0)
+        self.xS0_E = self.xS0[:, 0]
+        self.xS0_N = self.xS0[:, 1]
 
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
@@ -24963,6 +24997,36 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.u0_sec = self.u0_amp_sec * self.u0_hat
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
 
+        #####
+        # CoM-CoM frame (both binaries static, so explicit).
+        #####
+        # Source CoM: qS / (1 + qS) of the way from the primary to the
+        # secondary source (mas).
+        dS_com = (self.qS / (1.0 + self.qS)) * sepS_vec
+
+        # Lens CoM relative to the lens midpoint: the primary sits at
+        # +sepL / 2 along alphaL (mas).
+        sepL_hat = np.array((np.sin(self.alphaL_rad), np.cos(self.alphaL_rad)))
+        dL_com = 0.5 * (1.0 - self.q) / (1.0 + self.q) * self.sepL * sepL_hat
+
+        # Source CoM minus lens CoM at t0 (Einstein units), then its
+        # closest approach along the relative motion.
+        u_com = self.u0 + (dS_com - dL_com) / self.thetaE_amp
+        along = np.dot(u_com, self.thetaE_hat)
+        self.t0_com = self.t0 - self.tE * along
+        self.u0_com = u_com - along * self.thetaE_hat
+        self.u0_amp_com = np.dot(self.u0_com, u0_hat_pos)
+        self.u0_hat_com = u0_hat_from_thetaE_hat(self.thetaE_hat,
+                                                 self.u0_amp_com)
+        self.beta_com = self.u0_amp_com * self.thetaE_amp
+        self.thetaS0_com = self.u0_com * self.thetaE_amp  # mas
+
+        # Source CoM and lens CoM positions at t0_com (arcsec).
+        xS_com_t0 = self.xS0_pri + (dS_com * 1e-3)
+        self.xS0_com = shift_source_reference(xS_com_t0, self.muS,
+                                              self.t0, self.t0_com)
+        self.xL0_com = self.xS0_com - (self.thetaS0_com * 1e-3)
+
         return
 
 
@@ -24982,19 +25046,19 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0_com : float
-        Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : array
-        R.A. of source COM position on sky at t = t0 (arcsec) in an
+        Time of closest approach between the source CoM and the lens CoM
+        (MJD.DDD).
+    xS0_com_E : array
+        R.A. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of source COM position on sky at t = t0 (arcsec) in an
+    xS0_com_N : array
+        Dec. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    beta: float
-        Angular distance between the primary source
-        and the lens geometric center on the plane of the sky (mas).
-        Can be
+    beta_com : float
+        Angular distance between the source CoM and the lens CoM on the
+        plane of the sky at t0_com (mas). Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     muL_E : float
@@ -25063,14 +25127,45 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8
+
+    Notes
+    -----
+    Inputs ``t0_com``, ``beta_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in the
+    CoM-CoM frame: the source CoM passes the lens CoM at ``t0_com`` with
+    impact parameter ``beta_com``, and ``xS0_com`` is the source CoM at
+    ``t0_com``.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines). ``t0``,
+      ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint, and ``t0_p``,
+      ``u0_amp_p``, ``beta_p`` and ``xS0_p`` the primary source relative to
+      the primary lens. Both points orbit, so these are defined at an
+      instant (the source - point offset is perpendicular to the relative
+      proper motion), are reference epochs rather than closest approaches,
+      and are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio; ``mS``, ``mSp`` and
+      ``mSs`` are the source masses (Msun).
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_com',
-        'xS0_E',
-        'xS0_N',
-        'beta',
+        'xS0_com_E',
+        'xS0_com_N',
+        'beta_com',
         'muL_E',
         'muL_N',
         'muS_E',
@@ -25097,8 +25192,8 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
@@ -25109,20 +25204,27 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+    def __init__(self, mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
+                 beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
                  omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        """
+        Set up a Keplerian BSBL model from CoM-CoM inputs.
+
+        Parameters are described in the class docstring.
+
+        Returns
+        -------
+        None
+        """
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.t0_com = t0_com
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
-        self.beta = beta
+        self.xS0_com_E = xS0_com_E
+        self.xS0_com_N = xS0_com_N
+        self.beta_com = beta_com
 
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
@@ -25133,9 +25235,9 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.aL = aL
         self.sepS = alephS + aleph_secS
 
-    
-        self.mL = mLp + mLs
-        self.sepL_AU = dL * (self.sepL * 1e-3) * units.AU
+        # Lens orbit: period from Kepler's third law (aL in mas at dL).
+        self.mL = self.mLp + self.mLs
+        self.sepL_AU = self.dL * (self.sepL * 1e-3) * units.AU
         mL = self.mL * units.Msun
         pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
         self.pL = pL.value  # Period in Days
@@ -25145,26 +25247,12 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.iL = iL
         self.eL = eL
         self.tpL = tpL
-        
 
-        # Calculate period, and semi-major axes
-        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL  # mas
-        self.alephL = self.sepL - self.aleph_secL  # mas
+        # Semi-major axes of the lenses about their CoM (mas).
+        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL
+        self.alephL = self.sepL - self.aleph_secL
 
-        orb = orbits.Orbit()
-        orb.w = self.omegaL_pri
-        orb.o = self.big_omegaL_sec
-        orb.i = self.iL
-        orb.e = self.eL
-        orb.tp = (self.tpL)
-        orb.aleph = self.alephL *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secL *1e-3
-        orb.p = self.pL
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpL]))
-        self.alphaL_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaL = np.rad2deg(self.alphaL_rad)
-
-
+        # Source orbit.
         self.omegaS_pri = omegaS_pri
         self.big_omegaS_sec = big_omegaS_sec
         self.iS = iS
@@ -25173,20 +25261,6 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.tpS = tpS
         self.alephS = alephS
         self.aleph_secS = aleph_secS
-                     
-        orb = orbits.Orbit()
-        orb.w = self.omegaS_pri
-        orb.o = self.big_omegaS_sec
-        orb.i = self.iS
-        orb.e = self.eS
-        orb.tp = (self.tpS)
-        orb.aleph = self.alephS *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secS *1e-3
-        orb.p = self.pS
-                     
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpS]))
-        self.alphaS_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaS = np.rad2deg(self.alphaS_rad)
 
         self.mag_src_pri = np.array([mag_src_pri])
         self.mag_src_sec = np.array([mag_src_sec])
@@ -25247,71 +25321,29 @@ class BSBL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.m2 = m2.to(units.arcsec ** 2).value
 
         # Calculate the microlensing parallax
-        self.piE = (self.piRel / self.thetaE_amp) * self.thetaE_hat
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, Solar System barycentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0_amp = self.beta / self.thetaE_amp  # in Einstein units
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        # Calculate the microlensing parallax
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
 
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
-
-        # Calculate t0 (time of closest approach between geometric center of lens and the primary source)
-        self.phi_radL = self.alphaL_rad - np.arctan2(self.piE_E, self.piE_N)
         self.q = self.mLs / self.mLp
-        qeff_lens = (1 - self.q) / (1 + self.q)
-        t0_geom_temp = t0_com - self.tE * self.sepL / self.thetaE_amp * qeff_lens * np.cos(self.phi_radL)
-        self.t0_geo = t0_geom_temp
-        self.phi_radS = self.alphaS_rad - np.arctan2(self.piE_E, self.piE_N)
-        self.sepS_AU = self.dS * (self.sepS * 1e-3) * units.AU
-        self.mass_sources = ((4 * np.pi ** 2 * self.sepS_AU ** 3) / (const.G * (self.pS * units.day) ** 2)).to('Msun')
-        self.mass_source_primary = (self.aleph_secS / self.sepS) * self.mass_sources.value  # Msun
-        self.mass_source_secondary = self.mass_sources.value - self.mass_source_primary  # Msun
-        q_source = self.mass_source_primary / self.mass_source_secondary
-        qeff_source = (1 - q_source) / (1 + q_source)
-        self.t0 = t0_geom_temp - (self.tE * np.cos(self.phi_radS) * self.sepS / self.thetaE_amp) * (qeff_source - 1 / 2)
 
-        # Angular separation vector between source and lens (vector from lens to source).
-        # Note this is the angle between the geometric center of the lens and the
-        # source geometric center. Apologies for the mixed systems, but this is best
-        # for fitting purposes.
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+        # Source masses from Kepler's third law (aS in mas at dS); the
+        # semi-major axes about the CoM give qS = mSs / mSp.
+        aS_AU = self.dS * (self.sepS * 1e-3) * units.AU
+        mS = (4 * np.pi ** 2 * aS_AU ** 3
+              / (const.G * (self.pS * units.day) ** 2)).to('Msun')
+        self.mS = mS.value
+        self.mSp = (self.aleph_secS / self.sepS) * self.mS
+        self.mSs = self.mS - self.mSp
+        self.qS = self.alephS / self.aleph_secS
 
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        # xL0 matches xS0: always (n_filters, 2).
-        self.xL0_E = self.xL0[:, 0]
-        self.xL0_N = self.xL0[:, 1]
+        # Inputs are the CoM-CoM pair, which is also the internal frame.
+        u0_amp_com = self.beta_com / self.thetaE_amp
+        set_bsbl_keplerian_frames(self, self.t0_com, u0_amp_com,
+                                  self.xS0_com, 'COM', 'COM')
 
-
-        com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
-                                       np.cos(self.alphaS_rad)))  # mas
-        self.xL0_com = self.xL0
-
-        self.xS0_com = self.xS0
-                     
         return
 
 
@@ -25329,19 +25361,19 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0_com : float
-        Time of closest approach between source COM and Lens COM (MJD.DDD)
-    xS0_E : array
-        R.A. of source COM position on sky at t = t0 (arcsec) in an
+        Time of closest approach between the source CoM and the lens CoM
+        (MJD.DDD).
+    xS0_com_E : array
+        R.A. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of source COM position on sky at t = t0 (arcsec) in an
+    xS0_com_N : array
+        Dec. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    beta: float
-        Angular distance between the source PRIMARY position
-        and the GEOMETRIC center of the lenses on the plane of the sky (mas).
-        Can be
+    beta_com : float
+        Angular distance between the source CoM and the lens CoM on the
+        plane of the sky at t0_com (mas). Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
@@ -25408,14 +25440,45 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
+
+    Notes
+    -----
+    Inputs ``t0_com``, ``beta_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in the
+    CoM-CoM frame: the source CoM passes the lens CoM at ``t0_com`` with
+    impact parameter ``beta_com``, and ``xS0_com`` is the source CoM at
+    ``t0_com``.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines). ``t0``,
+      ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint, and ``t0_p``,
+      ``u0_amp_p``, ``beta_p`` and ``xS0_p`` the primary source relative to
+      the primary lens. Both points orbit, so these are defined at an
+      instant (the source - point offset is perpendicular to the relative
+      proper motion), are reference epochs rather than closest approaches,
+      and are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio; ``mS``, ``mSp`` and
+      ``mSs`` are the source masses (Msun).
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_com',
-        'xS0_E',
-        'xS0_N',
-        'beta',
+        'xS0_com_E',
+        'xS0_com_N',
+        'beta_com',
         'muL_E',
         'muL_N',
         'muS_E',
@@ -25440,8 +25503,8 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
@@ -25453,14 +25516,14 @@ class BSBL_PhotAstrom_CircOrbs_Param1(BSBL_PhotAstrom_EllOrbs_Param1):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_com, xS0_E, xS0_N,
-                 beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+    def __init__(self, mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
+                 beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
                  omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(mLp, mLs, t0_com, xS0_E, xS0_N,
-                         beta, muL_E, muL_N, muS_E, muS_N, dL, dS,
+        super().__init__(mLp, mLs, t0_com, xS0_com_E, xS0_com_N,
+                         beta_com, muL_E, muL_N, muS_E, muS_N, dL, dS,
                          omegaL_pri, big_omegaL_sec, iL, 0, tpL, sepL,
                          omegaS_pri, big_omegaS_sec, iS, 0, pS, tpS, alephS, aleph_secS,
                          mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
@@ -25481,10 +25544,11 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     Attributes
     ----------
     t0_com : float
-        Time of closest approach between the primary source and lens COM (MJD.DDD)
+        Time of closest approach between the source CoM and the lens CoM
+        (MJD.DDD).
     u0_amp_com: float
-        Angular distance between the primary source and the binary lens center of mass
-        on the plane of the sky at closest approach in units of thetaE. Can be
+        Angular distance between the source CoM and the lens CoM on the
+        plane of the sky at t0_com, in units of thetaE. Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
@@ -25502,12 +25566,12 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : array
-        R.A. of primary source position on sky at t = t0_com (arcsec) in an
+    xS0_com_E : array
+        R.A. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of primary source position on sky at t = to_com (arcsec) in an
+    xS0_com_N : array
+        Dec. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
 
@@ -25573,6 +25637,37 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
+
+    Notes
+    -----
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in the
+    CoM-CoM frame: the source CoM passes the lens CoM at ``t0_com`` with
+    impact parameter ``u0_amp_com``, and ``xS0_com`` is the source CoM at
+    ``t0_com``.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines). ``t0``,
+      ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint, and ``t0_p``,
+      ``u0_amp_p``, ``beta_p`` and ``xS0_p`` the primary source relative to
+      the primary lens. Both points orbit, so these are defined at an
+      instant (the source - point offset is perpendicular to the relative
+      proper motion), are reference epochs rather than closest approaches,
+      and are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio; ``mS``, ``mSp`` and
+      ``mSs`` are the source masses (Msun).
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         't0_com',
@@ -25583,8 +25678,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         'piE_E',
         'piE_N',
         'q',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'muS_E',
         'muS_N',
         'omegaL_pri',
@@ -25607,8 +25702,8 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'fratio_bin',
         'mag_base',
         'b_sff',
@@ -25619,10 +25714,21 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
-                omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
-                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q,
+                 xS0_com_E, xS0_com_N, muS_E, muS_N,
+                 omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+                 omegaS_pri, big_omegaS_sec, iS, eS, pS, tpS, alephS, aleph_secS,
+                 fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        """
+        Set up a Keplerian BSBL model from CoM-CoM microlensing inputs.
+
+        Parameters are described in the class docstring.
+
+        Returns
+        -------
+        None
+        """
         self.t0_com = t0_com
         self.u0_amp_com = u0_amp_com
         self.tE = tE
@@ -25637,36 +25743,30 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.muS_system = self.muS
         self.muS_E, self.muS_N = self.muS
 
+        self.xS0_com_E = xS0_com_E
+        self.xS0_com_N = xS0_com_N
 
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
-
-                  
+        # Lens mass and distances from thetaE, piE and piS.
         kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
         kappa = kappa_tmp.to(units.mas / units.Msun,
                              equivalencies=units.dimensionless_angles()).value
         self.piE_amp = np.linalg.norm(self.piE)
         self.piRel = self.piE_amp * self.thetaE_amp
-
         self.piL = self.piRel + self.piS
 
-        # Calculate the distance to source and lens.
         dL = (self.piL * units.mas).to(units.parsec,
                                        equivalencies=units.parallax())
         dS = (self.piS * units.mas).to(units.parsec,
                                        equivalencies=units.parallax())
         self.dL = dL.to('pc').value
         self.dS = dS.to('pc').value
-                     
+
         self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
         self.mLp = self.mL / (1.0 + self.q)
         self.mLs = self.mLp * self.q
 
-                     
-        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL  # mas
-        self.alephL = self.sepL - self.aleph_secL  # mas
+        # Lens orbit: period from Kepler's third law (aL in mas at dL).
+        self.mL = self.mLp + self.mLs
         self.sepL_AU = self.dL * (self.sepL * 1e-3) * units.AU
         mL = self.mL * units.Msun
         pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
@@ -25678,20 +25778,11 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.eL = eL
         self.tpL = tpL
 
-        orb = orbits.Orbit()
-        orb.w = self.omegaL_pri
-        orb.o = self.big_omegaL_sec
-        orb.i = self.iL
-        orb.e = self.eL
-        orb.tp = (self.tpL)
-        orb.aleph = self.alephL *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secL *1e-3
-        orb.p = self.pL
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpL]))
-        self.alphaL_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaL = np.rad2deg(self.alphaL_rad)
+        # Semi-major axes of the lenses about their CoM (mas).
+        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL
+        self.alephL = self.sepL - self.aleph_secL
 
-
+        # Source orbit.
         self.omegaS_pri = omegaS_pri
         self.big_omegaS_sec = big_omegaS_sec
         self.iS = iS
@@ -25700,21 +25791,7 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.tpS = tpS
         self.alephS = alephS
         self.aleph_secS = aleph_secS
-                     
-        orb = orbits.Orbit()
-        orb.w = self.omegaS_pri
-        orb.o = self.big_omegaS_sec
-        orb.i = self.iS
-        orb.e = self.eS
-        orb.tp = (self.tpS)
-        orb.aleph = self.alephS *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secS *1e-3
-        orb.p = self.pS
-                     
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpS]))
-        self.alphaS_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaS = np.rad2deg(self.alphaS_rad)
-                     
+
         self.mag_base = np.array([mag_base])
         self.b_sff = np.array([b_sff])
         self.fratio_bin = np.array([fratio_bin])
@@ -25732,76 +25809,41 @@ class BSBL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         # Super handles checking for properly formatted variables.
         super().__init__()
-        self.phiL_rad = self.alphaL_rad - np.arctan2(piE_E, piE_N)
-        qeff = (1 - q)/(1 + q)
-        self.t0 = self.t0_com - 0.5 * qeff * self.tE * self.sepL * np.cos(self.phiL_rad) / self.thetaE_amp #bin lens geom center to primary source
-        self.u0_amp = self.u0_amp_com - 0.5 * qeff * self.sepL * np.sin(self.phiL_rad)/self.thetaE_amp
 
-        self.beta = self.u0_amp * self.thetaE_amp
-        
+        # Relative and lens proper motions from tE and the piE direction.
         self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
-        
-
-        # Get the directional vectors.
         self.thetaE_hat = self.piE / self.piE_amp
         self.muRel_hat = self.thetaE_hat
         self.thetaE = self.thetaE_amp * self.thetaE_hat
-
-        # Calculate the relative velocity vector. Note that this will be in the
-        # direction of theta_hat
         self.muRel = self.muRel_amp * self.thetaE_hat
         self.muRel_E, self.muRel_N = self.muRel
         self.muL = self.muS - self.muRel
         self.muL_E, self.muL_N = self.muL
+        self.piE_E, self.piE_N = self.piE
 
         self.vxL = self.muL_E * 1e-3
         self.vyL = self.muL_N * 1e-3
 
-        # Calculate m1 and m2 (see PSBL writeup) -- note these are the individual Einstein radii**2
+        # Individual Einstein radii**2 of the lenses (arcsec^2).
         inv_dist_diff = (1.0 / dL) - (1.0 / dS)
         m1 = units.rad ** 2 * (4 * const.G * self.mLp * units.Msun / const.c ** 2) * inv_dist_diff
         m2 = units.rad ** 2 * (4 * const.G * self.mLs * units.Msun / const.c ** 2) * inv_dist_diff
         self.m1 = m1.to(units.arcsec ** 2).value  # arcsec^2
         self.m2 = m2.to(units.arcsec ** 2).value
 
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, Solar System barycentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
+        # Source masses from Kepler's third law (aS in mas at dS); the
+        # semi-major axes about the CoM give qS = mSs / mSp.
+        aS_AU = self.dS * (self.sepS * 1e-3) * units.AU
+        mS = (4 * np.pi ** 2 * aS_AU ** 3
+              / (const.G * (self.pS * units.day) ** 2)).to('Msun')
+        self.mS = mS.value
+        self.mSp = (self.aleph_secS / self.sepS) * self.mS
+        self.mSs = self.mS - self.mSp
+        self.qS = self.alephS / self.aleph_secS
 
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta)
-        self.u0 = np.abs(self.u0_amp) * self.u0_hat
-
-        self.beta_com = self.u0_amp_com * self.thetaE_amp
-
-        self.u0_com = np.abs(self.u0_amp_com) * u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_com)
-
-        # Angular separation vector between source and lens (vector from lens to source)
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-        self.thetaS0_com = self.u0_com  * self.thetaE_amp #mas
-
-        # Calculate the position of the lens on the sky at time, t0=t0_g (closest approach between geometric center of lens and primary source).
-        #self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-        #self.xL0_E, self.xL0_N = self.xL0[0], self.xL0[1]
-
-        self.xL0_com = self.xS0  - self.thetaS0_com * 1e-3
-        com_vec = self.alephS * np.array((np.sin(self.alphaS_rad),
-                                       np.cos(self.alphaS_rad)))  # mas
-
-        self.xL0 = self.xL0_com
-        self.xS0_com = self.xS0 + com_vec *1e-3
+        # Inputs are the CoM-CoM pair, which is also the internal frame.
+        set_bsbl_keplerian_frames(self, self.t0_com, self.u0_amp_com,
+                                  self.xS0_com, 'COM', 'COM')
 
         return
 
@@ -25818,10 +25860,11 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     Attributes
     ----------
     t0_com : float
-        Time of closest approach between the primary source and lens COM (MJD.DDD)
+        Time of closest approach between the source CoM and the lens CoM
+        (MJD.DDD).
     u0_amp_com: float
-        Angular distance between the primary source and the binary lens center of mass
-        on the plane of the sky at closest approach in units of thetaE. Can be
+        Angular distance between the source CoM and the lens CoM on the
+        plane of the sky at t0_com, in units of thetaE. Can be
           * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
 
@@ -25839,12 +25882,12 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     q : float
             Mass ratio (M2 / M1)
 
-    xS0_E : array
-        R.A. of primary source position on sky at t = t0_com (arcsec) in an
+    xS0_com_E : array
+        R.A. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of primary source position on sky at t = to_com (arcsec) in an
+    xS0_com_N : array
+        Dec. of the source CoM position on sky at t = t0_com (arcsec) in an
         arbitrary ref. frame.
         One entry per filter.
     muS_E : float
@@ -25906,6 +25949,37 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         The observers location for each photometric dataset (def=['earth'])
     root_tol : float
         Tolerance in comparing the polynomial roots to the physical solutions. Default = 1e-8        
+
+    Notes
+    -----
+    Inputs ``t0_com``, ``u0_amp_com`` and ``xS0_com_E`` / ``xS0_com_N`` are in the
+    CoM-CoM frame: the source CoM passes the lens CoM at ``t0_com`` with
+    impact parameter ``u0_amp_com``, and ``xS0_com`` is the source CoM at
+    ``t0_com``.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines). ``t0``,
+      ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint, and ``t0_p``,
+      ``u0_amp_p``, ``beta_p`` and ``xS0_p`` the primary source relative to
+      the primary lens. Both points orbit, so these are defined at an
+      instant (the source - point offset is perpendicular to the relative
+      proper motion), are reference epochs rather than closest approaches,
+      and are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio; ``mS``, ``mSp`` and
+      ``mSs`` are the source masses (Msun).
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
 
     fitter_param_names = [
@@ -25917,8 +25991,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         'piE_E',
         'piE_N',
         'q',
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'muS_E',
         'muS_N',
         'omegaL_pri',
@@ -25939,8 +26013,8 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_com_E',
+        'xS0_com_N',
         'fratio_bin',
         'mag_base',
         'b_sff',
@@ -25952,11 +26026,13 @@ class BSBL_PhotAstrom_CircOrbs_Param2(BSBL_PhotAstrom_EllOrbs_Param2):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+    def __init__(self, t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q,
+                 xS0_com_E, xS0_com_N, muS_E, muS_N,
                  omegaL_pri, big_omegaL_sec, iL, tpL, sepL,
                  omegaS_pri, big_omegaS_sec, iS, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
-        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q, xS0_E, xS0_N, muS_E, muS_N,
+        super().__init__(t0_com, u0_amp_com, tE, thetaE, piS, piE_E, piE_N, q,
+                         xS0_com_E, xS0_com_N, muS_E, muS_N,
                          omegaL_pri, big_omegaL_sec, iL, 0, tpL, sepL,
                          omegaS_pri, big_omegaS_sec, iS, 0, pS, tpS, alephS, aleph_secS, fratio_bin, mag_base, b_sff, dmag_Lp_Ls,
                          raL=raL, decL=decL, obsLocation=obsLocation, root_tol=1e-8)
@@ -25981,20 +26057,20 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0_p : float
-        Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : array
-        R.A. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        Reference epoch (MJD.DDD) of the primary source - primary lens pair;
+        not a closest-approach time (see Notes).
+    xS0_p_E : array
+        R.A. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+    xS0_p_N : array
+        Dec. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
     beta_p : float
-        Angular distance between the source PRIMARY position
-        and the PRIMARY center of the lenses on the plane of the sky (mas). 
-        Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+        Angular distance between the primary source and the primary lens on
+        the plane of the sky at t0_p (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
@@ -26009,8 +26085,6 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     dS : float
         Distance from the observer to the source (pc)
 
-
-
     omegaL_pri: float
         The argument of periastron of the primary lens's orbit in degrees.
     big_omegaL_sec: float
@@ -26020,7 +26094,6 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         Inclination angle of the system in degrees.
     eL: float
         Eccentricity of the  Lens System
-
     tpL: float
         This is the time of the periastron of the system in days.
     aL: float
@@ -26070,13 +26143,42 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    Inputs ``t0_p``, ``beta_p`` and ``xS0_p_E`` / ``xS0_p_N`` are in the
+    primary-primary frame (primary source, primary lens). Both points
+    orbit, so the pair is defined at an instant: at ``t0_p`` the primary
+    source minus the primary lens is perpendicular to the relative proper
+    motion, ``beta_p`` is that offset, and ``xS0_p`` is the primary source
+    at ``t0_p``. ``t0_p`` is a reference epoch, not a closest approach.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines in non-parallax models). 
+      ``t0``, ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``. The input
+      pair is converted to the CoM-CoM pair explicitly.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint at an instant;
+      they are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS = aS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio.
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_p',
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'beta_p',
         'muL_E',
         'muL_N',
@@ -26104,8 +26206,8 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
@@ -26117,21 +26219,34 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
-                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
+    def __init__(self, mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
+                 beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
+                 omegaL_pri, big_omegaL_sec, iL, eL, tpL, aL,
                  omegaS_pri, big_omegaS_sec, iS, eS, tpS, aS, mSp, mSs,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
+        """
+        Set up a Keplerian BSBL model from primary-primary inputs.
+
+        Parameters are described in the class docstring.
+
+        Returns
+        -------
+        None
+        """
         self.mLp = mLp  # Msun
         self.mLs = mLs  # Msun
         self.mSp = mSp  # Msun
         self.mSs = mSs  # Msun
+        self.mS = mSp + mSs  # Msun
+        self.qS = mSs / mSp
         self.t0_p = t0_p
-        self.xS0_E = xS0_E
-        self.xS0_N = xS0_N
+        self.xS0_p_E = xS0_p_E
+        self.xS0_p_N = xS0_p_N
         self.beta_p = beta_p
         self.muL = np.array([muL_E, muL_N])
         self.muS = np.array([muS_E, muS_N])
+        self.muS_system = self.muS
         self.dL = dL
         self.dS = dS
         self.sepL = aL
@@ -26154,6 +26269,39 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         flux_sec = mag2flux(self.mag_src_sec)
         self.mag_base = flux2mag(flux_pri + flux_sec) + 2.5 * np.log10(self.b_sff)
 
+        # Lens orbit: period from Kepler's third law (aL in mas at dL).
+        self.mL = self.mLp + self.mLs
+        self.sepL_AU = self.dL * (self.sepL * 1e-3) * units.AU
+        mL = self.mL * units.Msun
+        pL = (2 * np.pi * np.sqrt(self.sepL_AU ** 3 / (const.G * mL))).to('day')
+        self.pL = pL.value  # Period in Days
+
+        self.omegaL_pri = omegaL_pri
+        self.big_omegaL_sec = big_omegaL_sec
+        self.iL = iL
+        self.eL = eL
+        self.tpL = tpL
+
+        # Semi-major axes of the lenses about their CoM (mas).
+        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL
+        self.alephL = self.sepL - self.aleph_secL
+
+        # Source orbit: period from Kepler's third law (aS in mas at dS).
+        self.a_AU = self.dS * (self.aS * 1e-3) * units.AU  # AU semi-major
+        mS = self.mS * units.Msun
+        pS = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mS))).to('day')
+        self.pS = pS.value
+        self.omegaS_pri = omegaS_pri
+        self.big_omegaS_sec = big_omegaS_sec
+        self.iS = iS
+        self.eS = eS
+        self.tpS = tpS
+
+        # Semi-major axes of the sources about their CoM (mas).
+        self.aleph_secS = (mSp / (mSp + mSs)) * self.sepS
+        self.alephS = self.sepS - self.aleph_secS
+
+        # Calculate the relative parallax
         inv_dist_diff = (1.0 / (dL * units.pc)) - (1.0 / (dS * units.pc))
         piRel = units.rad * units.au * inv_dist_diff
         self.piRel = piRel.to('mas').value
@@ -26163,79 +26311,6 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         piL = (1.0 / self.dL) * (units.rad * units.au / units.pc)
         self.piS = piS.to('mas').value
         self.piL = piL.to('mas').value
-
-
-        self.mL = mLp + mLs
-        self.aL_AU = dL * (self.sepL * 1e-3) * units.AU
-        mL = self.mL * units.Msun
-        pL = (2 * np.pi * np.sqrt(self.aL_AU ** 3 / (const.G * mL))).to('day')
-        self.pL = pL.value  # Period in Days
-
-        self.omegaL_pri = omegaL_pri
-        self.big_omegaL_sec = big_omegaL_sec
-        self.iL = iL
-        self.eL = eL
-        self.tpL = tpL
-        
-
-        # Calculate period, and semi-major axes
-        self.aleph_secL = (self.mLp / (self.mLp + self.mLs)) * self.sepL  # mas
-        self.alephL = self.sepL - self.aleph_secL  # mas
-
-        orb = orbits.Orbit()
-        orb.w = self.omegaL_pri
-        orb.o = self.big_omegaL_sec
-        orb.i = self.iL
-        orb.e = self.eL
-        orb.tp = (self.tpL)
-        orb.aleph = self.alephL *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secL *1e-3
-        orb.p = self.pL
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpL]))
-        self.alphaL_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaL = np.rad2deg(self.alphaL_rad)
-
-
-                     
-        self.a_AU = self.dS * (self.aS * 1e-3) * units.AU # AU semi-major
-                     
-        mass_sources = (mSp + mSs) * units.Msun
-        pS = (2 * np.pi * np.sqrt(self.a_AU ** 3 / (const.G * mass_sources))).to('day')
-        self.pS = pS.value
-
-                     
-
-        self.omegaS_pri = omegaS_pri
-        self.big_omegaS_sec = big_omegaS_sec
-        self.iS = iS
-        self.eS = eS
-        self.tpS = tpS
-        self.aS = aS
-
-                     
-
-        # Calculate period, and semi-major axes
-        self.aleph_secS = (mSp / (mSp + mSs)) * self.sepS  # mas
-        self.alephS = self.sepS - self.aleph_secS  # mas
-
-                     
-       # self.alephS = alephS
-    #    self.aleph_secS = aleph_secS
-                     
-        orb = orbits.Orbit()
-        orb.w = self.omegaS_pri
-        orb.o = self.big_omegaS_sec
-        orb.i = self.iS
-        orb.e = self.eS
-        orb.tp = (self.tpS)
-        orb.aleph = self.alephS *1e-3 #arcseconds
-        orb.aleph2 = self.aleph_secS *1e-3
-        orb.p = self.pS
-                     
-        (x, y, x2, y2) = orb.oal2xy(np.array([tpS]))
-        self.alphaS_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alphaS = np.rad2deg(self.alphaS_rad)
-
 
         # Calculate the relative proper motion vector.
         # Note that this will be in the direction of theta_hat
@@ -26263,111 +26338,25 @@ class BSBL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.m2 = m2.to(units.arcsec ** 2).value
 
         # Calculate the microlensing parallax
-        self.piE = (self.piRel / self.thetaE_amp) * self.thetaE_hat
-
-        # Calculate other angles
-        self.phi_piE_rad = np.arctan2(self.piE[0], self.piE[1])
-        self.phi_piE = self.phi_piE_rad * 180.0 / np.pi
-        self.phiL_rad = self.alphaL_rad - self.phi_piE_rad
-        self.phiL = self.phiL_rad * 180.0 / np.pi
-
-        # Comment on sign conventions:
-        # thetaS0 = xS0 - xL0
-        # (difference in positions on sky, Solar System barycentric, at t0)
-        # u0 = thetaS0 / thetaE -- so u0 is source - lens position vector
-        # if u0_E > 0 then the Source is to the East of the lens
-        # if u0_E < 0 then the source is to the West of the lens
-        # We adopt the following sign convention (same as Gould:2004):
-        #    u0_amp > 0 means u0_E > 0
-        #    u0_amp < 0 means u0_E < 0
-        # Note that we assume beta = u0_amp (with same signs).
-
-        # Calculate the closest approach vector. Define beta sign convention
-        # same as of Andy Gould does with beta > 0 means u0_E > 0
-        # (lens passes to the right of the source as seen from Earth or Sun).
-        # The function u0_hat_from_thetaE_hat is programmed to use thetaE_hat and beta, but
-        # the sign of beta is always the same as the sign of u0_amp. Therefore this
-        # usage of the function with u0_amp works exactly the same.
-        self.u0_hat_p = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_p)
-        self.u0_amp_p = self.beta_p / self.thetaE_amp  # in Einstein units
-        self.u0_p = np.abs(self.u0_amp_p) * self.u0_hat_p
-
-        # Calculate the Einstein crossing time. (days)
-        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
-
-        # Calculate t0 and beta for geometric center of lens
-        self.q = self.mLs / self.mLp
-                     
-        u0_x_out, u0_y_out, t0_out = fc.convert_u0_t0_psbl(t0_in=self.t0_p, u0_x_in=self.u0_p[0], u0_y_in=self.u0_p[1],
-                                                           tE=self.tE, theta_E=self.thetaE_amp, q=self.q,
-                                                           phi=self.phiL_rad, sep=self.sepL, mu_rel_x=self.muRel[0],
-                                                           mu_rel_y=self.muRel[1], coords_in='prim_center',
-                                                           coords_out='geom_mid')
-
-
-                     
-        self.u0 = np.array([u0_x_out, u0_y_out])
-        self.u0_amp = np.sqrt(self.u0[0] ** 2 + self.u0[1] ** 2)
-        self.u0_hat = self.u0 / self.u0_amp
-        self.t0 = t0_out
-        self.beta = self.u0_amp * self.thetaE_amp
-
-        # Angular separation vector between source and lens (vector from lens to source).
-        # Note this is the angle between the geometric center of the lens and the
-        # source primary position. Apologies for the mixed systems, but this is best
-        # for fitting purposes.
-        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
-
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
-
-        # Calculate the microlensing parallax
         self.piE_amp = self.piRel / self.thetaE_amp
         self.piE = self.piE_amp * self.thetaE_hat
         self.piE_E, self.piE_N = self.piE
 
-        #####
-        # Derived binary source parameters. Origin is at the primary.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
+        # Calculate the Einstein crossing time. (days)
+        self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
+        self.q = self.mLs / self.mLp
 
-        # Secondary
-        sepS_vec = self.sepS * np.array((np.sin(self.alphaS_rad),
-                                         np.cos(self.alphaS_rad)))  # mas
+        # Primary source - primary lens pair at t0_p (signed).
+        self.u0_hat_p = u0_hat_from_thetaE_hat(self.thetaE_hat, self.beta_p)
+        self.u0_amp_p = self.beta_p / self.thetaE_amp  # in Einstein units
+        self.u0_p = np.abs(self.u0_amp_p) * self.u0_hat_p
 
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
-
-
-        u0_x_com, u0_y_com, t0_com = fc.convert_u0_t0_psbl(t0_in=self.t0, u0_x_in=self.u0[0], u0_y_in=self.u0[1],
-                                                           tE=self.tE, theta_E=self.thetaE_amp, q=self.q,
-                                                           phi=self.phiL_rad, sep=self.sepL, mu_rel_x=self.muRel[0],
-                                                           mu_rel_y=self.muRel[1], coords_in='geom_mid',
-                                                           coords_out='COM')
-        self.u0_com = np.array([u0_x_com, u0_y_com])
-        self.u0_amp_com = np.sqrt(self.u0_com[0] ** 2 + self.u0_com[1] ** 2)
-        self.u0_hat_com = self.u0_com / self.u0_amp_com
-        self.t0_com = t0_com
-        self.beta = self.u0_amp_com * self.thetaE_amp
-
-        # Angular separation vector between source and lens (vector from lens to source).
-        # Note this is the angle between the geometric center of the lens and the
-        # source primary position. Apologies for the mixed systems, but this is best
-        # for fitting purposes.
-        self.thetaS0_com = self.u0_amp_com * self.thetaE_amp  # mas
-        self.xS0_com = self.xS0
-        # Calculate the position of the lens on the sky at time, t0
-        self.xL0_com = self.xS0 - (self.thetaS0_com * 1e-3)
-
-        self.muS_system = self.muS
+        # Primary-primary pair -> CoM-CoM pair (explicit), the internal frame.
+        set_bsbl_keplerian_frames(self, self.t0_p, self.u0_amp_p,
+                                  self.xS0_p, 'prim_center', 'prim_center')
 
         return
+
 
 class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     """BSBL model for astrometry and photometry - physical parameterization
@@ -26384,20 +26373,20 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     mLp, mLs : float
         Masses of the lenses (Msun)
     t0_p : float
-        Time of closest approach between source and PRIMARY LENS (MJD.DDD)
-    xS0_E : array
-        R.A. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+        Reference epoch (MJD.DDD) of the primary source - primary lens pair;
+        not a closest-approach time (see Notes).
+    xS0_p_E : array
+        R.A. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
-    xS0_N : array
-        Dec. of source primary position on sky at t = t0 (arcsec) in an
-        arbitrary ref. frame.
+    xS0_p_N : array
+        Dec. of the primary source position on sky at t = t0_p (arcsec) in
+        an arbitrary ref. frame.
         One entry per filter.
     beta_p : float
-        Angular distance between the source PRIMARY position
-        and the PRIMARY center of the lenses on the plane of the sky (mas). 
-        Can be
-          * positive (u0_amp > 0 when u0_hat[0] > 0) or 
+        Angular distance between the primary source and the primary lens on
+        the plane of the sky at t0_p (mas). Can be
+          * positive (u0_amp > 0 when u0_hat[0] > 0) or
           * negative (u0_amp < 0 when u0_hat[0] < 0).
     muL_E : float
         Lens system proper motion in the RA direction (mas/yr)
@@ -26468,13 +26457,42 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         such as 'jwst' or 'spitzer'. Can be a single string if all observer
         locations are identical. Otherwise, array of same length as mag_src
         or b_sff (e.g. other photometric parameters).
+
+    Notes
+    -----
+    Inputs ``t0_p``, ``beta_p`` and ``xS0_p_E`` / ``xS0_p_N`` are in the
+    primary-primary frame (primary source, primary lens). Both points
+    orbit, so the pair is defined at an instant: at ``t0_p`` the primary
+    source minus the primary lens is perpendicular to the relative proper
+    motion, ``beta_p`` is that offset, and ``xS0_p`` is the primary source
+    at ``t0_p``. ``t0_p`` is a reference epoch, not a closest approach.
+
+    Reference frames (positions are before parallax, in the SSB frame):
+
+    * The internal frame of Keplerian models is the CoM-CoM frame, the only
+      true closest approach (both CoMs move on straight lines). ``t0``,
+      ``u0_amp`` / ``u0``, ``beta`` and ``xL0`` equal ``t0_com``,
+      ``u0_amp_com`` / ``u0_com``, ``beta_com`` and ``xL0_com`` (the lens
+      CoM at ``t0_com``); ``xS0`` and ``xS0_com`` are the source CoM there.
+      ``xS0_pri`` / ``xS0_sec`` are the two sources at ``t0``. The input
+      pair is converted to the CoM-CoM pair explicitly.
+    * ``t0_mid``, ``u0_amp_mid``, ``beta_mid`` and ``xL0_mid`` describe the
+      primary source relative to the lens geometric midpoint at an instant;
+      they are root-solved on first access.
+    * ``alphaL`` (secondary -> primary lens) and ``alphaS`` (primary ->
+      secondary source), ``sepL_t0`` and ``sepS_t0`` are evaluated at
+      ``t0``. ``sepL = aL`` and ``sepS = aS`` are the semi-major axes.
+    * ``qS = mSs / mSp`` is the source mass ratio.
+
+    Frames are converted with
+    :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit`.
     """
     fitter_param_names = [
         'mLp',
         'mLs',
         't0_p',
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'beta_p',
         'muL_E',
         'muL_N',
@@ -26500,8 +26518,8 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
         'dmag_Lp_Ls',
     ]
     filt_param_names = [
-        'xS0_E',
-        'xS0_N',
+        'xS0_p_E',
+        'xS0_p_N',
         'mag_src_pri',
         'mag_src_sec',
         'b_sff',
@@ -26513,14 +26531,14 @@ class BSBL_PhotAstrom_CircOrbs_Param3(BSBL_PhotAstrom_EllOrbs_Param3):
     paramPhotFlag = True
     orbitFlag = 'Keplerian'
 
-    def __init__(self, mLp, mLs, t0_p, xS0_E, xS0_N,
+    def __init__(self, mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
                  beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
                  omegaL_pri, big_omegaL_sec, iL, tpL, aL,
                  omegaS_pri, big_omegaS_sec, iS, tpS, aS, mSp, mSs,
                  mag_src_pri, mag_src_sec, b_sff, dmag_Lp_Ls,
                  raL=None, decL=None, obsLocation='earth', root_tol=1e-8):
         # Circular lens and source orbits (eL = eS = 0).
-        super().__init__(mLp, mLs, t0_p, xS0_E, xS0_N,
+        super().__init__(mLp, mLs, t0_p, xS0_p_E, xS0_p_N,
                          beta_p, muL_E, muL_N, muS_E, muS_N, dL, dS,
                          omegaL_pri, big_omegaL_sec, iL, 0, tpL, aL,
                          omegaS_pri, big_omegaS_sec, iS, 0, tpS, aS,
@@ -32855,6 +32873,163 @@ def keplerian_binary_axis(orb, t):
     sep = np.hypot(d_E, d_N)
 
     return alpha_rad, sep
+
+
+def set_keplerian_com_frame(model, orbL, orbS, xS0_com, set_internal=True):
+    """
+    Fill the CoM-CoM frame of an orbiting binary model.
+
+    Parameters
+    ----------
+    model : BAGLE Param instance
+        Must already carry ``t0_com``, ``u0_amp_com``, ``tE``,
+        ``thetaE_amp``, ``thetaE_hat``, ``muL`` and ``muS``.
+    orbL : bagle.orbits.Orbit or None
+        Lens orbit about the lens CoM (arcsec); ``None`` for one lens.
+    orbS : bagle.orbits.Orbit or None
+        Source orbit about the source CoM (arcsec); ``None`` for one
+        source.
+    xS0_com : array_like, shape (n_filters, 2)
+        Source CoM position at ``t0_com`` (arcsec).
+    set_internal : bool, optional
+        If True (Keplerian option C), the internal ``t0`` / ``u0_amp`` /
+        ``u0`` / ``beta`` / ``xL0`` become the CoM values. If False, the
+        caller keeps its own internal (midpoint) frame.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Sets ``beta_com``, ``u0_hat_com``, ``u0_com``, ``thetaS0_com``,
+    ``xS0_com``, ``xL0_com`` (lens CoM at ``t0_com``) and ``_kep_frame``,
+    which drives the lazy ``_mid`` / ``_p`` attributes of
+    :class:`bagle.binary_frames.BinaryFramesMixin`.
+    """
+    # A re-init must not keep stale lazily cached _mid / _p values.
+    clear_lazy_frames(model)
+
+    # CoM-CoM closest approach vector (signed amplitude).
+    model.beta_com = model.u0_amp_com * model.thetaE_amp
+    model.u0_hat_com = u0_hat_from_thetaE_hat(model.thetaE_hat, model.beta_com)
+    model.u0_com = np.abs(model.u0_amp_com) * model.u0_hat_com
+    model.thetaS0_com = model.u0_com * model.thetaE_amp  # mas
+
+    # Source and lens CoM at t0_com: shape (n_filters, 2), arcsec.
+    model.xS0_com = np.atleast_2d(np.asarray(xS0_com, dtype=float))
+    model.xL0_com = model.xS0_com - (model.thetaS0_com * 1e-3)
+
+    # Lazy midpoint / primary pairs are root-solved from the CoM pair.
+    model._kep_frame = KeplerianFrame(
+        model.t0_com, model.u0_amp_com, model.tE, model.thetaE_hat,
+        model.thetaE_amp, orbL, orbS, model.xL0_com, model.xS0_com,
+        model.muL, model.muS)
+
+    if set_internal:
+        # Internal frame = CoM-CoM (the only exact closest approach).
+        model.t0 = model.t0_com
+        model.u0_amp = model.u0_amp_com
+        model.beta = model.beta_com
+        model.u0_hat = model.u0_hat_com
+        model.u0 = model.u0_com
+        model.thetaS0 = model.thetaS0_com
+        model.xL0 = model.xL0_com
+        model.xL0_E = model.xL0[:, 0]
+        model.xL0_N = model.xL0[:, 1]
+
+    return None
+
+
+def set_bsbl_keplerian_frames(model, t_in, u0_amp_in, xS0_in, lens_in, src_in):
+    """
+    Fill every frame of a Keplerian binary-source, binary-lens model.
+
+    Parameters
+    ----------
+    model : BSBL Keplerian Param instance
+        Must carry the lens orbit (``omegaL_pri``, ``big_omegaL_sec``,
+        ``iL``, ``eL``, ``tpL``, ``pL``, ``alephL``, ``aleph_secL``), the
+        source orbit (same names with ``S``), ``tE``, ``thetaE_amp``,
+        ``thetaE_hat``, ``piE``, ``muL`` and ``muS``.
+    t_in : float
+        Input reference epoch (MJD).
+    u0_amp_in : float
+        Signed input impact parameter (Einstein units) at ``t_in``.
+    xS0_in : array_like, shape (n_filters, 2)
+        Input source point at ``t_in`` (arcsec).
+    lens_in : {'COM', 'prim_center', 'geom_mid'}
+        Input lens reference point.
+    src_in : {'COM', 'prim_center'}
+        Input source reference point.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    The input pair is converted to the CoM-CoM pair explicitly, which then
+    becomes the internal frame (``t0``, ``u0_amp``, ``u0``, ``beta``,
+    ``xL0``; ``xS0`` is the source CoM). The midpoint and primary pairs are
+    lazy (:class:`bagle.binary_frames.BinaryFramesMixin`). The binary axes
+    are evaluated at ``t0``: ``alphaL`` points from the secondary lens to
+    the primary lens and ``alphaS`` from the primary source to the secondary
+    source, as in the static BSBL classes.
+    """
+    # Lens and source orbits about their CoMs (arcsec).
+    orbL = keplerian_lens_orbit(model.omegaL_pri, model.big_omegaL_sec,
+                                model.iL, model.eL, model.tpL, model.pL,
+                                model.alephL * 1e-3, model.aleph_secL * 1e-3)
+    orbS = keplerian_lens_orbit(model.omegaS_pri, model.big_omegaS_sec,
+                                model.iS, model.eS, model.tpS, model.pS,
+                                model.alephS * 1e-3, model.aleph_secS * 1e-3)
+
+    # Input pair -> CoM-CoM pair (explicit).
+    if lens_in == 'COM' and src_in == 'COM':
+        t0_com, u0_amp_com = t_in, u0_amp_in
+    else:
+        t0_com, u0_amp_com = fc.convert_u0_amp_t0_bsbl_orbit(
+            t_in, u0_amp_in, model.tE, model.thetaE_hat, orbL, orbS,
+            model.thetaE_amp * 1e-3, lens_in=lens_in, lens_out='COM',
+            src_in=src_in, src_out='COM')
+    model.t0_com = t0_com
+    model.u0_amp_com = u0_amp_com
+
+    # Source CoM at t_in, then carried to t0_com (arcsec).
+    xS_com_in = np.atleast_2d(np.asarray(xS0_in, dtype=float))
+    if src_in != 'COM':
+        xS_com_in = xS_com_in - fc.keplerian_point_offset(orbS, t_in, src_in)
+    xS0_com = shift_source_reference(xS_com_in, model.muS, t_in, t0_com)
+
+    # CoM-CoM frame is the internal frame.
+    model.muS_system = model.muS
+    set_keplerian_com_frame(model, orbL, orbS, xS0_com)
+    model.xS0 = np.array(model.xS0_com)
+    model.xS0_E = model.xS0[:, 0]
+    model.xS0_N = model.xS0[:, 1]
+
+    # Primary and secondary sources at t0.
+    x, y, x2, y2 = orbS.oal2xy(np.array([model.t0]))
+    model.xS0_pri = model.xS0_com + np.array([x[0], y[0]])
+    model.xS0_sec = model.xS0_com + np.array([x2[0], y2[0]])
+
+    # Binary axes at t0. keplerian_binary_axis gives secondary -> primary;
+    # the source axis points primary -> secondary.
+    phi_piE = np.arctan2(model.piE[0], model.piE[1])
+    model.alphaL_rad, sepL_t0 = keplerian_binary_axis(orbL, model.t0)
+    model.alphaL = np.rad2deg(model.alphaL_rad)
+    model.sepL_t0 = sepL_t0 * 1e3  # mas
+    alpha_ps, sepS_t0 = keplerian_binary_axis(orbS, model.t0)
+    model.alphaS_rad = (alpha_ps + np.pi) % (2 * np.pi)
+    model.alphaS = np.rad2deg(model.alphaS_rad)
+    model.sepS_t0 = sepS_t0 * 1e3  # mas
+    model.phiL_rad = model.alphaL_rad - phi_piE
+    model.phiL = np.rad2deg(model.phiL_rad)
+    model.phiS_rad = model.alphaS_rad - phi_piE
+    model.phiS = np.rad2deg(model.phiS_rad)
+
+    return None
 
 
 def get_angular_einstein_radius(m, d1, d2):

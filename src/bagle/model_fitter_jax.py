@@ -71,7 +71,8 @@ muS_scale_factor = 100.0
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
                      'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
                      'dmag_Lp_Lt',
-                     'xS0_E', 'xS0_N', 'pi_ref_frame',
+                     'xS0_E', 'xS0_N', 'xS0_com_E', 'xS0_com_N',
+                     'xS0_p_E', 'xS0_p_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
@@ -663,6 +664,10 @@ class MicrolensSolver(Solver):
         't0_p': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
         'xS0_N': ('make_xS0_gen', None, None),
+        'xS0_com_E': ('make_xS0_gen', None, None),
+        'xS0_com_N': ('make_xS0_gen', None, None),
+        'xS0_p_E': ('make_xS0_gen', None, None),
+        'xS0_p_N': ('make_xS0_gen', None, None),
         'u0_amp': ('make_gen', -1, 1),
         'u0_amp_prim': ('make_gen', -1, 1),
         'beta': ('make_gen', -2, 2),
@@ -733,8 +738,7 @@ class MicrolensSolver(Solver):
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
-        'xS0_system_E': ('make_gen', -10, 10),
-        'xS0_system_N': ('make_gen', -10, 10),
+        'qS': ('make_gen', 0, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
         'accS_E': ('make_gen', -10, 10),
@@ -2084,9 +2088,10 @@ class MicrolensSolver(Solver):
                         'xS0 prior for a filter with no astrometry: '
                         + param_name
                     )
-                if priors_name == 'xS0_E':
+                # xS0_E, xS0_com_E and xS0_p_E all read the East positions.
+                if priors_name.endswith('_E'):
                     pos = self.data['xpos' + str(int(series) + 1)]
-                elif priors_name == 'xS0_N':
+                elif priors_name.endswith('_N'):
                     pos = self.data['ypos' + str(int(series) + 1)]
                 else:
                     raise ValueError(param_name)

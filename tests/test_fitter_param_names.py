@@ -31,6 +31,10 @@ RENAMES = {
     ("sepL", "aL"),  # circular binary-source orbits: a = separation
     ("sep12", "sep"), ("alpha12", "alpha"), ("q_12", "q"),  # PSTL: pair 1-2
     ("i_12", "i"), ("e_12", "e"), ("tp_12", "tp"), ("a_12", "a"),
+    # Keplerian CoM-input classes pass xS0_com_* to a static parent's xS0_*,
+    # and PSTL passes its xS0_* to the PSBL Keplerian xS0_com_*.
+    ("xS0_com_E", "xS0_E"), ("xS0_com_N", "xS0_N"),
+    ("xS0_E", "xS0_com_E"), ("xS0_N", "xS0_com_N"),
 }
 
 

@@ -4257,6 +4257,8 @@ def fake_data_noPar_PSBL_1(outdir='', outroot='psbl',
     params['t0'] = psbl.t0
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
+    params['xS0_com_E'] = xS0_E
+    params['xS0_com_N'] = xS0_N
     params['beta'] = psbl.beta
     params['muL_E'] = muL_E
     params['muL_N'] = muL_N
@@ -4441,6 +4443,8 @@ def fake_data_noPar_PSBL_1_a2(outdir='', outroot='psbl',
     params['t0'] = psbl.t0
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
+    params['xS0_com_E'] = xS0_E
+    params['xS0_com_N'] = xS0_N
     params['beta'] = psbl.beta
     params['muL_E'] = muL_E
     params['muL_N'] = muL_N
@@ -4626,6 +4630,8 @@ def fake_data_noPar_PSBL_ell_1(outdir='', outroot='psbl',
     params['t0'] = psbl.t0
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
+    params['xS0_com_E'] = xS0_E
+    params['xS0_com_N'] = xS0_N
     params['beta'] = psbl.beta
     params['muL_E'] = muL_E
     params['muL_N'] = muL_N
@@ -4817,6 +4823,8 @@ def fake_data_noPar_PSBL_4(outdir='', outroot='psbl',
     params['piE_N'] = piE_N
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
+    params['xS0_com_E'] = xS0_E
+    params['xS0_com_N'] = xS0_N
 
     params['omega_pri'] = omega
     params['big_omega_sec'] = big_omega
@@ -5016,6 +5024,9 @@ def fake_data_noPar_BSBL_1(outdir='', outroot='psbl', mLp=10, mLs=8,
     params['t0'] = bsbl.t0
     params['xS0_E'] = xS0_E
     params['xS0_N'] = xS0_N
+    params['xS0_com_E'] = xS0_E
+    params['xS0_com_N'] = xS0_N
+    params['beta_com'] = bsbl.beta_com
 
     params['beta'] = bsbl.beta
     params['muL_E'] = muL_E
