@@ -223,7 +223,10 @@ All 188 truth rows constructed successfully in the integration check.
 Photometry was spot-checked at five epochs each for events 028, 027, 093,
 and 157, including their sampled peaks. At ``amg_tol=1e-6`` and a 4096-point
 cap, the largest difference from VBM was about 218 ppm, at event 027's peak.
-Increasing the cap to 16384 at ``amg_tol=1e-7`` did not stabilize that point.
+At that same epoch with ``amg_tol=1e-7``, contour point limits of 4096, 8192,
+and 16384 gave baseline-normalized fluxes of 3.739593, 3.738810, and 3.744634,
+respectively. Increasing the limit therefore did not demonstrate improved
+accuracy at this epoch.
 These checks establish the parameterization and workflow, but do not
 validate BAGLE's development integrator for every Beginner observation.
 

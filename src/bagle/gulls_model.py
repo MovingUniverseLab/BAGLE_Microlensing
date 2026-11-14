@@ -199,8 +199,10 @@ class FSBL_PhotParamGullsBeginner(model.FSBL_PhotParam1):
     ``get_amplification`` and ``get_photometry`` use BAGLE's own finite-source
     integrator. ``amg_tol`` and ``amg_max_pts`` control that calculation;
     they are not VBM's ``Tol``/``RelTol`` and do not promise identical output.
-    The development integrator did not stabilize at a sampled caustic peak
-    in RMDC26_000027 when the contour cap increased from 4096 to 16384.
+    At a sampled RMDC26_000027 caustic peak with ``amg_tol=1e-7``, increasing
+    the contour point limit from 4096 to 8192 to 16384 gave baseline-normalized
+    fluxes of 3.739593, 3.738810, and 3.744634, respectively. These results
+    did not show that increasing the limit made the flux more accurate.
     It is not yet validated for precise reproduction of every Beginner curve.
     Precise VBM comparisons use ``BinaryMag2`` with ``Tol=1e-4`` (absolute
     magnification-error target), ``RelTol=1e-6`` (relative target),
