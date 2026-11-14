@@ -7671,9 +7671,10 @@ class PSBL_PhotAstrom(PSBL, PSPL_PhotAstrom):
             # Get resolved position for orbit-case instead.
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
-                # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset  # parallax applied
-                xL2 = xL1 + (2 * offset)
+                # Geometric midpoint origin; primary on +alpha (same as static).
+                xL = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
+                xL1 = xL + offset  # primary
+                xL2 = xL - offset  # secondary
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
                 # Apply acceleration difference.
@@ -22976,9 +22977,10 @@ class BSBL(PSBL):
             # Get resolved position for orbit-case instead.
             if self.orbitFlag == 'linear' or self.orbitFlag == 'accelerated':
                 dt_in_years = (t - self.t0) / days_per_year
-                # Get positions assuming binary origin at primary.
-                xL1 = self.get_lens_origin_astrometry(t, filt_idx=filt_idx) - offset # parallax applied
-                xL2 = xL1 + (2 * offset)
+                # Geometric midpoint origin; primary on +alphaL (same as static).
+                xL = self.get_lens_origin_astrometry(t, filt_idx=filt_idx)
+                xL1 = xL + offset  # primary
+                xL2 = xL - offset  # secondary
                 # Apply velocity difference.
                 xL2 += np.outer(dt_in_years, self.muL_sec - self.muL) * 1e-3
                 # Apply acceleration difference.

@@ -15,10 +15,10 @@ are root-solved lazily (`t0_mid`, `u0_amp_mid`, `xL0_mid`, `t0_p`, ...).
 The CoMs move on straight lines, so the CoM pair is an exact closest
 approach. Orbits are always evaluated about the CoMs.
 
-**Result.** All PSBL / FSBL and BSBL / BFSBL parameterizations, static and
-Keplerian (including phot-only), honor their input frame and fill the
-midpoint frame consistently. The remaining failures are the primary-input
-linear / accelerated orbit classes (see Remaining issues).
+**Result.** All PSBL / FSBL and BSBL / BFSBL parameterizations — static,
+linear / accelerated (including primary-input Param6 / Param7), and
+Keplerian (including phot-only) — honor their input frame and fill the
+midpoint / CoM frame consistently.
 
 ## Method
 
@@ -182,8 +182,8 @@ Times in days, separations in Einstein radii, `xS0` offset in mas. `Δt_in` / `|
 | `FSBL_PhotAstromParam8` | CoM `t0_com` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1514 | 0.1514 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotAstrom_AccOrbs_Param1` | geometric `t0` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.0724 | 0.0724 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotAstrom_AccOrbs_Param3` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
-| `FSBL_PhotAstrom_AccOrbs_Param6` | primary `t0_prim` | -51.45 | 0.4087 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
-| `FSBL_PhotAstrom_AccOrbs_Param7` | primary `t0_p` | -175.32 | 0.3981 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
+| `FSBL_PhotAstrom_AccOrbs_Param6` | primary `t0_prim` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
+| `FSBL_PhotAstrom_AccOrbs_Param7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotAstrom_CircOrbs_Param1` | CoM `t0_com` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.1512 | 0.1512 | 0.0000 | 0.000 (t0_com) | ✅ | ✅ |
 | `FSBL_PhotAstrom_CircOrbs_Param3` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotAstrom_CircOrbs_Param4` | CoM `t0_com` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.0901 | 0.0901 | 0.0000 | 0.000 (t0_com) | ✅ | ✅ |
@@ -196,8 +196,8 @@ Times in days, separations in Einstein radii, `xS0` offset in mas. `Δt_in` / `|
 | `FSBL_PhotAstrom_EllOrbs_Param8` | CoM `t0_com` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.0993 | 0.0993 | 0.0000 | 0.000 (t0_com) | ✅ | ✅ |
 | `FSBL_PhotAstrom_LinOrbs_Param1` | geometric `t0` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.0724 | 0.0724 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotAstrom_LinOrbs_Param3` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
-| `FSBL_PhotAstrom_LinOrbs_Param6` | primary `t0_prim` | -51.45 | 0.4087 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
-| `FSBL_PhotAstrom_LinOrbs_Param7` | primary `t0_p` | -175.32 | 0.3981 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
+| `FSBL_PhotAstrom_LinOrbs_Param6` | primary `t0_prim` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
+| `FSBL_PhotAstrom_LinOrbs_Param7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `FSBL_PhotParam1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
 | `FSBL_Phot_CircOrbs_Param1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
 | `FSBL_Phot_EllOrbs_Param1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
@@ -208,8 +208,8 @@ Times in days, separations in Einstein radii, `xS0` offset in mas. `Δt_in` / `|
 | `PSBL_PhotAstromParam5` | primary `t0_prim` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `PSBL_PhotAstromParam7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `PSBL_PhotAstrom_AccOrbs_Param1` | geometric `t0` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.0724 | 0.0724 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
-| `PSBL_PhotAstrom_AccOrbs_Param6` | primary `t0_prim` | -51.45 | 0.4087 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
-| `PSBL_PhotAstrom_AccOrbs_Param7` | primary `t0_p` | -175.32 | 0.3981 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
+| `PSBL_PhotAstrom_AccOrbs_Param6` | primary `t0_prim` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
+| `PSBL_PhotAstrom_AccOrbs_Param7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `PSBL_PhotAstrom_CircOrbs_Param1` | CoM `t0_com` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.1512 | 0.1512 | 0.0000 | 0.000 (t0_com) | ✅ | ✅ |
 | `PSBL_PhotAstrom_CircOrbs_Param2` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `PSBL_PhotAstrom_CircOrbs_Param3` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
@@ -223,8 +223,8 @@ Times in days, separations in Einstein radii, `xS0` offset in mas. `Δt_in` / `|
 | `PSBL_PhotAstrom_EllOrbs_Param7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2519 | 0.2519 | 0.0000 | 0.000 (t0_p) | ✅ | ✅ |
 | `PSBL_PhotAstrom_EllOrbs_Param8` | CoM `t0_com` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.0993 | 0.0993 | 0.0000 | 0.000 (t0_com) | ✅ | ✅ |
 | `PSBL_PhotAstrom_LinOrbs_Param1` | geometric `t0` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.0724 | 0.0724 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
-| `PSBL_PhotAstrom_LinOrbs_Param6` | primary `t0_prim` | -51.45 | 0.4087 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
-| `PSBL_PhotAstrom_LinOrbs_Param7` | primary `t0_p` | -175.32 | 0.3981 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ❌ | ✅ |
+| `PSBL_PhotAstrom_LinOrbs_Param6` | primary `t0_prim` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.2543 | 0.2543 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
+| `PSBL_PhotAstrom_LinOrbs_Param7` | primary `t0_p` | +0.00 | 0.0724 | 0.0724 | +0.00 | 0.2352 | 0.2352 | 0.0000 | 0.000 (t0) | ✅ | ✅ |
 | `PSBL_PhotParam1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
 | `PSBL_Phot_CircOrbs_Param1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
 | `PSBL_Phot_EllOrbs_Param1` | geometric `t0` | +0.00 | 0.1000 | 0.1000 | +0.00 | 0.1000 | 0.1000 | – | – | ✅ | ✅ |
@@ -290,11 +290,9 @@ VBMicrolensing in three motion directions), `tests/test_binary_orbit_frames.py`
 
 ## Remaining issues
 
-* **Linear / accelerated primary-input classes** (`LinOrbs` / `AccOrbs`
-  Param6 / Param7): internal frame correct, input frame not honored. Their
-  `get_resolved_lens_astrometry` branch places the primary at
-  `xL0 - (sep/2)(sin α, cos α)`, the opposite side from the static and
-  Keplerian classes, so the static conversion lands on the wrong lens.
+None for binary-lens reference frames. (Other bagle todos — BSPL Keplerian
+`xS0`, phot-only binary-source along-track, Gulls PR #47, centroid-shift
+map — are outside this audit.)
 
 ## Reproduce
 

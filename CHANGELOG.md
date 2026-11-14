@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### LinOrbs / AccOrbs lens placement
+
+- Binary-lens `LinOrbs` / `AccOrbs` `get_resolved_lens_astrometry` now
+  places the primary at `xL0 + (sep/2)(sin α, cos α)`, matching the static
+  and Keplerian classes (it previously used the opposite sign). Primary-
+  input Param6 / Param7 conversions already assumed the static side, so
+  their input frames are honored after this fix (`model.py` and
+  `model_jax.py`).
+
 ### Binary reference frames (PSBL / FSBL / BSBL / BFSBL)
 
 Fit results for the classes below change: their constructors now honor the

@@ -671,10 +671,10 @@ are root-solved lazily (`t0_mid`, `u0_amp_mid`, `xL0_mid`, `t0_p`, ...).
 The CoMs move on straight lines, so the CoM pair is an exact closest
 approach. Orbits are always evaluated about the CoMs.
 
-**Result.** All PSBL / FSBL and BSBL / BFSBL parameterizations, static and
-Keplerian (including phot-only), honor their input frame and fill the
-midpoint frame consistently. The remaining failures are the primary-input
-linear / accelerated orbit classes (see Remaining issues).
+**Result.** All PSBL / FSBL and BSBL / BFSBL parameterizations — static,
+linear / accelerated (including primary-input Param6 / Param7), and
+Keplerian (including phot-only) — honor their input frame and fill the
+midpoint / CoM frame consistently.
 
 ## Method
 
@@ -820,11 +820,9 @@ VBMicrolensing in three motion directions), `tests/test_binary_orbit_frames.py`
 
 ## Remaining issues
 
-* **Linear / accelerated primary-input classes** (`LinOrbs` / `AccOrbs`
-  Param6 / Param7): internal frame correct, input frame not honored. Their
-  `get_resolved_lens_astrometry` branch places the primary at
-  `xL0 - (sep/2)(sin α, cos α)`, the opposite side from the static and
-  Keplerian classes, so the static conversion lands on the wrong lens.
+None for binary-lens reference frames. (Other bagle todos — BSPL Keplerian
+`xS0`, phot-only binary-source along-track, Gulls PR #47, centroid-shift
+map — are outside this audit.)
 
 ## Reproduce
 
