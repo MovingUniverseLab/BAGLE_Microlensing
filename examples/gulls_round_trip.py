@@ -116,9 +116,9 @@ def figure(result):
                           buttons=buttons)],
         template='plotly_white', hovermode='x unified', dragmode='pan')
     caption = (
-        'This figure shows two ways of converting RMDC26 Beginner Tier Gulls '
-        'parameters into a VBM light curve and compares both with the saved '
-        f'Gulls noiseless light curve for {d["name"]} in F146. '
+        'This figure validates BAGLE’s conversion of the RMDC26 Beginner Tier '
+        'Gulls microlensing model to VBM against our best-matching independent '
+        f'direct conversion, using {d["name"]} in F146. '
         'Orange is “Independent Gulls to VBM”, dashed blue is “BAGLE ingesting '
         'Gulls and exporting VBM”, and open circles are “Gulls Noiseless”. '
         'The middle panel, “vs Gulls”, uses Gulls Noiseless as the reference: '
