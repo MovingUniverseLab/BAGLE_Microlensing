@@ -2587,13 +2587,13 @@ def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=
 
     if amp_pylima is not None:
         ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], ls='-', lw=2, ms=3,label='pyLIMA - BAGLE')
     if amp_vbmicr is not None:
         ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], ls=':', lw=2, ms=3, label='VBMicrolensing - BAGLE')
     if amp_mulens is not None:
         ax[0].plot(time_arr, amp_mulens, label='MuLensModel', color=colors[3], ls='-.', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_mulens - amp_bagle, 'x', color=colors[3], lw=2, label='MuLensModel - BAGLE')
+        ax[1].plot(time_arr, amp_mulens - amp_bagle, 'x', color=colors[3], ls='-.', lw=2, ms=3, label='MuLensModel - BAGLE')
 
     ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
 
@@ -2636,10 +2636,10 @@ def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_
 
     if amp_pylima is not None:
         ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], ls='-', lw=2, ms=3, label='pyLIMA - BAGLE')
     if amp_vbmicr is not None:
         ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], ls=':', lw=2, ms=3, label='VBMicrolensing - BAGLE')
 
     ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
 
