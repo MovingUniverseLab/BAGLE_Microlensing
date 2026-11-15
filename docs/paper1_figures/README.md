@@ -84,10 +84,10 @@ Not reproduced: the hand-drawn schematics (`geometry_schematic_binary_lens`,
 
 ## Code issues found (B), present on origin/main
 
-1. Binary-lens Lin/AccOrbs: `PSBL_PhotAstrom.get_resolved_lens_astrometry`
-   (model.py ~7656) and the BSBL equivalent (~22978), plus model_jax.py,
-   place the primary at -sep/2 along alpha. The static branch places it at
-   +sep/2, so switching static <-> Lin/AccOrbs flips the binary by 180 deg.
+1. ~~Binary-lens Lin/AccOrbs: `PSBL_PhotAstrom.get_resolved_lens_astrometry`
+   (and the BSBL equivalent), plus model_jax.py, placed the primary at
+   `-sep/2` along alpha while static used `+sep/2`~~ (**fixed**): primary
+   is at `xL0 + (sep/2)(sin α, cos α)`, matching static and Keplerian.
 2. ~~`BSPL_PhotAstrom_EllOrbs_Param1` / `Param2` did not reproduce the input
    xS0 at t0~~ (**fixed**): CoM is now `xS0 - d_pri(t0)` from `oal2xy` at
    `t0`; `sep = aleph + aleph_sec` remains the relative semi-major axis.
