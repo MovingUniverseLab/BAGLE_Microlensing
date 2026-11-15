@@ -327,6 +327,638 @@ def get_mulens_model(bagle_model):
     return mulens_mod
 
 
+# BinaryLightCurveKepler reads the Sun table even when both parallax
+# components are zero. Shift TDB MJD onto a date inside that table.
+# ``t - t0`` is unchanged when the light-curve times use the same shift,
+# so the magnification does not pick up the 0.5 day HJD' offset.
+VBM_ORBIT_TIME_SHIFT = 50000.0
+
+# Tiny source radius for point-source binary and triple light curves.
+# rho = 1e-6 matches point-source magnification at about 1e-8. rho = 1e-10
+# is noisier in VBM's contour solver.
+_VBM_POINT_SOURCE_RHO = 1e-6
+
+
+def _vbm_lens_family(class_name):
+    """Classify a BAGLE class name for the VBM multi-lens light curves.
+
+    Parameters
+    ----------
+    class_name : str
+        ``bagle_model.__class__.__name__``.
+
+    Returns
+    -------
+    family : str or None
+        ``'triple'``, ``'binary'``, or None for a single lens.
+        Binary-source classes are None: they are not one-source binaries.
+    """
+    # Triple before binary: the names do not overlap, but keep the
+    # order obvious.
+    if 'PSTL' in class_name:
+        return 'triple'
+
+    # BFSPL / BFSBL contain the substrings FSPL / FSBL.
+    if ('BFSPL' in class_name or 'BFSBL' in class_name
+            or 'BSPL' in class_name or 'BSBL' in class_name):
+        return None
+
+    if 'FSBL' in class_name or 'PSBL' in class_name:
+        return 'binary'
+
+    return None
+
+
+def _is_finite_source_class(class_name):
+    """True for a single-source finite-source BAGLE class.
+
+    Parameters
+    ----------
+    class_name : str
+        ``bagle_model.__class__.__name__``.
+
+    Returns
+    -------
+    finite : bool
+    """
+    if 'BFSPL' in class_name or 'BFSBL' in class_name:
+        return False
+
+    finite = ('FSPL' in class_name or 'FSBL' in class_name
+              or 'FSTL' in class_name)
+
+    return finite
+
+
+def _vbm_orbit_kind(class_name):
+    """Orbit family understood by the VBM light-curve functions.
+
+    Parameters
+    ----------
+    class_name : str
+        ``bagle_model.__class__.__name__``.
+
+    Returns
+    -------
+    kind : str
+        ``'kepler'`` (EllOrbs or CircOrbs), ``'linear'`` (LinOrbs or
+        AccOrbs), or ``'static'``.
+    """
+    if 'EllOrbs' in class_name or 'CircOrbs' in class_name:
+        return 'kepler'
+
+    if 'LinOrbs' in class_name or 'AccOrbs' in class_name:
+        return 'linear'
+
+    return 'static'
+
+
+def _vbm_rho(bagle_model, tE_bagle, tE_vbm):
+    """Source radius in VBM's Einstein units.
+
+    Point-source models get :data:`_VBM_POINT_SOURCE_RHO`. Finite-source
+    models use ``source_radius_thetaE_units`` when the model has it, then
+    rescale from BAGLE's Einstein radius to the total-mass radius VBM uses.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    tE_bagle : float
+        BAGLE Einstein timescale (days).
+    tE_vbm : float
+        Einstein timescale in the VBM mass normalization (days).
+
+    Returns
+    -------
+    rho : float
+        Source radius in VBM Einstein radii. Always positive.
+    """
+    class_name = bagle_model.__class__.__name__
+
+    if not _is_finite_source_class(class_name):
+        return _VBM_POINT_SOURCE_RHO
+
+    # Native BAGLE rho, in whatever Einstein radius that model uses.
+    if hasattr(bagle_model, 'source_radius_thetaE_units'):
+        rho = float(bagle_model.source_radius_thetaE_units())
+    elif hasattr(bagle_model, 'thetaE_amp'):
+        rho = float(bagle_model.radiusS) * 1e3 / float(bagle_model.thetaE_amp)
+    else:
+        rho = float(bagle_model.radiusS)
+
+    # thetaE scales with tE at fixed proper motion. Triple PhotAstrom
+    # defines thetaE from the 1-2 pair; VBM uses the total mass.
+    rho *= float(tE_bagle) / float(tE_vbm)
+
+    if rho <= 0.0:
+        return _VBM_POINT_SOURCE_RHO
+
+    return rho
+
+
+def _mass_fractions(bagle_model, n_lens):
+    """Lens masses as fractions of the total, primary first.
+
+    PhotAstrom models also store ``m1`` as a polynomial coefficient in
+    arcsec^2. Prefer the solar masses ``mLp``, ``mLs``, ``mLt`` when
+    they exist.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    n_lens : int
+        2 or 3.
+
+    Returns
+    -------
+    mass : ndarray, shape (n_lens,)
+        Fractions summing to 1.
+    """
+    if n_lens == 3 and hasattr(bagle_model, 'mLt'):
+        mass = np.array([bagle_model.mLp, bagle_model.mLs,
+                         bagle_model.mLt], dtype=float)
+    elif hasattr(bagle_model, 'mLp') and hasattr(bagle_model, 'mLs'):
+        mass = np.array([bagle_model.mLp, bagle_model.mLs], dtype=float)
+    elif n_lens == 3:
+        mass = np.array([bagle_model.m1, bagle_model.m2,
+                         bagle_model.m3], dtype=float)
+    else:
+        mass = np.array([bagle_model.m1, bagle_model.m2], dtype=float)
+
+    mass = mass / np.sum(mass)
+
+    return mass
+
+
+def _einstein_source_lenses(bagle_model, t, n_lens):
+    """Source and lenses in VBM's total-mass Einstein frame.
+
+    Phot-only positions are already in Einstein radii of the total mass.
+    PhotAstrom positions are arcseconds. A triple PhotAstrom ``thetaE``
+    is the 1-2 pair, so those coordinates are divided by the total-mass
+    Einstein radius and ``tE`` is stretched by the same factor.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    t : array_like
+        Times (MJD).
+    n_lens : int
+        2 or 3.
+
+    Returns
+    -------
+    src : ndarray, shape (N_times, 2)
+        Unlensed source, East/North, VBM Einstein radii.
+    lenses : ndarray, shape (N_times, n_lens, 2)
+        Lens positions in that same frame.
+    tE_vbm : float
+        Einstein timescale for that frame (days).
+    """
+    t = np.atleast_1d(np.asarray(t, dtype=float))
+    tE_bagle = float(bagle_model.tE)
+
+    # Phot-only: get_u and the lens table share one Einstein origin.
+    if not bagle_model.astrometryFlag:
+        lenses = np.asarray(
+            bagle_model.get_resolved_lens_astrometry(t), dtype=float)
+        src = np.asarray(bagle_model.get_u(t), dtype=float)
+        if src.ndim == 3:
+            src = src[:, 0, :]
+
+        return src, lenses, tE_bagle
+
+    # PhotAstrom sky positions (arcsec), relative to the lens origin.
+    xL = np.asarray(
+        bagle_model.get_resolved_lens_astrometry(t), dtype=float)
+    xS = np.asarray(
+        bagle_model.get_source_astrometry_unlensed(t), dtype=float)
+    x0 = np.asarray(
+        bagle_model.get_lens_origin_astrometry(t), dtype=float)
+    xL = xL - x0[:, None, :]
+    xS = xS - x0
+
+    # Total-mass Einstein radius. Binary thetaE is already the total.
+    thetaE_mas = float(bagle_model.thetaE_amp)
+    if n_lens == 3 and hasattr(bagle_model, 'mLt'):
+        m_tot = float(bagle_model.mLp + bagle_model.mLs + bagle_model.mLt)
+        m_pair = float(bagle_model.mLp + bagle_model.mLs)
+        thetaE_vbm_mas = thetaE_mas * np.sqrt(m_tot / m_pair)
+    else:
+        thetaE_vbm_mas = thetaE_mas
+
+    # arcsec per VBM Einstein radius.
+    scale = thetaE_vbm_mas * 1e-3
+    src = xS / scale
+    lenses = xL / scale
+    tE_vbm = tE_bagle * (thetaE_vbm_mas / thetaE_mas)
+
+    return src, lenses, tE_vbm
+
+
+def _static_multilens_params(bagle_model, n_lens):
+    """VBM static binary or triple parameters from the on-sky geometry.
+
+    The VBM origin is the center of mass of the primary and secondary
+    (the first two lenses). ``alpha`` and signed ``u0`` come from the
+    source position and its velocity in that frame, so geometric-center
+    and primary-centered BAGLE parameters do not need a separate shift.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+        Static (no orbital motion), parallax off.
+    n_lens : int
+        2 or 3.
+
+    Returns
+    -------
+    vbm_par : list of float
+        ``BinaryLightCurve`` (7 numbers) or ``TripleLightCurve`` (10).
+    """
+    # Any epoch works: static, no parallax, so the track is linear.
+    if hasattr(bagle_model, 't0'):
+        t_ref = float(np.asarray(bagle_model.t0).reshape(-1)[0])
+    else:
+        t_ref = float(bagle_model.t0_com)
+
+    dt = 1.0
+    src, lenses, tE_vbm = _einstein_source_lenses(
+        bagle_model, np.array([t_ref, t_ref + dt]), n_lens)
+    mass = _mass_fractions(bagle_model, n_lens)
+
+    # VBM +x runs from the primary toward the secondary.
+    r1 = lenses[0, 0]
+    r2 = lenses[0, 1]
+    rel = r2 - r1
+    s = float(np.hypot(rel[0], rel[1]))
+    ex = rel / s
+    ey = np.array([-ex[1], ex[0]])
+
+    # CoM of the first two lenses. The tertiary is not in this origin.
+    com = (mass[0] * r1 + mass[1] * r2) / (mass[0] + mass[1])
+    y0 = np.array([(src[0] - com) @ ex, (src[0] - com) @ ey])
+    y1 = np.array([(src[1] - com) @ ex, (src[1] - com) @ ey])
+
+    # Velocity per Einstein time. Direction sets alpha; |v| is 1
+    # when tE_vbm matches the position units.
+    v = (y1 - y0) / dt * tE_vbm
+    alpha = float(np.arctan2(-v[1], -v[0]))
+
+    # Invert y = (u0 sin alpha - tau cos alpha,
+    #             -u0 cos alpha - tau sin alpha).
+    u0 = float(y0[0] * np.sin(alpha) - y0[1] * np.cos(alpha))
+    tau = float(-y0[0] * np.cos(alpha) - y0[1] * np.sin(alpha))
+    t0 = t_ref - tau * tE_vbm
+
+    q = float(mass[1] / mass[0])
+    rho = _vbm_rho(bagle_model, bagle_model.tE, tE_vbm)
+    vbm_par = [math.log(s), math.log(q), u0, alpha, math.log(rho),
+               math.log(tE_vbm), t0]
+
+    if n_lens == 2:
+        return vbm_par
+
+    # Tertiary: separation and angle from the primary, relative to +x.
+    r3 = lenses[0, 2]
+    d3 = r3 - r1
+    s13 = float(np.hypot(d3[0], d3[1]))
+    q3 = float(mass[2] / mass[0])
+    psi = float(np.arctan2(d3 @ ey, d3 @ ex))
+    vbm_par.extend([math.log(s13), math.log(q3), psi])
+
+    return vbm_par
+
+
+def _relative_los_einstein(bagle_model, t):
+    """Line-of-sight secondary minus primary, in Einstein radii.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+        Keplerian binary (phot-only or PhotAstrom).
+    t : float
+        Time (MJD).
+
+    Returns
+    -------
+    z : float
+        Line-of-sight offset (Einstein radii). Positive is the VBM sign
+        carried by the Thiele-Innes ``C`` and ``H`` elements.
+    """
+    # Imported here: bagle.model imports this module at load time.
+    from bagle.model import keplerian_lens_orbit
+
+    # Phot-only stores (w, o). PhotAstrom stores the two node angles.
+    if hasattr(bagle_model, 'w') and hasattr(bagle_model, 'o'):
+        omega = bagle_model.w
+        big_omega = bagle_model.o
+    else:
+        omega = bagle_model.omega_pri
+        big_omega = bagle_model.big_omega_sec
+
+    orb = keplerian_lens_orbit(
+        omega, big_omega, bagle_model.i, bagle_model.e, bagle_model.tp,
+        bagle_model.p, bagle_model.aleph, bagle_model.aleph_sec)
+    orb.oal2xy(np.array([t]))
+
+    # Orbit-plane coordinates. C and H are the line-of-sight Thiele-Innes
+    # elements; the secondary minus the primary is (C2 - C, H2 - H).
+    mean_anom = 2.0 * np.pi * (t - bagle_model.tp) / bagle_model.p
+    ecc_anom = orb.eccen_anomaly(np.array([mean_anom]), bagle_model.e)[0]
+    X = np.cos(ecc_anom) - bagle_model.e
+    Y = np.sqrt(1.0 - bagle_model.e ** 2) * np.sin(ecc_anom)
+    z = ((orb.conC2 - orb.conC) * X + (orb.conH2 - orb.conH) * Y)
+
+    # PhotAstrom aleph is in mas. thetaE_amp is also mas.
+    if hasattr(bagle_model, 'thetaE_amp') and not hasattr(bagle_model, 'w'):
+        z = z / bagle_model.thetaE_amp
+
+    return float(z)
+
+
+def _kepler_binary_params(bagle_model):
+    """``BinaryLightCurveKepler`` parameters at the lens-CoM closest approach.
+
+    Parameter order, matching VBMicrolensing::
+
+        [log s, log q, u0, alpha, log rho, log tE, t0,
+         paiN, paiE, w1, w2, w3, z/s, a_r]
+
+    ``t0`` is ``t0_com - VBM_ORBIT_TIME_SHIFT``. Pass light-curve times
+    through that same shift. Parallax components are zero: this path is
+    for no-parallax Keplerian models. ``u0`` is the absolute CoM impact
+    parameter. ``alpha`` is measured from the primary-to-secondary axis.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+        Keplerian PSBL or FSBL, parallax off.
+
+    Returns
+    -------
+    vbm_par : list of float
+        Fourteen BinaryLightCurveKepler parameters.
+    """
+    tc = float(bagle_model.t0_com)
+    dt = 1e-3
+    is_pa = (hasattr(bagle_model, 'thetaE_amp')
+             and not hasattr(bagle_model, 'w'))
+
+    # Primary and secondary in Einstein radii, at three epochs.
+    t_obs = np.array([tc - dt, tc, tc + dt])
+    lens = np.asarray(
+        bagle_model.get_resolved_lens_astrometry(t_obs), dtype=float)
+    if is_pa:
+        lens = lens / (bagle_model.thetaE_amp * 1e-3)
+
+    rel = lens[:, 1] - lens[:, 0]
+    rel_dot = (rel[2] - rel[0]) / (2.0 * dt)
+
+    # Line of sight and its rate, per day, in Einstein radii.
+    z = _relative_los_einstein(bagle_model, tc)
+    z_dot = (_relative_los_einstein(bagle_model, tc + dt)
+             - _relative_los_einstein(bagle_model, tc - dt)) / (2.0 * dt)
+
+    # VBM axes at t0_com. +x is primary -> secondary.
+    s = float(np.hypot(rel[1, 0], rel[1, 1]))
+    ex = rel[1] / s
+    ey = np.array([-ex[1], ex[0]])
+    w1 = float(rel_dot @ ex / s)
+    w2 = float(-(rel_dot @ ey) / s)
+
+    # Semi-major axis over the current 3-D separation (VBM a_r).
+    if is_pa:
+        a_ein = float(bagle_model.a) / float(bagle_model.thetaE_amp)
+    else:
+        a_ein = float(bagle_model.a)
+    ar = a_ein / (s * np.sqrt(1.0 + (z / s) ** 2))
+
+    # Source motion in the binary frame, per Einstein time.
+    v = np.array([bagle_model.thetaE_hat @ ex, bagle_model.thetaE_hat @ ey])
+    alpha = float(np.arctan2(-v[1], -v[0]))
+    rho = _vbm_rho(bagle_model, bagle_model.tE, bagle_model.tE)
+
+    vbm_par = [math.log(s), math.log(float(bagle_model.q)),
+               abs(float(bagle_model.u0_amp_com)), alpha, math.log(rho),
+               math.log(float(bagle_model.tE)), tc - VBM_ORBIT_TIME_SHIFT,
+               0.0, 0.0, w1, w2, z_dot / s, z / s, ar]
+
+    return vbm_par
+
+
+def _set_vbm_coordinates(vbm_mod, bagle_model):
+    """Point a VBM model at the BAGLE lens coordinates.
+
+    Parameters
+    ----------
+    vbm_mod : VBMicrolensing.VBMicrolensing
+    bagle_model : BAGLE model instance
+        Read for ``raL`` and ``decL`` (degrees).
+
+    Returns
+    -------
+    None
+    """
+    # Keplerian calls require coordinates even when parallax is zero.
+    if bagle_model.raL is None or bagle_model.decL is None:
+        vbm_mod.SetObjectCoordinates('17:52:00 -29:00:00')
+        return None
+
+    c = SkyCoord(ra=bagle_model.raL * u.deg, dec=bagle_model.decL * u.deg,
+                 frame='icrs')
+    ra_string = c.ra.to_string(unit=u.hourangle, sep=':')
+    dec_string = c.dec.to_string(unit=u.degree, sep=':', alwayssign=True)
+    vbm_mod.SetObjectCoordinates(f'{ra_string} {dec_string}')
+
+    return None
+
+
+def _get_vbm_multilens(bagle_model, vbm_mod, verbose=False):
+    """Parameter vector for a binary or triple BAGLE model.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    vbm_mod : VBMicrolensing.VBMicrolensing
+        Solver. Tolerances and coordinates are set here.
+    verbose : bool
+        Print which VBM light-curve path was used.
+
+    Returns
+    -------
+    vbm_mod : VBMicrolensing.VBMicrolensing
+    vbm_par : list of float
+
+    Notes
+    -----
+    Static no-parallax models leave ``t0`` in TDB MJD. Call
+    ``BinaryLightCurve`` or ``TripleLightCurve`` with unconverted times.
+    Keplerian models put ``t0`` on the ``VBM_ORBIT_TIME_SHIFT`` clock.
+    Call ``BinaryLightCurveKepler`` with times shifted the same way,
+    or use :func:`vbm_light_curve`.
+    """
+    class_name = bagle_model.__class__.__name__
+    family = _vbm_lens_family(class_name)
+    orbit = _vbm_orbit_kind(class_name)
+
+    if bagle_model.parallaxFlag:
+        raise NotImplementedError(
+            'get_vbm_model does not map parallax for binary, triple, '
+            'or Keplerian lenses. Use a no-parallax model.')
+
+    if orbit == 'linear':
+        raise NotImplementedError(
+            'get_vbm_model supports static lenses and Keplerian '
+            '(EllOrbs, CircOrbs) orbits, not linear or accelerated orbits.')
+
+    if family == 'triple' and orbit == 'kepler':
+        raise NotImplementedError(
+            'VBMicrolensing has no full Keplerian triple light curve.')
+
+    # Same tolerances the comparison notebook and the VBM tests use.
+    vbm_mod.Tol = 1e-6
+    vbm_mod.RelTol = 1e-7
+
+    if orbit == 'kepler':
+        _set_vbm_coordinates(vbm_mod, bagle_model)
+        vbm_par = _kepler_binary_params(bagle_model)
+        if verbose:
+            print('VBM BinaryLightCurveKepler')
+        return vbm_mod, vbm_par
+
+    n_lens = 3 if family == 'triple' else 2
+    vbm_par = _static_multilens_params(bagle_model, n_lens)
+    if verbose:
+        method = 'TripleLightCurve' if n_lens == 3 else 'BinaryLightCurve'
+        print('VBM ' + method)
+
+    return vbm_mod, vbm_par
+
+
+def _vbm_method_name(bagle_model):
+    """VBM light-curve method that matches ``get_vbm_model`` parameters.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+
+    Returns
+    -------
+    name : str
+        Method name on a ``VBMicrolensing`` instance.
+    """
+    class_name = bagle_model.__class__.__name__
+    family = _vbm_lens_family(class_name)
+    finite = _is_finite_source_class(class_name)
+
+    if family is not None and _vbm_orbit_kind(class_name) == 'kepler':
+        return 'BinaryLightCurveKepler'
+
+    if family == 'triple':
+        return 'TripleLightCurve'
+
+    if family == 'binary':
+        return 'BinaryLightCurve'
+
+    # Single lens. Astrometry curves always carry the parallax slots.
+    if bagle_model.astrometryFlag:
+        if finite:
+            return 'ESPLAstroLightCurve'
+        return 'PSPLAstroLightCurve'
+
+    if bagle_model.parallaxFlag:
+        if finite:
+            return 'ESPLLightCurveParallax'
+        return 'PSPLLightCurveParallax'
+
+    if finite:
+        return 'ESPLLightCurve'
+
+    return 'PSPLLightCurve'
+
+
+def _vbm_eval_times(bagle_model, time_mjd):
+    """Times on the clock expected by the matching VBM light-curve method.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    time_mjd : array_like
+        BAGLE times (TDB MJD).
+
+    Returns
+    -------
+    t_vbm : ndarray
+        Times to pass into the VBM method.
+    """
+    t = np.atleast_1d(np.asarray(time_mjd, dtype=float))
+    class_name = bagle_model.__class__.__name__
+
+    # Kepler t0 was stored already shifted.
+    if (_vbm_lens_family(class_name) is not None
+            and _vbm_orbit_kind(class_name) == 'kepler'):
+        return t - VBM_ORBIT_TIME_SHIFT
+
+    # Single-lens parallax and astrometry paths convert the clock.
+    # Static binary and triple no-parallax paths keep TDB MJD.
+    if _vbm_lens_family(class_name) is None and (
+            bagle_model.parallaxFlag or bagle_model.astrometryFlag):
+        return np.atleast_1d(mjd_prime_to_vbm_time(t))
+
+    return t
+
+
+def vbm_light_curve(bagle_model, time_mjd, verbose=False):
+    """Magnification and source track from the matching VBM light curve.
+
+    Builds parameters with :func:`get_vbm_model` and calls the VBM
+    method named by :func:`_vbm_method_name`. Keplerian times are shifted
+    by :data:`VBM_ORBIT_TIME_SHIFT`. Single-lens parallax and astrometry
+    times go through :func:`mjd_prime_to_vbm_time`.
+
+    Parameters
+    ----------
+    bagle_model : BAGLE model instance
+    time_mjd : array_like
+        Observation times (TDB MJD).
+    verbose : bool, optional
+        Passed to :func:`get_vbm_model`.
+
+    Returns
+    -------
+    amp : ndarray, shape (N_times,)
+        Total magnification.
+    y1, y2 : ndarray, shape (N_times,)
+        Source position in the VBM lens frame.
+    sep : ndarray, shape (N_times,), or None
+        Projected lens separation for Keplerian binaries. None otherwise.
+    """
+    vbm_mod, vbm_par = get_vbm_model(bagle_model, verbose=verbose)
+    method_name = _vbm_method_name(bagle_model)
+    t_vbm = _vbm_eval_times(bagle_model, time_mjd)
+    t_list = [float(ti) for ti in np.atleast_1d(t_vbm)]
+
+    method = getattr(vbm_mod, method_name)
+    out = method(vbm_par, t_list)
+
+    # Astro light curves return centroids before the lens-frame y.
+    if 'Astro' in method_name:
+        y1 = np.asarray(out[5], dtype=float)
+        y2 = np.asarray(out[6], dtype=float)
+        sep = None
+    else:
+        y1 = np.asarray(out[1], dtype=float)
+        y2 = np.asarray(out[2], dtype=float)
+        sep = None
+        if len(out) > 3:
+            sep = np.asarray(out[3], dtype=float)
+
+    amp = np.asarray(out[0], dtype=float)
+
+    return amp, y1, y2, sep
+
+
 def get_vbm_model(bagle_model, verbose=False):
     """
     Return a VBMicrolensing matched to the input BAGLE model.
@@ -337,10 +969,27 @@ def get_vbm_model(bagle_model, verbose=False):
     FSPL with astrometry uses ``ESPLAstroLightCurve`` (``log_rho`` inserted
     after ``t0`` in the PSPLAstro parameter list).
 
-    Parallax paths convert ``t0`` and ``t0_par`` with
+    Static PSBL and FSBL use ``BinaryLightCurve``::
+
+        [log s, log q, u0, alpha, log rho, log tE, t0]
+
+    Static PSTL uses ``TripleLightCurve``, appending
+    ``[log s13, log q3, psi]``. Separations and ``tE`` are in Einstein
+    units of the total lens mass. PhotAstrom triples are rescaled from
+    the 1-2-pair Einstein radius. Point sources use a source radius of
+    1e-6; finite-source models pass BAGLE ``radiusS``. These paths have
+    no parallax. ``t0`` stays in TDB MJD.
+
+    Keplerian PSBL and FSBL (EllOrbs, CircOrbs) use
+    ``BinaryLightCurveKepler``. ``t0`` is
+    ``t0_com - VBM_ORBIT_TIME_SHIFT``. Shift the time grid the same way,
+    or call :func:`vbm_light_curve`.
+
+    Parallax paths for single lenses convert ``t0`` and ``t0_par`` with
     ``mjd_prime_to_vbm_time`` (TDB MJD to UTC ``JD - 2450000``).
     Pass the light-curve time grid through that same function.
-    Paths without parallax leave ``t0`` in TDB MJD; pass unconverted times.
+    Single-lens paths without parallax leave ``t0`` in TDB MJD; pass
+    unconverted times.
 
     Parameters
     ----------
@@ -361,6 +1010,12 @@ def get_vbm_model(bagle_model, verbose=False):
     # Setup VBM model
     #####
     vbm_mod = VBMicrolensing.VBMicrolensing()
+
+    # Binary and triple, including finite-source and Keplerian orbits.
+    # Single lenses (PSPL, FSPL) stay on the parameter paths below.
+    class_name = bagle_model.__class__.__name__
+    if _vbm_lens_family(class_name) is not None:
+        return _get_vbm_multilens(bagle_model, vbm_mod, verbose=verbose)
 
     bagle_class_name = str(bagle_model.__class__)
     is_fspl = 'FSPL' in bagle_class_name
