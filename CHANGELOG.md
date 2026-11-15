@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### VBM time conversion (TDB MJD → UTC)
+
+- `frame_convert.mjd_prime_to_vbm_time` converts BAGLE TDB MJD to
+  VBMicrolensing's UTC `JD - 2450000` clock and no longer applies a Keck
+  light-travel correction. Parallax docs state that BAGLE times are TDB
+  MJD and that `parallax_in_direction` evaluates the JPL ephemeris at
+  that TDB instant.
+
 ### Phot-only binary-source along-track (Option A)
 
 - Phot-only `BSPL` / `BSBL` / `BFSPL` `get_u` now keeps the full static

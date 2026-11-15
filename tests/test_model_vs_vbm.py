@@ -1007,7 +1007,8 @@ def test_fspl_phot_par_njx_vs_vbm():
     a_njx = mod_njx.get_amplification(t)
 
     vbm, par = _get_vbm(mod_njx)
-    t_vbm = fc.mjd_prime_to_vbm_time(t, c)
+    # BAGLE times are TDB MJD; VBM's Sun table is UT.
+    t_vbm = fc.mjd_prime_to_vbm_time(t)
     a_vbm = np.asarray(vbm.ESPLLightCurveParallax(par, list(t_vbm))[0])
 
     frac = _max_frac_diff(a_njx, a_vbm)
@@ -1064,7 +1065,8 @@ def test_fspl_photastrom_par_njx_vs_vbm():
     shift_njx = mod_njx.get_centroid_shift(t) / theta_e
 
     vbm, par = _get_vbm(mod_njx)
-    t_vbm = fc.mjd_prime_to_vbm_time(t, c)
+    # BAGLE times are TDB MJD; VBM's Sun table is UT.
+    t_vbm = fc.mjd_prime_to_vbm_time(t)
     tmp = vbm.ESPLAstroLightCurve(par, list(t_vbm))
 
     u0_vbm, piEN_vbm, piEE_vbm = par[0], par[4], par[5]

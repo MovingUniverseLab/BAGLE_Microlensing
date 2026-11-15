@@ -337,6 +337,11 @@ def get_vbm_model(bagle_model, verbose=False):
     FSPL with astrometry uses ``ESPLAstroLightCurve`` (``log_rho`` inserted
     after ``t0`` in the PSPLAstro parameter list).
 
+    Parallax paths convert ``t0`` and ``t0_par`` with
+    ``mjd_prime_to_vbm_time`` (TDB MJD to UTC ``JD - 2450000``).
+    Pass the light-curve time grid through that same function.
+    Paths without parallax leave ``t0`` in TDB MJD; pass unconverted times.
+
     Parameters
     ----------
     bagle_model : BAGLE model instance
@@ -389,6 +394,8 @@ def get_vbm_model(bagle_model, verbose=False):
     if not bagle_model.astrometryFlag and not bagle_model.parallaxFlag:
         if verbose: print('VBM with Photometry-Only, no parallax')
         u0_vbm = float(bagle_model.u0_amp)
+        # No Sun table on this path. Keep t0 in BAGLE TDB MJD and pass
+        # the light-curve times in that same unconverted clock.
         t0_vbm = float(bagle_model.t0)
         tE_vbm = float(bagle_model.tE)
 
@@ -414,8 +421,10 @@ def get_vbm_model(bagle_model, verbose=False):
         piEE_vbm = geo_params[3]
         piEN_vbm = geo_params[4]
 
-        t0_vbm = mjd_prime_to_vbm_time(geo_params[0], c)
-        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0, c)
+        # BAGLE times are TDB MJD. Shift onto VBM's UTC JD-2450000 clock.
+        # VBM still applies its own light-travel term when t_in_HJD is set.
+        t0_vbm = mjd_prime_to_vbm_time(geo_params[0])
+        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0)
 
         # Update model
         vbm_mod.parallaxsystem = 1
@@ -444,8 +453,9 @@ def get_vbm_model(bagle_model, verbose=False):
         piEE_vbm = geo_params[3]
         piEN_vbm = geo_params[4]
 
-        t0_vbm = mjd_prime_to_vbm_time(geo_params[0], c)
-        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0, c)
+        # Same TDB MJD -> UTC JD-2450000 shift as the photometry path.
+        t0_vbm = mjd_prime_to_vbm_time(geo_params[0])
+        t0_par_vbm = mjd_prime_to_vbm_time(bagle_model.t0)
 
         muSE_vbm = bagle_model.muS[0]
         muSN_vbm = bagle_model.muS[1]
@@ -487,6 +497,11 @@ def get_mjd_prime(target_coords, time_mjd):
     -------
     float or np.ndarray
         Light-travel-time-corrected MJD value(s), computed for Keck Observatory.
+
+    Notes
+    -----
+    VBMicrolensing comparisons use ``mjd_prime_to_vbm_time``. That
+    function converts TDB MJD to UTC and does not call this one.
     """
     location = EarthLocation.of_site('Keck Observatory')
     time_to_correct = Time(time_mjd, format='mjd', scale='utc', location=location)
@@ -495,28 +510,67 @@ def get_mjd_prime(target_coords, time_mjd):
     return time_mjd_prime
 
 
-def mjd_prime_to_vbm_time(time_mjd, target_coords):
+def mjd_prime_to_vbm_time(time_mjd, target_coords=None):
     """
-    Convert from MJD to VB Microlensing times (which are in an usual system of
-    HJD' - 2450000). Note, these times are missing 0.5, subtract off an extra 50,000 days,
-    and account for the light-travel time differences for the Earth in different parts of the orbit.
+    Convert BAGLE TDB MJD to the VBMicrolensing numeric clock.
+
+    BAGLE model times are MJD on the TDB scale. VBMicrolensing's bundled
+    Sun ephemeris (``SunEphemeris.txt``) is a Horizons table tagged in UT,
+    and VBM times are ``JD - 2450000`` on that UTC clock. This function
+    converts the TDB instant to UTC, then applies that zero point::
+
+        t_vbm = MJD_UTC - 50000 + 0.5
+
+    which is ``JD_UTC - 2450000``. At MJD 55775 the TDB-UTC offset is
+    about 66 s; after the 2017 leap second it is about 69 s.
+
+    Light-travel time is not applied. With the default ``t_in_HJD=True``,
+    VBM subtracts its own heliocentric light-travel time when it indexes
+    the Sun table, and it leaves ``(t - t0)`` on the input clock. A
+    topocentric correction here (the old Keck "MJD prime" term) shifts
+    the light-curve clock as well as the ephemeris lookup, and it does
+    not match VBM's geocentric table. The name of this function is the
+    old one; the light-travel step is no longer part of the conversion.
 
     Parameters
     ----------
-    time_mjd : float or np.array
-        Times in MJD (float or numpy array, not Time objects).
-    target_coords : astropy.coordinates.SkyCoord
-        Sky position of the target used for heliocentric light-travel correction.
+    time_mjd : float or array_like
+        BAGLE time(s) in TDB MJD. Float or numpy array, not ``Time`` objects.
+    target_coords : astropy.coordinates.SkyCoord, optional
+        Ignored. Kept so callers that used to pass a sky position for the
+        light-travel correction still run. The UTC conversion does not
+        depend on direction.
 
     Returns
     -------
-    time_vbm : float or np.ndarray
-        Time(s) converted to the VBMicrolensing convention (`HJD' - 2450000`
-        with the package-specific offset correction).
-    """
-    new_time_helio = get_mjd_prime(target_coords, time_mjd)
+    time_vbm : float or numpy array
+        Time(s) on VBM's clock, ``JD_UTC - 2450000``. A scalar input
+        returns a float.
 
-    time_vbm = new_time_helio - 50000 + 0.5
+    Notes
+    -----
+    VBM's table is geocentric, daily, and linearly interpolated, and its
+    equatorial basis includes the obliquity. Those are separate from this
+    clock conversion. See ``docs/frame_convert.rst``.
+    """
+    # Accept a scalar or an array. The UTC step is the same either way.
+    time_arr = np.asarray(time_mjd, dtype=float)
+    scalar_input = time_arr.ndim == 0
+
+    # Sky position used to drive a Keck light-travel correction. The
+    # TDB to UTC shift does not use it.
+    del target_coords
+
+    # Same physical instant, labeled UTC. Leap seconds make the offset
+    # stepwise; astropy carries the table.
+    t_tdb = Time(time_arr, format='mjd', scale='tdb')
+    mjd_utc = np.asarray(t_tdb.utc.mjd, dtype=float)
+
+    # VBM zero point: JD - 2450000 = MJD - 50000 + 0.5.
+    time_vbm = mjd_utc - 50000.0 + 0.5
+
+    if scalar_input:
+        return float(time_vbm)
 
     return time_vbm
 

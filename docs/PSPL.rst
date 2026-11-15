@@ -9,6 +9,13 @@ with input parameters in Solar System barycentric coordinates, unless otherwise 
 The Solar System barycentric (SSB) coordinates are most useful in when modeling astrometry and
 photometry jointly, which we will build up to.
 
+Times are Modified Julian Date on the TDB scale (``JD_TDB = MJD + 2400000.5``).
+``t0`` is the closest approach of the SSB trajectory on that clock.
+On-sky vectors are East and North in the ICRS tangent plane. The parallax
+ephemeris is JPL, evaluated at the TDB instant, in SSB coordinates.
+See :doc:`frame_convert` for this convention and for the shift onto
+VBMicrolensing's UTC ``JD - 2450000`` clock.
+
 Photometry-Only
 ===============
 The simplest form of microlens model is one used for generating a photometric
@@ -22,7 +29,7 @@ For classes with photometry only, input parameters typically include
 =================  ================  ========================================================
 Parameter          Units             Description
 =================  ================  ========================================================
-:math:`t_0`        MJD (day)         Time of closest approach in SSB coordinates.
+:math:`t_0`        MJD (day)         SSB closest approach, TDB MJD.
 :math:`u_0`        :math:`\theta_E`  Closest approach distance.
 :math:`t_E`        (day)             Einstein crossing time.
 :math:`\pi_{E,E}`                    Microlensing parallax in the East direction.
@@ -50,8 +57,9 @@ Photometry and Astrometry
 BAGLE's strength is jointly modeling or fitting photometric and astrometric data sets.
 In these events, the absolution position of the lens and source on the sky are known
 and controlled by additional parameters in the model. All orientations of position and velocity
-vectors in these models are with respect to North and East as defined by the Earth's equator,
-even if models are SSB or observed from some other satellite (e.g. Roman).
+vectors in these models are ICRS East and North in the tangent plane,
+even if the observer is Earth or some other satellite (e.g. Roman).
+The origin of the rectilinear motion remains the Solar System barycenter.
 
 Parameterizations for photometric+astrometric models are much more varied. First, we can
 start with an expansion approach where we start with photometric parameters and add more
@@ -61,7 +69,7 @@ parameters to describe the astrometry. An example of this parameterization is
 =================  ================  ========================================================
 Parameter          Units             Description
 =================  ================  ========================================================
-:math:`t_0`        MJD (day)         Time of closest approach in SSB coordinates.
+:math:`t_0`        MJD (day)         SSB closest approach, TDB MJD.
 :math:`u_0`        :math:`\theta_E`  Closest approach distance.
 :math:`t_E`        (day)             Einstein crossing time.
 :math:`\theta_E`   (mas)             Einstein radius.
@@ -98,7 +106,7 @@ the case for the ``PSPL_PhotAstrom_Par_Param1`` model class with the following p
 Parameter          Units              Description
 =================  =================  ========================================================
 :math:`m_L`        (:math:`M_\odot`)  Lens mass.“
-:math:`t_0`        MJD (day)          Time of closest approach in SSB coordinates.
+:math:`t_0`        MJD (day)          SSB closest approach, TDB MJD.
 :math:`\beta`      (mas)              Closest approach distance, projected on sky.
 :math:`d_L`        (pc)               Distance to the lens.
 :math:`d_L/d_S`                       Ratio of lens distance to source distance.

@@ -17,9 +17,11 @@ Motivation and physics
 
 The lens and the source are the same objects in every dataset. What
 changes with the observer is the line of sight. ``parallax_in_direction``
-returns the East/North parallax vector of that observer 
-(or body/spacecraft they reside on) at the observation 
-times (barycentric, in AU). Photometry, the lens track, the unlensed
+returns the ICRS East/North parallax vector of that observer
+(or body/spacecraft they reside on) at the observation
+times. Those times are TDB MJD. The vector is the observer's
+barycentric position in AU, from the observer toward the
+Solar System barycenter. Photometry, the lens track, the unlensed
 source, and the unresolved centroid all read
 ``obsLocation[filt_idx]`` and pass it to that function. Annual parallax
 and satellite parallax are the same ephemeris call with a different

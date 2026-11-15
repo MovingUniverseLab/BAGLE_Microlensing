@@ -1326,3 +1326,36 @@ def test_bagle_helio_geo_set(plot_lc=False, plot_conv=False, verbose=False):
 #
 #     ax[0].legend()
 #     plt.show()
+
+
+def test_mjd_prime_to_vbm_time_tdb_to_utc():
+    """
+    BAGLE TDB MJD maps to VBM's UTC JD-2450000 clock.
+
+    The shift is TDB-UTC (about a minute). A sky position must not
+    change the result: the old Keck light-travel term is not applied.
+    """
+    from astropy.time import Time
+
+    mjd_tdb = np.array([55775.0, 60000.0])
+    t_utc = Time(mjd_tdb, format='mjd', scale='tdb').utc
+    expected = np.asarray(t_utc.mjd, dtype=float) - 50000.0 + 0.5
+
+    got = fc.mjd_prime_to_vbm_time(mjd_tdb)
+    assert got.shape == (2,)
+    assert np.allclose(got, expected, atol=1e-9)
+
+    # Callers used to pass a SkyCoord for the light-travel correction.
+    coord = SkyCoord(ra=269.9, dec=-28.6, unit=u.deg)
+    got_coord = fc.mjd_prime_to_vbm_time(mjd_tdb, coord)
+    assert np.allclose(got_coord, got, atol=0.0)
+
+    # Scalar in, float out. Offset from the bare zero point is ~66 s,
+    # well under a Rømer delay.
+    one = fc.mjd_prime_to_vbm_time(55775.0)
+    zero_point = 55775.0 - 50000.0 + 0.5
+    delta_day = zero_point - float(one)
+    assert isinstance(one, float)
+    assert 60.0 / 86400.0 < delta_day < 80.0 / 86400.0
+
+    return None

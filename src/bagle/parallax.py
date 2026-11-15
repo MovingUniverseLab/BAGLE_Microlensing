@@ -28,11 +28,30 @@ else:
 @cache_memory.cache()
 def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
-    | R.A. in degrees. (J2000)
-    | Dec. in degrees. (J2000)
-    | MJD
+    Observer parallax vector in the ICRS East/North tangent plane.
 
-    Equations following MulensModel.
+    The input time is a BAGLE MJD on the TDB scale. The JPL ephemeris is
+    evaluated at ``JD_TDB = MJD + 2400000.5``. The returned vector is the
+    barycentric position of the observer, from the observer toward the
+    Solar System barycenter, in AU.
+
+    Parameters
+    ----------
+    RA : float
+        Right ascension in degrees, ICRS (J2000).
+    Dec : float
+        Declination in degrees, ICRS (J2000).
+    mjd : float or array_like
+        Time in TDB MJD.
+    obsLocation : str, optional
+        Observer body. ``'earth'`` or a JPL Horizons body name.
+
+    Returns
+    -------
+    pvec : numpy array
+        Parallax vector ``[E, N]`` in AU. Shape ``(2,)`` for a scalar time
+        and ``(N_times, 2)`` for an array. Equations follow MulensModel,
+        in the barycentric convention.
     """
     #print('parallax_in_direction: len(t) = ', len(mjd))
 
@@ -66,13 +85,24 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
 
 def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     """
-    R.A. in degrees. (J2000)
-    Dec. in degrees. (J2000)
-    MJD
+    Time derivative of the East/North parallax vector.
 
-    Equations following MulensModel.
-    Time derivative --> units are yr^-1
+    Parameters
+    ----------
+    RA : float
+        Right ascension in degrees, ICRS (J2000).
+    Dec : float
+        Declination in degrees, ICRS (J2000).
+    mjd : float or array_like
+        Time in TDB MJD. The ephemeris is evaluated at that TDB instant.
+    obsLocation : str, optional
+        Observer body. ``'earth'`` or a JPL Horizons body name.
 
+    Returns
+    -------
+    dpvec_dt : numpy array
+        ``d(E, N) / dt`` in AU/yr. Shape matches ``parallax_in_direction``.
+        Equations follow MulensModel.
     """
     # print('parallax_in_direction: len(t) = ', len(mjd))
     # Munge inputs into astropy format.

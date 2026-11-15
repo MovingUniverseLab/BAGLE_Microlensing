@@ -62,8 +62,12 @@ Note that BAGLE mas many different parameterizations that all
 specify the same event. We have chosen ``Param1``.
 
 Once you have created the event, you can see numerous event
-properties. BAGLE defines event parameteres in Solar System barycentric
-coordinates unless otherwise specified. To see properties,
+properties. BAGLE defines event parameters in Solar System barycentric
+coordinates unless otherwise specified. Times (``t0`` and the times you
+pass to ``get_amplification``) are MJD on the TDB scale. On-sky vectors
+are East and North in the ICRS tangent plane. The full convention,
+including the conversion onto VBMicrolensing's UTC clock, is in
+:doc:`frame_convert`. To see properties,
 use::
 
   print(event1.t0)      # Time of closest apparent approach
@@ -114,7 +118,8 @@ Making a PSPL Model with Parallax
 ---------------------------------
 The second step is to generate a PSPL model with parallax adding the
 *ra* (right ascention of lens) and *dec* (declination of lens).
-Again, all of the parameters are specified in Solar System barycentric coordinates.
+Again, all of the parameters are specified in Solar System barycentric
+coordinates, with times in TDB MJD and on-sky vectors in ICRS East and North.
 
 .. code-block:: python3
 

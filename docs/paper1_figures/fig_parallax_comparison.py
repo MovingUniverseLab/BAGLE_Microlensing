@@ -53,7 +53,7 @@ def vbm_setup(coords):
     vbm : VBMicrolensing.VBMicrolensing
         Configured instance.
     t_vbm : numpy array
-        Model times in VBM's HJD' - 2450000 convention.
+        Model times on VBM's clock: UTC JD - 2450000, from BAGLE TDB MJD.
     """
     import VBMicrolensing
 
@@ -61,8 +61,9 @@ def vbm_setup(coords):
     vbm.SetObjectCoordinates(coords.to_string("hmsdms", sep=":"))
     vbm.parallaxsystem = 1
     vbm.t0_par_fixed = 1
-    vbm.t0_par = fc.mjd_prime_to_vbm_time(T0, coords)
-    t_vbm = fc.mjd_prime_to_vbm_time(T, coords)
+    # T0 and T are BAGLE TDB MJD. VBM's Sun table is tagged UT.
+    vbm.t0_par = fc.mjd_prime_to_vbm_time(T0)
+    t_vbm = fc.mjd_prime_to_vbm_time(T)
     return vbm, t_vbm
 
 
@@ -142,7 +143,7 @@ def psbl():
 
     # VBMicrolensing; pick the alpha mapping that matches MulensModel.
     vbm, t_vbm = vbm_setup(coords)
-    t0_v = fc.mjd_prime_to_vbm_time(t0_m, coords)
+    t0_v = fc.mjd_prime_to_vbm_time(t0_m)
     best = None
     for lab, a in [("alpha", alpha_m), ("-alpha", -alpha_m),
                    ("alpha+180", alpha_m + 180), ("180-alpha", 180 - alpha_m)]:
@@ -226,8 +227,8 @@ def bspl():
     # VBMicrolensing.
     vbm, t_vbm = vbm_setup(coords)
     par = [np.log(tE_g), np.log(qflux), u0p_g, u0s_g,
-           fc.mjd_prime_to_vbm_time(t0p_g, coords),
-           fc.mjd_prime_to_vbm_time(t0s_g, coords), piEN_g, piEE_g]
+           fc.mjd_prime_to_vbm_time(t0p_g),
+           fc.mjd_prime_to_vbm_time(t0s_g), piEN_g, piEE_g]
     A_v = np.asarray(vbm.BinSourceLightCurveParallax(par, list(t_vbm))[0])
 
     plot_comparison(A_b, A_v, A_m, "BSPL with Parallax",
