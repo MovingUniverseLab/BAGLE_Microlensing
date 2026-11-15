@@ -499,3 +499,28 @@ def test_plot_BSPL_static_writes_png():
 
     return None
 
+
+def test_get_centroid_shift_map_writes_png():
+    """
+    Smoke-test the PSBL source-plane centroid-shift map.
+
+    Returns
+    -------
+    None
+    """
+    psbl = _make_psbl_photastrom()
+    tmpdir = tempfile.mkdtemp()
+    outfile = os.path.join(tmpdir, 'csmap.png')
+
+    # Small grid keeps the forward solve cheap.
+    shift_map = plot_models.get_centroid_shift_map(
+        psbl, grid_size=4.0, lim=4.0, bins=41, savefile=outfile, show=False)
+
+    assert shift_map.shape == (41, 41)
+    assert np.nanmax(shift_map) > 0.0
+    assert np.isfinite(shift_map).any()
+    assert os.path.isfile(outfile)
+    assert os.path.getsize(outfile) > 0
+
+    return None
+

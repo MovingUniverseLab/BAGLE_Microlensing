@@ -94,6 +94,7 @@ Not reproduced: the hand-drawn schematics (`geometry_schematic_binary_lens`,
 3. Phot-only `BSPL.get_u` uses u_sec = u0_sec + tau_pri * muRel_hat. It
    keeps only the separation component along u0_hat, so the secondary
    always peaks at the primary's t0 (only phi = +/-90 deg is right).
-4. `plot_models.get_centroid_shift_map` cannot run: it uses an undefined
-   `psbl`, `dist2_mas`, `xCentroid_complex_as` and `zgrid_as`.
-   `fig_maps.csmap()` computes the map with the PSBL solver instead.
+4. ~~`plot_models.get_centroid_shift_map` could not run (undefined
+   `psbl`, `dist2_mas`, `xCentroid_complex_as`, `zgrid_as`)~~ (**fixed**):
+   forward PSBL image solving on a source-plane grid, matching
+   `fig_maps.csmap()`.

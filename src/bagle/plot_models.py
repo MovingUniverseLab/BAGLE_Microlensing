@@ -2420,88 +2420,151 @@ def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1
             fig.colorbar(val)
             time = time + time_skip
 
-def get_centroid_shift_map(model, grid_size=31.2, plot_radius=15.6, lim=8, bins=6000, cmap='seismic'):
+def _images_amps_for_sources(psbl, w):
     """
-    Generate a color map of flux-weighted centroid shifts (in mas) for a uniform
-    grid of sources using inverse ray shooting.
+    Image positions and amplifications for arbitrary source positions.
 
+    Mirrors :meth:`PSBL.get_all_arrays` (rescaled root finding) for a
+    fixed lens configuration at ``t0``.
+
+    Parameters
+    ----------
+    psbl : PSBL model
+        Model supplying the lens positions and masses.
+    w : numpy array, dtype=complex, shape = [N]
+        Source positions in the model's native units (arcsec for
+        PhotAstrom, Einstein radii for phot-only).
+
+    Returns
+    -------
+    images : numpy array, dtype=complex, shape = [N, N_images]
+        Image positions; NaN for missing images.
+    amps : numpy array, shape = [N, N_images]
+        Image amplifications.
     """
+    # Lens positions at t0, repeated for every source position.
+    zs, _masses = _resolved_lens_complex(psbl, np.array([psbl.t0]))
+    zs = np.asarray(zs).ravel()
+    z1 = np.full(w.shape, zs[0], dtype=complex)
+    z2 = np.full(w.shape, zs[1], dtype=complex)
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    
-    arcsec2mas = 1e3
-    mas2arcsec = 1.0 / arcsec2mas
+    # Rescale into a unit box, solve, and undo the rescaling.
+    rw, rz1, rz2, m1, m2, scale, shift = psbl.rescale_complex_pos(
+        w.copy(), z1.copy(), z2.copy())
+    tol = psbl.root_tol
+    psbl.root_tol = tol * scale
+    rimg = psbl.get_image_pos_arr(rw, rz1, rz2, m1, m2)
+    psbl.root_tol = tol
+    images = rimg / scale[:, None] + shift[:, None]
 
-    m1 = psbl.m1
-    m2 = psbl.m2
-    _xL = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
-    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
-    z1_as = xL1_0[0][0] + 1j * xL1_0[0][1]   # arcsec
-    z2_as = xL2_0[0][0] + 1j * xL2_0[0][1]   # arcsec
-    z1_mas = z1_as * arcsec2mas #Lens position in mas
-    z2_mas = z2_as * arcsec2mas#Lens position in mas
-
-    
-    
-    grid_center_mas = (psbl.xL0_com + 1e-3) * arcsec2mas
-    grid_size_mas = grid_size
-    plot_radius_mas = plot_radius 
-    lim_mas = lim
-
-    xmin_mas = grid_center_mas[0] - grid_size_mas
-    xmax_mas = grid_center_mas[0] + grid_size_mas
-    ymin_mas = grid_center_mas[1] - grid_size_mas
-    ymax_mas = grid_center_mas[1] + grid_size_mas
-
-    x = np.linspace(xmin_mas, xmax_mas, bins)
-    y = np.linspace(ymin_mas, ymax_mas, bins)   
-    xgrid, ygrid = np.meshgrid(x, y)
-    zgrid_mas = xgrid + 1j * ygrid   
-    
-    z_flat = zgrid_mas.flatten()
-    dist2_as = z_flat.real**2 + z_flat.imag**2
-    valid_mask = dist2_mas < (plot_radius_mas ** 2) #Cut off faraway points
-    z_flat_valid = z_flat[valid_mask]
-
-    # arrays of lens positions in arcsec
-    z1_arr = np.full_like(z_flat_valid, z1_mas)
-    z2_arr = np.full_like(z_flat_valid, z2_mas)
-    z_arr = psbl.get_image_pos_arr(z_flat_valid, z1_arr, z2_arr, m1, m2)
-    mu_arr = psbl.get_amp_arr(z_arr, z1_arr, z2_arr)
-
-    t_dummy = np.arange(len(z_flat_valid))
-    xCentroid = psbl.get_astrometry(t_dummy, image_arr=z_arr, amp_arr=mu_arr)
-    xCentroid_complex_mas = xCentroid[:, 0] + 1j * xCentroid[:, 1]
-    shift_mas = np.abs(xCentroid_complex_as - z_flat_valid)
+    amps = psbl.get_amp_arr(images, z1, z2)
+    return images, amps
 
 
-    shift_map = np.full(zgrid_mas.shape, np.nan, dtype=float)
-    shift_map_flat = shift_map.flatten()
-    shift_map_flat[valid_mask] = shift_mas
-    shift_map = shift_map_flat.reshape(zgrid_as.shape)
+def get_centroid_shift_map(model, grid_size=6.0, plot_radius=None, lim=6.0,
+                           bins=241, cmap='inferno', savefile='csmap.png',
+                           show=True):
+    """
+    Map the dark-lens flux-weighted image centroid shift on the source plane.
 
-    vmin = 0.0
-    vmax = np.nanpercentile(shift_map, 99.99)
+    For each source on a regular grid, solve for the PSBL images at ``t0``
+    and plot ``|centroid - source|`` in milliarcseconds. This matches the
+    paper-1 ``csmap`` construction (forward ray shooting), not inverse
+    ray shooting.
 
-    plt.figure(figsize=(5, 5))
-    im = plt.imshow(shift_map, origin='lower', extent=[xmin_mas, xmax_mas, ymin_mas, ymax_mas],
-                    cmap=cmap, vmin=vmin, vmax=vmax)
-    cbar = plt.colorbar(im)
+    Parameters
+    ----------
+    model : PSBL PhotAstrom model
+        Binary-lens model with sky positions in arcsec. The map uses the
+        lens geometry at ``model.t0`` and assumes dark lenses (image
+        centroid only; no luminous-lens contamination).
+    grid_size : float, optional
+        Half-width of the source grid about the lens CoM (mas).
+    plot_radius : float or None, optional
+        Unused; kept for backward compatibility with the old signature.
+    lim : float, optional
+        Plot axis limit about the CoM (mas). Default matches ``grid_size``.
+    bins : int, optional
+        Number of source-grid points along each side.
+    cmap : str, optional
+        Matplotlib colormap name.
+    savefile : str, optional
+        Output PNG path.
+    show : bool, optional
+        If True, call ``plt.show()``.
 
-    plt.plot(z1_mas.real, z1_mas.imag, 'black', marker='.', label='Primary Lens', markersize=10)
-    plt.plot(z2_mas.real, z2_mas.imag, 'green', marker='^', label='Secondary Lens', markersize=10)
+    Returns
+    -------
+    shift_map : numpy array, shape = [bins, bins]
+        Centroid shift in mas. Rows are North, columns are East
+        (``imshow`` with ``origin='lower'``).
+    """
+    if not _model_is_photastrom(model):
+        raise ValueError('get_centroid_shift_map expects a PhotAstrom model '
+                         '(sky positions in arcsec).')
 
-    plt.xlabel(r"$\Delta \alpha^*$ (mas)")
-    plt.ylabel(rf"$\Delta \delta$ (mas)")
-    plt.xlim(-lim, lim)   # lim in mas (user-facing)
-    plt.ylim(-lim, lim)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('csmap.png')
-    plt.show()
-    
+    if lim is None:
+        lim = grid_size
+
+    # Lens positions at t0 (arcsec -> mas) and CoM for centering.
+    zs, _masses = _resolved_lens_complex(model, np.array([model.t0]))
+    z1_mas = zs[0] * 1e3
+    z2_mas = zs[1] * 1e3
+    if hasattr(model, 'mLp') and hasattr(model, 'mLs'):
+        w_p = model.mLp / (model.mLp + model.mLs)
+    else:
+        w_p = model.m1 / (model.m1 + model.m2)
+    com_mas = w_p * z1_mas + (1.0 - w_p) * z2_mas
+
+    # Source-plane grid in mas, centered on the lens CoM.
+    x = np.linspace(-grid_size, grid_size, bins) + com_mas.real
+    y = np.linspace(-grid_size, grid_size, bins) + com_mas.imag
+    xx, yy = np.meshgrid(x, y)
+    w_mas = xx + 1j * yy
+    w_as = w_mas.ravel() * 1e-3
+
+    # Forward solve: images and amps for every source.
+    images, amps = _images_amps_for_sources(model, w_as)
+    ok = np.isfinite(images) & np.isfinite(amps)
+    a = np.where(ok, amps, 0.0)
+    a_sum = np.sum(a, axis=1)
+    cen = np.sum(np.where(ok, images, 0.0) * a, axis=1) / a_sum
+
+    # |centroid - source| in mas; invalid solves -> NaN.
+    shift = np.abs(cen - w_as) * 1e3
+    shift[~np.isfinite(shift) | (a_sum <= 0)] = np.nan
+    shift_map = shift.reshape(bins, bins)
+
+    # Relative coordinates for the axes (CoM at the origin).
+    extent = [x[0] - com_mas.real, x[-1] - com_mas.real,
+              y[0] - com_mas.imag, y[-1] - com_mas.imag]
+    vmax = np.nanpercentile(shift_map, 99.9)
+
+    fig, ax = plt.subplots(figsize=(5.5, 5.0))
+    im = ax.imshow(shift_map, origin='lower', extent=extent, cmap=cmap,
+                   vmin=0.0, vmax=vmax)
+    fig.colorbar(im, ax=ax, label=r'$|\vec{\delta}_{c}|$ (mas)')
+
+    ax.plot(z1_mas.real - com_mas.real, z1_mas.imag - com_mas.imag,
+            'k.', ms=10, label='Primary Lens')
+    ax.plot(z2_mas.real - com_mas.real, z2_mas.imag - com_mas.imag,
+            'g^', ms=10, label='Secondary Lens')
+    ax.set_xlim(lim, -lim)
+    ax.set_ylim(-lim, lim)
+    ax.set_xlabel(r'$\Delta\alpha^*$ (mas)')
+    ax.set_ylabel(r'$\Delta\delta$ (mas)')
+    ax.legend(loc='best', fontsize=9)
+    fig.tight_layout()
+    fig.savefig(savefile, dpi=130)
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return shift_map
+
+
 
 def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=None, amp_mulens=None,
                           savefile='compare_model_pkg_phot_amp.png'):
