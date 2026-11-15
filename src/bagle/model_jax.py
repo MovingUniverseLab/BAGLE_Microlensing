@@ -524,6 +524,7 @@ from bagle.model import (
     keplerian_lens_orbit,
     phot_param_view,
     set_bsbl_keplerian_frames,
+    set_bspl_keplerian_sources_at_t0,
     set_keplerian_com_frame,
     shift_source_reference,
     validate_param_declaration,
@@ -21550,13 +21551,6 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         orb.aleph2 = self.aleph_sec *1e-3
         orb.p = self.p
 
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
-
-
-
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
         super().__init__()
@@ -21634,27 +21628,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-        #####
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
-
-        # CoM
-        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                         np.cos(self.alpha_rad)))  # mas
+        # Primary at input xS0 / t0; CoM and secondary from the orbit at t0.
+        set_bspl_keplerian_sources_at_t0(self, orb)
 
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
@@ -21666,9 +21641,8 @@ class BSPL_PhotAstrom_EllOrbs_Param1(PSPL_Param):
         self.qS = self.mSs / self.mSp
         q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
-        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep_t0 / self.thetaE_amp) * (qeff_source - 1 / 2)
 
-        self.xS0_com = self.xS0_pri + com_vec *1e-3
 
         return
 
@@ -21847,11 +21821,6 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         orb.aleph2 = self.aleph_sec *1e-3
         orb.p = self.p
 
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
-
         self.fratio_bin = np.array(fratio_bin)
         fb = np.asarray(self.fratio_bin, dtype=float).reshape(-1)
         self.mag_src_pri = mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fb)
@@ -21899,6 +21868,8 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
 
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
+        # Primary at input xS0 / t0; CoM and secondary from the orbit at t0.
+        set_bspl_keplerian_sources_at_t0(self, orb)
 
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
@@ -21909,30 +21880,9 @@ class BSPL_PhotAstrom_EllOrbs_Param2(PSPL_Param):
         self.qS = self.mSs / self.mSp
         q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
-        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
-
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
-
-        # CoM
-        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                         np.cos(self.alpha_rad)))  # mas
-
-        self.xS0_com = self.xS0_pri + com_vec * 1e-3
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad)
+                                 * self.sep_t0 / self.thetaE_amp) * (
+            qeff_source - 1 / 2)
 
         return
 
@@ -22109,12 +22059,6 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         orb.aleph2 = self.aleph_sec *1e-3
         orb.p = self.p
 
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad) # Defined at tp
-
-
         self.fratio_bin = np.array(fratio_bin)
 
         self.mag_src_pri = self.mag_base \
@@ -22192,6 +22136,9 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         # Calculate the position of the lens on the sky at time, t0
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
+        # Primary at input xS0 / t0; CoM and secondary from the orbit at t0.
+        set_bspl_keplerian_sources_at_t0(self, orb)
+
         self.phi_rad = self.alpha_rad - np.arctan2(piE_E, piE_N)
         self.sep_AU = self.dS * (self.sep * 1e-3) * units.AU
         self.mS = ((4 * np.pi ** 2 * self.sep_AU ** 3)
@@ -22201,30 +22148,9 @@ class BSPL_PhotAstrom_EllOrbs_Param3(PSPL_Param):
         self.qS = self.mSs / self.mSp
         q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
-        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
-
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
-
-        # CoM
-        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                         np.cos(self.alpha_rad)))  # mas
-
-        self.xS0_com = self.xS0_pri + com_vec * 1e-3
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad)
+                                 * self.sep_t0 / self.thetaE_amp) * (
+            qeff_source - 1 / 2)
 
         return
 
@@ -22435,13 +22361,6 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         orb.aleph2 = self.aleph_sec *1e-3
         orb.p = self.p
 
-        (x, y, x2, y2) = orb.oal2xy(np.array([tp]))
-
-        self.alpha_rad = np.arctan2(x-x2, y-y2)[0]
-        self.alpha = np.rad2deg(self.alpha_rad)
-
-
-
         # Must call after setting parameters.
         # This checks for proper parameter formatting.
         super().__init__()
@@ -22519,27 +22438,8 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         # Calculate the Einstein crossing time. (days)
         self.tE = (self.thetaE_amp / self.muRel_amp) * days_per_year
 
-        #####
-        # Derived binary source parameters.
-        #####
-        # Primary -- at origin
-        self.t0_pri = self.t0
-        self.xS0_pri = self.xS0
-        self.u0_amp_pri = self.u0_amp
-        self.u0_pri = self.u0
-
-        # Secondary
-        sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
-                                       np.cos(self.alpha_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
-        self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
-
-        # CoM
-        com_vec = self.aleph * np.array((np.sin(self.alpha_rad),
-                                         np.cos(self.alpha_rad)))  # mas
+        # Primary at input xS0 / t0; CoM and secondary from the orbit at t0.
+        set_bspl_keplerian_sources_at_t0(self, orb)
 
 
         self.phi_rad = self.alpha_rad - np.arctan2(self.piE_E, self.piE_N)
@@ -22551,9 +22451,8 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         self.qS = self.mSs / self.mSp
         q_source = self.mSp / self.mSs
         qeff_source = (1 - q_source) / (1 + q_source)
-        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep / self.thetaE_amp) * (qeff_source - 1 / 2)
+        self.t0_com = self.t0 + (self.tE * np.cos(self.phi_rad) * self.sep_t0 / self.thetaE_amp) * (qeff_source - 1 / 2)
 
-        self.xS0_com = self.xS0_pri + com_vec *1e-3
 
         return
 

@@ -23,9 +23,9 @@ ASSUMED: BSPL_PhotAstrom_noPar_EllOrbs_Param1, dS = 8 kpc, muS along +East
 way between troughs, +East gives 0.39), tp = t0, xS0 = (0, 0) and
 beta = +1 mas, which with the current code puts the lens at (0, -1) and the
 source CoM at (0.5, 3.0) mas as in the published figure.
-FINDING: the primary is then at (0.7, 4.0) mas at t0, not at the input
-xS0 = (0, 0): Param1 builds xS0_com = xS0 + aleph * (pri - sec unit vector
-at tp) instead of subtracting the primary's orbital offset at t0.
+NOTE: after the xS0-at-t0 fix, the primary sits at the input xS0 = (0, 0)
+at t0 (CoM = xS0 - d_pri(t0)). The published figure's CoM placement may
+still differ if it used the old constructor convention.
 
 bsbl_keplerian -- PAPER: thetaE = 4.9 mas, tE = 231.15 d, mLp = 10,
 mLs = 8 Msun (q = 0.8); lens orbit omega = 30, Omega = 10, i = 90, e = 0.2,

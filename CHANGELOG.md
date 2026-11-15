@@ -11,6 +11,14 @@
   their input frames are honored after this fix (`model.py` and
   `model_jax.py`).
 
+### BSPL Keplerian `xS0` at `t0`
+
+- `BSPL_PhotAstrom_EllOrbs` / `CircOrbs` Param1–4 now set
+  `xS0_com = xS0_pri - d_pri(t0)` from `oal2xy` at the input `t0`, so the
+  primary track recovers the input `xS0`. `alpha` / `sep_t0` are the
+  projected primary→secondary axis at `t0`; `sep = aleph + aleph_sec`
+  remains the relative semi-major axis.
+
 ### Binary reference frames (PSBL / FSBL / BSBL / BFSBL)
 
 Fit results for the classes below change: their constructors now honor the

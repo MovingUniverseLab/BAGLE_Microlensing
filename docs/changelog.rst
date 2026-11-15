@@ -14,6 +14,15 @@ LinOrbs / AccOrbs lens placement
   input Param6 / Param7 conversions already assumed that side, so their
   input frames are honored after this fix.
 
+BSPL Keplerian ``xS0`` at ``t0``
+--------------------------------
+
+* ``BSPL_PhotAstrom_EllOrbs`` / ``CircOrbs`` Param1–4 set
+  ``xS0_com = xS0_pri - d_pri(t0)`` from ``oal2xy`` at the input ``t0``,
+  so the primary track recovers the input ``xS0``. ``alpha`` /
+  ``sep_t0`` are at ``t0``; ``sep = aleph + aleph_sec`` stays the
+  relative semi-major axis.
+
 Binary reference frames (PSBL / FSBL / BSBL / BFSBL)
 ----------------------------------------------------
 
