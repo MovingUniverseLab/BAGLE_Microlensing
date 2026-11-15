@@ -18229,8 +18229,13 @@ class BSPL(PSPL):
             u_sec = (xS2_unlens - xL)/thetaE_amp
 
         else:
+            # Phot-only: one epoch (primary CA). Secondary is a static
+            # offset (sep, phi) from the primary, including the along-track
+            # piece, so both share tau_pri.
             u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-            u_sec = self.u0_sec[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
+                                           np.cos(self.phi_rho1_rad)))
+            u_sec = u_pri + sep_vec[np.newaxis, :]
 
             if self.parallaxFlag:
                 parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
@@ -19241,15 +19246,12 @@ class BSPL_PhotParam1(PSPL_Param):
         sep_vec = p['sep'] * jnp.stack([
             jnp.sin(phi_piE + phi), jnp.cos(phi_piE + phi)
         ])
-        u0_hat = u0_pri / jnp.linalg.norm(u0_pri)
-        u0_amp_sec = p['u0_amp'] + jnp.dot(sep_vec, u0_hat)
-        u0_sec, _, _ = derive_pspl_static_geometry(
-            u0_amp_sec, p['piE_E'], p['piE_N']
-        )
-        t0_sec = p['t0'] - jnp.dot(sep_vec, thetaE_hat) * p['tE']
+        # Option A: same t0 for both sources; u0_sec is the full static
+        # offset from the primary at t0 (incl. along-track).
+        u0_sec = u0_pri + sep_vec
         mag_pri, mag_sec = mag_src
         lnL = jax_physics.bspl_log_likely_photometry(
-            t, p['t0'], t0_sec, p['tE'], u0_pri, u0_sec,
+            t, p['t0'], p['t0'], p['tE'], u0_pri, u0_sec,
             thetaE_hat, mag_pri, mag_sec, b_sff, mag_obs, mag_err,
             parallax_vectors=parallax_vectors, piE_E=p['piE_E'],
             piE_N=p['piE_N'], gp_params=gp_params,
@@ -19324,12 +19326,14 @@ class BSPL_PhotParam1(PSPL_Param):
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
 
-        # Secondary
+        # Secondary: static offset from the primary (Einstein radii).
+        # u0_sec is the secondary's lens-relative position at t0_pri (not a
+        # closest-approach vector). u0_amp_sec is the signed impact parameter
+        # of the secondary at its own closest approach (derived only).
         sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
-                                       np.cos(self.phi_rho1_rad)))  # mas
-        # Closest approach time
+                                       np.cos(self.phi_rho1_rad)))
+        self.u0_sec = self.u0_pri + sep_vec
         self.u0_amp_sec = self.u0_amp_pri + np.dot(sep_vec, self.u0_hat)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
 
         return
 
@@ -23954,8 +23958,13 @@ class BSBL(PSBL):
             u_sec = (xS2_unlens - xL)/thetaE_amp
 
         else:
+            # Phot-only: one epoch (primary CA). Secondary is a static
+            # offset (sep, phi) from the primary, including the along-track
+            # piece, so both share tau_pri.
             u_pri = self.u0_pri[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-            u_sec = self.u0_sec[np.newaxis, :] + tau_pri[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
+                                           np.cos(self.phi_rho1_rad)))
+            u_sec = u_pri + sep_vec[np.newaxis, :]
 
             if self.parallaxFlag:
                 parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
@@ -24924,15 +24933,15 @@ class BSBL_PhotParam1(PSPL_Param):
         self.sep = self.sep_S
         self.phi_rho1_rad = self.phi_S_rho1_rad
 
-        # Primary source at the system origin; secondary offset in the u0
-        # direction (same convention as BSPL_PhotParam1).
+        # Primary source at the system origin; secondary is a static offset
+        # (sep_S, phi_S) at t0_pri, including the along-track piece.
         self.t0_pri = self.t0
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
         sep_vec = self.sep_S * np.array(
             (np.sin(self.phi_S_rho1_rad), np.cos(self.phi_S_rho1_rad)))
+        self.u0_sec = self.u0_pri + sep_vec
         self.u0_amp_sec = self.u0_amp_pri + np.dot(sep_vec, self.u0_hat)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
 
         return
 
@@ -25177,14 +25186,14 @@ class BSBL_PhotAstromParam1(PSPL_Param):
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
 
-        # Secondary
+        # Secondary: static sky offset from the primary; u0_sec is the
+        # lens-relative position at t0_pri (Einstein radii).
         sepS_vec = self.sepS * np.array((np.sin(self.alphaS_rad),
                                          np.cos(self.alphaS_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
+        self.u0_sec = self.u0_pri + sepS_vec / self.thetaE_amp
+        self.u0_amp_sec = self.u0_amp_pri + (
+            np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
 
         return
 
@@ -25839,14 +25848,14 @@ class BSBL_PhotAstromParam2(PSPL_Param):
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
 
-        # Secondary
+        # Secondary: static sky offset from the primary; u0_sec is the
+        # lens-relative position at t0_pri (Einstein radii).
         sepS_vec = self.sepS * np.array((np.sin(self.alphaS_rad),
                                          np.cos(self.alphaS_rad)))  # mas
-
-        # Closest approach time
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
         self.xS0_sec = self.xS0_pri + (sepS_vec * 1e-3)
+        self.u0_sec = self.u0_pri + sepS_vec / self.thetaE_amp
+        self.u0_amp_sec = self.u0_amp_pri + (
+            np.dot(sepS_vec, self.u0_hat) / self.thetaE_amp)
 
         #####
         # CoM-CoM frame (both binaries static, so explicit).
@@ -38953,10 +38962,14 @@ class BFSPL(PSPL):
             u_pri = (xS_unlensed[:, 0, :] - xL) / thetaE_amp
             u_sec = (xS_unlensed[:, 1, :] - xL) / thetaE_amp
         else:
+            # Phot-only: one epoch (primary CA). Secondary is a static
+            # offset (sep, phi) from the primary, including the along-track
+            # piece, so both share tau.
             tau = (t - self.t0) / self.tE
-
             u_pri = self.u0_pri[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
-            u_sec = self.u0_sec[np.newaxis, :] + tau[:, np.newaxis] * self.muRel_hat[np.newaxis, :]
+            sep_vec = self.sep * np.array((np.sin(self.phi_rho1_rad),
+                                           np.cos(self.phi_rho1_rad)))
+            u_sec = u_pri + sep_vec[np.newaxis, :]
 
             if self.parallaxFlag:
                 parallax_vec = parallax.parallax_in_direction(self.raL, self.decL, t,
@@ -39568,14 +39581,14 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         self.u0_amp_pri = self.u0_amp
         self.u0_pri = self.u0
 
-        # Secondary
+        # Secondary: static sky offset from the primary; u0_sec is the
+        # lens-relative position at t0_pri (Einstein radii).
         sep_vec = self.sep * np.array((np.sin(self.alpha_rad),
                                        np.cos(self.alpha_rad)))  # mas
-
-        # Closest approach time and distance
         self.xS0_sec = self.xS0_pri + (sep_vec * 1e-3)
-        self.u0_amp_sec = self.u0_amp_pri + (np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
-        self.u0_sec = self.u0_amp_sec * self.u0_hat
+        self.u0_sec = self.u0_pri + sep_vec / self.thetaE_amp
+        self.u0_amp_sec = self.u0_amp_pri + (
+            np.dot(sep_vec, self.u0_hat) / self.thetaE_amp)
 
         return
 

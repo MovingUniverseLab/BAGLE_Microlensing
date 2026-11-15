@@ -65,37 +65,68 @@ def bspl_photometry_jax(
 
 
 def _bspl_times(model):
+    """
+    Primary and secondary reference epochs for photometry.
+
+    Option A uses a single epoch (primary CA); ``get_t0_sec`` remains a
+    derived diagnostic for the secondary's own closest approach.
+
+    Parameters
+    ----------
+    model : object
+        BSPL-like model with ``t0_pri``.
+
+    Returns
+    -------
+    t0_pri, t0_sec : float
+        Both equal to ``t0_pri`` under Option A.
+    """
     t0_pri = float(model.t0_pri)
-    if hasattr(model, "get_t0_sec"):
-        t0_sec = float(model.get_t0_sec())
-    elif hasattr(model, "t0_sec"):
-        t0_sec = float(model.t0_sec)
-    else:
-        t0_sec = t0_pri
-    return t0_pri, t0_sec
+    return t0_pri, t0_pri
 
 
 def _bspl_u0_pair(model, filt_idx: int):
-    u0_pri = float(getattr(model, "u0_amp_pri", model.u0_amp))
-    if hasattr(model, "u0_amp_sec"):
-        u0_sec = float(model.u0_amp_sec)
-        thetaE_hat = np.asarray(model.thetaE_hat, dtype=np.float64)
-        return (
-            jnp.asarray(u0_pri, dtype=jnp.float64),
-            jnp.asarray(u0_sec, dtype=jnp.float64),
-            jnp.asarray(thetaE_hat, dtype=jnp.float64),
-        )
+    """
+    Primary and secondary ``u0`` vectors at ``t0_pri``.
+
+    Parameters
+    ----------
+    model : object
+        BSPL-like model.
+    filt_idx : int
+        Unused; kept for call-site compatibility.
+
+    Returns
+    -------
+    u0_pri, u0_sec : jnp.ndarray, shape = (2,)
+        Lens-relative positions at ``t0_pri`` (Einstein radii).
+    thetaE_hat : jnp.ndarray, shape = (2,)
+        Unit vector along relative proper motion.
+    """
+    thetaE_hat = jnp.asarray(model.thetaE_hat, dtype=jnp.float64).reshape(2)
+
+    # Prefer snapshot vectors already stored on the model (Option A).
+    if hasattr(model, "u0_pri") and hasattr(model, "u0_sec"):
+        u0_pri = jnp.asarray(model.u0_pri, dtype=jnp.float64).reshape(2)
+        u0_sec = jnp.asarray(model.u0_sec, dtype=jnp.float64).reshape(2)
+        return u0_pri, u0_sec, thetaE_hat
+
+    # Reconstruct the full static offset from sep / angle.
     u0_pri_j, thetaE_hat, _ = derive_pspl_static_geometry(
-        u0_pri,
+        float(getattr(model, "u0_amp_pri", model.u0_amp)),
         float(model.piE[0]),
         float(model.piE[1]),
     )
-    sep_th = float(model.sep) / float(model.thetaE_amp)
+    # Phot-only: sep is already in Einstein radii. PhotAstrom: mas.
+    if hasattr(model, "thetaE_amp"):
+        sep = float(model.sep) / float(model.thetaE_amp)
+    else:
+        sep = float(model.sep)
     alpha = float(getattr(model, "phi_rho1_rad", getattr(model, "alpha_rad", 0.0)))
-    u0_sec_vec = np.asarray(model.u0, dtype=np.float64) + sep_th * np.array(
-        [np.sin(alpha), np.cos(alpha)]
-    )
-    u0_sec_j = jnp.linalg.norm(jnp.asarray(u0_sec_vec, dtype=jnp.float64))
+    sep_vec = sep * np.array([np.sin(alpha), np.cos(alpha)])
+    u0_sec_j = jnp.asarray(u0_pri_j, dtype=jnp.float64) + jnp.asarray(
+        sep_vec, dtype=jnp.float64)
+
     return u0_pri_j, u0_sec_j, thetaE_hat
 
 

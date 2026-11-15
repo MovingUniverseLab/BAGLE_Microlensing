@@ -4691,8 +4691,8 @@ def _bspl_phot_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
     phi_piE = jnp.arctan2(p["piE_E"], p["piE_N"])
     phi_rho1 = phi_piE + phi_rad
     sep_vec = p["sep"] * jnp.stack([jnp.sin(phi_rho1), jnp.cos(phi_rho1)])
-    u0_amp_sec = p["u0_amp"] + jnp.dot(sep_vec, u0_hat)
-    u0_sec = u0_amp_sec * u0_hat
+    # Option A: full static offset at t0 (incl. along-track), shared epoch.
+    u0_sec = u0_pri + sep_vec
     out = (
         "bspl_phot",
         u0_pri,

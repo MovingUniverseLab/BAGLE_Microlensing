@@ -5,6 +5,15 @@ Changelog
 Unreleased
 ==========
 
+Phot-only binary-source along-track (Option A)
+----------------------------------------------
+
+* Phot-only ``BSPL`` / ``BSBL`` / ``BFSPL`` ``get_u`` keeps the full
+  static ``(sep, phi)`` offset: ``u_sec(t) = u_pri(t) + sep_vec`` with a
+  shared primary epoch. Attribute ``u0_sec`` is the snapshot at
+  ``t0_pri``; ``u0_amp_sec`` / ``get_t0_sec()`` remain derived
+  closest-approach diagnostics only.
+
 LinOrbs / AccOrbs lens placement
 --------------------------------
 

@@ -91,9 +91,9 @@ Not reproduced: the hand-drawn schematics (`geometry_schematic_binary_lens`,
 2. ~~`BSPL_PhotAstrom_EllOrbs_Param1` / `Param2` did not reproduce the input
    xS0 at t0~~ (**fixed**): CoM is now `xS0 - d_pri(t0)` from `oal2xy` at
    `t0`; `sep = aleph + aleph_sec` remains the relative semi-major axis.
-3. Phot-only `BSPL.get_u` uses u_sec = u0_sec + tau_pri * muRel_hat. It
-   keeps only the separation component along u0_hat, so the secondary
-   always peaks at the primary's t0 (only phi = +/-90 deg is right).
+3. ~~Phot-only `BSPL.get_u` dropped the along-track piece of the
+   secondary offset~~ (**fixed**, Option A): `u_sec(t) = u_pri(t) + sep_vec`
+   with a shared primary epoch; `u0_sec` is the snapshot at `t0_pri`.
 4. ~~`plot_models.get_centroid_shift_map` could not run (undefined
    `psbl`, `dist2_mas`, `xCentroid_complex_as`, `zgrid_as`)~~ (**fixed**):
    forward PSBL image solving on a source-plane grid, matching

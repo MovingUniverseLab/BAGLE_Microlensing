@@ -686,6 +686,8 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             p["piE_N"],
         )
     if eval_kind == "bspl_phot":
+        # Option A: both sources share t0; u0_sec is the full static
+        # offset from the primary (incl. along-track), not a CA vector.
         piE = jnp.stack([p["piE_E"], p["piE_N"]])
         piE_amp = jnp.linalg.norm(piE)
         thetaE_hat = piE / piE_amp
@@ -695,8 +697,7 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
         phi_piE = jnp.arctan2(p["piE_E"], p["piE_N"])
         phi_rho1 = phi_piE + phi_rad
         sep_vec = p["sep"] * jnp.stack([jnp.sin(phi_rho1), jnp.cos(phi_rho1)])
-        u0_amp_sec = p["u0_amp"] + jnp.dot(sep_vec, u0_hat)
-        u0_sec = u0_amp_sec * u0_hat
+        u0_sec = u0_pri + sep_vec
         return (
             "bspl_phot",
             u0_pri,

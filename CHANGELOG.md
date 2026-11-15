@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Phot-only binary-source along-track (Option A)
+
+- Phot-only `BSPL` / `BSBL` / `BFSPL` `get_u` now keeps the full static
+  `(sep, phi)` offset: `u_sec(t) = u_pri(t) + sep_vec` with a shared
+  primary epoch. The secondary no longer always peaks at `t0_pri` when
+  the binary axis has an along-track component. Attribute `u0_sec` is the
+  snapshot at `t0_pri`; `u0_amp_sec` / `get_t0_sec()` remain derived
+  closest-approach diagnostics only (`model.py`, `model_jax.py`,
+  `jax/geometry.py`, `jax/bspl.py`).
+
 ### LinOrbs / AccOrbs lens placement
 
 - Binary-lens `LinOrbs` / `AccOrbs` `get_resolved_lens_astrometry` now
