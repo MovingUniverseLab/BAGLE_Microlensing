@@ -28690,10 +28690,14 @@ class FSPL_Phot(FSPL):
 class FSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
     ref_frame_parallax_flag = False
+    # New list (do not share / mutate PSPL_noParallax.fixed_param_names).
+    fixed_param_names = ['n_outline']
 
 
 class FSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    # New list including n_outline (do not append to PSPL_Parallax's list).
+    fixed_param_names = ['raL', 'decL', 'n_outline']
 
 
 class FSPL_PhotParam1(PSPL_Param):
@@ -28751,7 +28755,7 @@ class FSPL_PhotParam1(PSPL_Param):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """Traced FSPL photometric log-likelihood (``radiusS`` in Einstein radii).
 
         Parameters
@@ -28773,6 +28777,13 @@ class FSPL_PhotParam1(PSPL_Param):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_photometry
         from bagle.jax.geometry import derive_pspl_static_geometry
 
@@ -28896,7 +28907,7 @@ class FSPL_PhotParam2(PSPL_Param):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_base, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """Traced FSPL photometry likelihood with ``mag_base`` parameterization.
 
         Parameters
@@ -28917,6 +28928,13 @@ class FSPL_PhotParam2(PSPL_Param):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_photometry
         from bagle.jax.geometry import derive_pspl_static_geometry
 
@@ -29105,7 +29123,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """Traced FSPL photometry; ``radiusS`` in arcsec converted via ``thetaE``.
 
         Parameters
@@ -29126,6 +29144,13 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_photometry
 
         p, geom = cls._jax_geometry(vec)
@@ -29147,7 +29172,7 @@ class FSPL_PhotAstromParam1(PSPL_Param):
     @classmethod
     def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
                                   y_err, b_sff=1.0, mag_src=18.0,
-                                  parallax_vectors=None, n_outline=400):
+                                  parallax_vectors=None, n_outline=50):
         """Traced FSPL absolute-astrometry log-likelihood.
 
         Parameters
@@ -29168,6 +29193,13 @@ class FSPL_PhotAstromParam1(PSPL_Param):
         lnL : float
             Summed astrometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_astrometry
 
         p, geom = cls._jax_geometry(vec)
@@ -29402,7 +29434,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """Traced FSPL photometry for reduced Param2 (``radiusS`` in arcsec).
 
         Parameters
@@ -29423,6 +29455,13 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_photometry
 
         p, geom = cls._jax_geometry(vec)
@@ -29442,7 +29481,7 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
     @classmethod
     def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
                                   y_err, b_sff=1.0, mag_src=18.0,
-                                  parallax_vectors=None, n_outline=400):
+                                  parallax_vectors=None, n_outline=50):
         """Traced FSPL absolute-astrometry log-likelihood (Param2).
 
         Parameters
@@ -29463,6 +29502,13 @@ class FSPL_PhotAstromParam2(PSPL_PhotAstromParam2):
         lnL : float
             Summed astrometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.fspl import fspl_log_likely_astrometry
 
         p, geom = cls._jax_geometry(vec)
@@ -39340,10 +39386,14 @@ class BFSPL_PhotAstrom(BFSPL, BSPL_PhotAstrom):
 
 class BFSPL_noParallax(PSPL_noParallax):
     parallaxFlag = False
+    # New list (do not share / mutate PSPL_noParallax.fixed_param_names).
+    fixed_param_names = ['n_outline']
 
 
 class BFSPL_Parallax(PSPL_Parallax):
     parallaxFlag = True
+    # New list including n_outline (do not append to PSPL_Parallax's list).
+    fixed_param_names = ['raL', 'decL', 'n_outline']
 
 
 class BFSPL_PhotAstromParam1(PSPL_Param):
@@ -39491,7 +39541,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """
         Traced BFSPL photometric log-likelihood.
 
@@ -39518,6 +39568,13 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.bfs import bfspl_log_likely_photometry
 
         p, g = cls._jax_bfspl_geometry(vec)
@@ -39539,7 +39596,7 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
     @classmethod
     def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err, y_err,
                                   b_sff=1.0, parallax_vectors=None,
-                                  n_outline=400):
+                                  n_outline=50):
         """
         Traced BFSPL astrometric log-likelihood.
 
@@ -39562,6 +39619,13 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
         lnL : float
             Summed astrometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.bfs import bfspl_log_likely_astrometry
 
         p, g = cls._jax_bfspl_geometry(vec)
@@ -39581,7 +39645,13 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
                  radiusS_pri, radiusS_sec, sep,
                  b_sff, mag_src_pri, mag_src_sec,
                  n_outline_pri=False, n_outline_sec=False,
+                 n_outline=None,
                  raL=None, decL=None, obsLocation='earth'):
+        # data['n_outline'] from the fitter sets both source outlines.
+        if n_outline is not None:
+            n_outline_pri = n_outline
+            n_outline_sec = n_outline
+
         # Initialised variables
         self.t0 = t0
         self.mL = mL
@@ -39831,8 +39901,8 @@ class BFSPL_Limb_PhotAstromParam1(BFSPL_PhotAstromParam1):
     def __init__(self, mL, t0, beta, dL, dL_dS, xS0_E, xS0_N, muL_E, muL_N,
                  alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep, b_sff,
                  mag_src_pri, mag_src_sec, gamma_pri, gamma_sec,
-                 n_outline_pri=False, n_outline_sec=False, raL=None, decL=None,
-                 obsLocation='earth'):
+                 n_outline_pri=False, n_outline_sec=False, n_outline=None,
+                 raL=None, decL=None, obsLocation='earth'):
         # Set gamma first so PSPL_Param broadcasts per filter.
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
@@ -39840,8 +39910,8 @@ class BFSPL_Limb_PhotAstromParam1(BFSPL_PhotAstromParam1):
                          alpha, muS_E, muS_N, radiusS_pri, radiusS_sec, sep,
                          b_sff, mag_src_pri, mag_src_sec,
                          n_outline_pri=n_outline_pri,
-                         n_outline_sec=n_outline_sec, raL=raL, decL=decL,
-                         obsLocation=obsLocation)
+                         n_outline_sec=n_outline_sec, n_outline=n_outline,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
 
         return None
 
@@ -39879,7 +39949,13 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
                  sep, phi, mag_src_pri, mag_src_sec, b_sff,
                  radiusS_pri, radiusS_sec,
                  n_outline_pri=50, n_outline_sec=50,
+                 n_outline=None,
                  raL=None, decL=None, obsLocation='earth'):
+        # data['n_outline'] from the fitter sets both source outlines.
+        if n_outline is not None:
+            n_outline_pri = n_outline
+            n_outline_sec = n_outline
+
         super().__init__(t0, u0_amp, tE, piE_E, piE_N,
                          sep, phi, mag_src_pri, mag_src_sec, b_sff,
                          raL=raL, decL=decL, obsLocation=obsLocation)
@@ -39942,7 +40018,7 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
     def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
                                   mag_src, parallax_vectors=None,
                                   gp_params=None, fixed_jitter=True,
-                                  n_outline=400):
+                                  n_outline=50):
         """
         Traced BFSPL photometry-only log-likelihood (finite source).
 
@@ -39969,6 +40045,13 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
         lnL : float
             Summed photometric log-likelihood.
         """
+
+        # Host default is 50; False means point-source on the host path.
+        if n_outline is False or n_outline is None:
+            n_outline = 50
+        else:
+            n_outline = int(n_outline)
+
         from bagle.jax.bfs import bfspl_log_likely_photometry
 
         p, g = cls._jax_bfspl_phot_geometry(vec)
@@ -40010,7 +40093,7 @@ class BFSPL_Limb_PhotParam1(BFSPL_PhotParam1):
     def __init__(self, t0, u0_amp, tE, piE_E, piE_N,
                  sep, phi, mag_src_pri, mag_src_sec, b_sff,
                  radiusS_pri, radiusS_sec, gamma_pri, gamma_sec,
-                 n_outline_pri=50, n_outline_sec=50,
+                 n_outline_pri=50, n_outline_sec=50, n_outline=None,
                  raL=None, decL=None, obsLocation='earth'):
         self.gamma_pri = gamma_pri
         self.gamma_sec = gamma_sec
@@ -40018,7 +40101,7 @@ class BFSPL_Limb_PhotParam1(BFSPL_PhotParam1):
                          sep, phi, mag_src_pri, mag_src_sec, b_sff,
                          radiusS_pri, radiusS_sec,
                          n_outline_pri=n_outline_pri,
-                         n_outline_sec=n_outline_sec,
+                         n_outline_sec=n_outline_sec, n_outline=n_outline,
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
         return None

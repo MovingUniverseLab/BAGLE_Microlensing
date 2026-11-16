@@ -280,6 +280,7 @@ def build_explicit_jax_loglik_fn(fitter):
         float(fitter.data['raL']) if 'raL' in fitter.data else None,
         float(fitter.data['decL']) if 'decL' in fitter.data else None,
         float(fitter.data['t0par']) if 't0par' in fitter.data else None,
+        int(fitter.data['n_outline']) if 'n_outline' in fitter.data else 50,
         tuple(id(fitter.data.get(f't_phot{i + 1}')) for i in range(n_phot)),
         tuple(id(fitter.data.get(f't_ast{i + 1}')) for i in range(n_ast)),
     )
@@ -356,6 +357,9 @@ def build_explicit_jax_loglik_fn(fitter):
 
     weights = getattr(fitter, 'weights', None)
     is_gp = 'GP' in model_class.__name__
+
+    # Finite-source limb count for FSPL / BFSPL traced methods.
+    n_out = int(fitter.data['n_outline']) if 'n_outline' in fitter.data else 50
 
     # If GP model, verify tinygp is importable
     if is_gp:
@@ -537,11 +541,16 @@ def build_explicit_jax_loglik_fn(fitter):
             )
             phot_sig = inspect.signature(phot_method)
             if 'raL' in phot_sig.parameters and 'raL' in fitter.data:
-                phot_kwargs['raL'] = float(fitter.data['raL'])
+                phot_kwargs['raL'] = fitter.data['raL']
             if 'decL' in phot_sig.parameters and 'decL' in fitter.data:
-                phot_kwargs['decL'] = float(fitter.data['decL'])
+                phot_kwargs['decL'] = fitter.data['decL']
             if 't0par' in phot_sig.parameters and 't0par' in fitter.data:
-                phot_kwargs['t0par'] = float(fitter.data['t0par'])
+                phot_kwargs['t0par'] = fitter.data['t0par']
+            # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
+            if 'n_outline' in phot_sig.parameters:
+                n_outline_default = phot_sig.parameters['n_outline'].default
+                if n_outline_default is not None:
+                    phot_kwargs['n_outline'] = n_out
 
             # Add weighted likelihood for this photometric dataset
             lnL += weight * phot_method(
@@ -566,6 +575,11 @@ def build_explicit_jax_loglik_fn(fitter):
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
+            if 'n_outline' in ast_sig.parameters:
+                n_outline_default = ast_sig.parameters['n_outline'].default
+                if n_outline_default is not None:
+                    kwargs['n_outline'] = n_out
             if ast_accepts_mag:
                 if idx_mag_src is None:
                     mag_value = jnp.asarray(0.0, dtype=jnp.float64)
@@ -8801,10 +8815,19 @@ def generate_fixed_params_dict(data, fixed_param_names):
     Notes
     -----
     A missing ``obsLocation`` is skipped so the model default (Earth)
-    applies.
+    applies. A missing ``n_outline`` is skipped so the FSPL / BFSPL
+    constructor default (50) applies.
     """
-    return {name: data[name] for name in (fixed_param_names or [])
-            if name != 'obsLocation' or 'obsLocation' in data}
+    param_dict = {}
+    for name in (fixed_param_names or []):
+        # Optional fixed keys: use the constructor default when absent.
+        if name == 'obsLocation' and 'obsLocation' not in data:
+            continue
+        if name == 'n_outline' and 'n_outline' not in data:
+            continue
+        param_dict[name] = data[name]
+
+    return param_dict
 
 ########################################
 ### GENERAL USE AND SHARED FUNCTIONS ###
