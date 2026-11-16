@@ -931,7 +931,7 @@ keyword:
 
 ## Log
 
-- 2026-11-15: Step 1 (`jaxswap/step1-correctness`): fixed W1–W4 and hygiene items 1.1–1.9 (orbiting_lens_offsets sign, BFSPL phot jax_log_likely, GP SHO sigma=sqrt(S0*omega0*Q), alt S0 names, geoproj jax_log_likely via geo_phot_to_helio_jax, narrow MicrolensSolverJaxLike except, remove tkinter / bagle.jax_model / dead BSPL helpers). Added tests/test_jax_swap_fixes.py; updated test_psbl_orbit_jax static-offset check for the new primary side. PLACEHOLDER_HASH
+- 2026-11-15: Step 1 (`jaxswap/step1-correctness`): fixed W1–W4 and hygiene items 1.1–1.9 (orbiting_lens_offsets sign, BFSPL phot jax_log_likely, GP SHO sigma=sqrt(S0*omega0*Q), alt S0 names, geoproj jax_log_likely via geo_phot_to_helio_jax, narrow MicrolensSolverJaxLike except, remove tkinter / bagle.jax_model / dead BSPL helpers). Added tests/test_jax_swap_fixes.py; updated test_psbl_orbit_jax static-offset check for the new primary side. commit 260b2b3
 - 2026-11-15: Audit of `fsbl_ld_jax` at `5368a88`. Found four wrong likelihood
   mappings (W1 to W4), coverage gaps, and API differences; first draft of this plan
   written.
