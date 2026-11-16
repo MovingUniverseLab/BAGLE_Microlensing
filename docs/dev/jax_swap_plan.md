@@ -533,7 +533,7 @@ Branch: `jaxswap/step2-raise-missing`. New test file: `tests/test_jax_lnl_regist
 
 ### 2.1 Add an explicit list of classes that have a verified JAX likelihood
 
-- [ ] Item 2.1 done.
+- [x] Item 2.1 done.
 
 **Background.** `build_explicit_jax_loglik_fn` (`model_fitter_jax.py:231`) finds the
 likelihood methods with `getattr(model_class, 'jax_log_likely_photometry', None)`
@@ -931,6 +931,7 @@ keyword:
 
 ## Log
 
+- 2026-11-16: Step 2 (`jaxswap/step2-raise-missing`): added `model_jax.JAX_LIKELIHOOD_CLASSES` (109 classes: Appendix A JAX-likelihood ✅ plus Step 1 geoproj / BFSPL Phot). `build_explicit_jax_loglik_fn` raises `NotImplementedError` naming the class (or `add_err`/`mult_err`); removed host fallback in `evaluate_loglik_jax`. Open question remains: Jessica — confirm raising for `add_err`/`mult_err` (implemented as raise per Change text). Tests: `tests/test_jax_lnl_registry.py`.
 - 2026-11-15: Step 1 (`jaxswap/step1-correctness`): fixed W1–W4 and hygiene items 1.1–1.9 (orbiting_lens_offsets sign, BFSPL phot jax_log_likely, GP SHO sigma=sqrt(S0*omega0*Q), alt S0 names, geoproj jax_log_likely via geo_phot_to_helio_jax, narrow MicrolensSolverJaxLike except, remove tkinter / bagle.jax_model / dead BSPL helpers). Added tests/test_jax_swap_fixes.py; updated test_psbl_orbit_jax static-offset check for the new primary side. commit 260b2b3
 - 2026-11-15: Audit of `fsbl_ld_jax` at `5368a88`. Found four wrong likelihood
   mappings (W1 to W4), coverage gaps, and API differences; first draft of this plan

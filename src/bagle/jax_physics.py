@@ -3917,7 +3917,10 @@ def supports_jax_loglik(fitter) -> str | None:
         can be built, otherwise ``None``.
     """
     # Probe the same builder used by MultiNest / PyMC / NumPyro paths.
-    fn, _ = build_jax_loglik_fn(fitter)
+    try:
+        fn, _ = build_jax_loglik_fn(fitter)
+    except NotImplementedError:
+        return None
     if fn is None:
         return None
 

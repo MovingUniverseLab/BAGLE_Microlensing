@@ -249,10 +249,13 @@ def build_explicit_jax_loglik_fn(fitter):
 
     Notes
     -----
-    Returns (None, None) in cases where the configuration is unsupported
-    (e.g., model requires add_err/mult_err, missing likelihood methods).
-    This function also uses caching to avoid redundant compilation.
+    Raises ``NotImplementedError`` when the model class is not in
+    :data:`bagle.model_jax.JAX_LIKELIHOOD_CLASSES`, when the fitted
+    names include ``add_err`` / ``mult_err``, or when a required
+    ``jax_log_likely_*`` method is missing. Uses caching to avoid
+    redundant compilation.
     """
+    from bagle import model_jax as _model_jax
 
     names = tuple(fitter.fitter_param_names)
     tied = dict(getattr(fitter, 'tied_params', {}) or {})
@@ -285,11 +288,26 @@ def build_explicit_jax_loglik_fn(fitter):
     if cached is not None and cached_key == cache_key:
         return cached
 
-    # Models with additive/multiplicative error parameters are not supported
-    if any(('add_err' in name or 'mult_err' in name) for name in names):
-        return None, None
-
     model_class = fitter.model_class
+    class_name = model_class.__name__
+
+    # Only verified concrete classes may use the traced JAX path.
+    if class_name not in _model_jax.JAX_LIKELIHOOD_CLASSES:
+        raise NotImplementedError(
+            f"{class_name} has no JAX likelihood. "
+            "Use MicrolensSolver (host likelihood) or add a JAX likelihood "
+            "(see docs/dev/jax_swap_plan.md, Step 7)."
+        )
+
+    # Additive / multiplicative photometric error params are unsupported.
+    bad_err = [n for n in names if 'add_err' in n or 'mult_err' in n]
+    if bad_err:
+        raise NotImplementedError(
+            f"{class_name} JAX likelihood does not support fitted error "
+            f"parameters {bad_err}. Fix those parameters or use "
+            "MicrolensSolver (host likelihood)."
+        )
+
     phot_method = getattr(model_class, 'jax_log_likely_photometry', None)
     ast_method = getattr(model_class, 'jax_log_likely_astrometry', None)
     need_phot = bool(
@@ -301,9 +319,15 @@ def build_explicit_jax_loglik_fn(fitter):
         and fitter.n_ast_sets
     )
 
-    # Ensure required methods exist for photometry/astrometry
-    if (need_phot and phot_method is None) or (need_ast and ast_method is None):
-        return None, None
+    # Required methods must exist for the datasets on this fitter.
+    if need_phot and phot_method is None:
+        raise NotImplementedError(
+            f"{class_name} is missing jax_log_likely_photometry."
+        )
+    if need_ast and ast_method is None:
+        raise NotImplementedError(
+            f"{class_name} is missing jax_log_likely_astrometry."
+        )
 
     base_names = tuple(model_class.fitter_param_names)
     filt_names = set(getattr(model_class, 'filt_param_names', ()) or ())
@@ -313,9 +337,14 @@ def build_explicit_jax_loglik_fn(fitter):
     try:
         for name in base_names:
             if name not in filt_names and name not in names:
-                return None, None
-    except TypeError:
-        return None, None
+                raise NotImplementedError(
+                    f"{class_name} JAX likelihood needs shared parameter "
+                    f"{name!r} in the fitted cube."
+                )
+    except TypeError as exc:
+        raise NotImplementedError(
+            f"{class_name} JAX likelihood cannot read fitter_param_names."
+        ) from exc
 
     # Check if parallax info is needed and available
     use_parallax = bool(getattr(model_class, 'parallaxFlag', False))
@@ -2532,21 +2561,12 @@ class MicrolensSolver(Solver):
         -----
         The batch path compiles ``jax.vmap`` of the cached likelihood
         once and stores it on ``_explicit_jax_loglik_vmap_cache``.
-        When the JAX likelihood is unavailable, each point is passed
-        to :meth:`log_likely`.
+        Unsupported classes raise from
+        :func:`build_explicit_jax_loglik_fn` (no host fallback).
         """
         fn, _ = build_explicit_jax_loglik_fn(self)
         batch = (getattr(cube, 'ndim', None) == 2
                  and not isinstance(cube, (dict, Row)))
-
-        # No explicit JAX likelihood: host log_likely, including batches.
-        if fn is None:
-            if not batch:
-                return float(self.log_likely(cube))
-            values = np.array([self.log_likely(row)
-                               for row in np.asarray(cube, dtype=np.float64)])
-            # Same finite floor as the JAX batch path.
-            return np.where(np.isfinite(values), values, _LN_L_FLOOR)
 
         if batch:
             return self._loglik_jax_batch(fn, cube)
@@ -2607,10 +2627,6 @@ class MicrolensSolver(Solver):
             No JAX log-likelihood is registered for this fitter.
         """
         fn, _ = build_explicit_jax_loglik_fn(self)
-        if fn is None:
-            raise NotImplementedError(
-                "No JAX log-likelihood for this fitter configuration."
-            )
         # Fitted values as the float vector the JAX likelihood takes.
         vec = self.to_param_vector(self.to_param_dict(cube))
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
@@ -4625,9 +4641,11 @@ def scipy_to_pymc(prior, name, wrapped=False):
 class LogLikelihoodOp(Op):
     """PyTensor Op wrapping MicrolensSolver.log_likely().
 
-    When ``use_jax_grad=True`` and the model Param mixin provides explicit JAX
-    likelihood methods, evaluation and differentiation use a jitted closure.
-    Unsupported configurations fall back to black-box ``log_likely``.
+    When ``use_jax_grad=True`` and the model is in
+    :data:`bagle.model_jax.JAX_LIKELIHOOD_CLASSES`, evaluation and
+    differentiation use a jitted closure. Unsupported configurations raise
+    from :func:`build_explicit_jax_loglik_fn`, or use black-box
+    ``log_likely`` when ``use_jax_grad=False``.
     """
 
     __props__ = ('fitter', 'param_names', 'use_jax_grad')
