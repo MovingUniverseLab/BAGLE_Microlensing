@@ -134,13 +134,13 @@ def test_static_offsets_match_static_kernel():
     vec_s = jnp.asarray([vec0[names.index(n)]
                          for n in static.fitter_param_names])
 
-    # Same data, same errors: the orbit and static models agree once the
-    # orbit is switched off (up to the orbit models' primary at -offset).
+    # Same data, same errors: after W1 the orbit models place the primary
+    # at +offset like the static kernel, so zero orbital motion matches
+    # without an alpha flip.
     err = jnp.full(t.size, 1e-3)
     tj = jnp.asarray(t)
     lo = float(cls.jax_log_likely_photometry(vec0, tj, jnp.asarray(mag_h),
                                              err, 0.7, 19.0))
-    vec_s = vec_s.at[static.fitter_param_names.index('alpha')].add(180.0)
     ls = float(static.jax_log_likely_photometry(vec_s, tj, jnp.asarray(mag_h),
                                                 err, 0.7, 19.0))
     assert abs(lo - ls) < 1e-6 * abs(ls)

@@ -485,7 +485,6 @@ All times must be reported in MJD.
 
 """
 
-from tkinter import W
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import inspect
@@ -2189,16 +2188,6 @@ class PSPL_GP(ABC):
             if t_pred is None:
                 t_pred = t
             # GP photometry still uses layout try_get_* (no analytic jnp AD yet).
-            try:
-                from bagle.jax_model import try_get_photometry_with_gp
-
-                gp_jax = try_get_photometry_with_gp(
-                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
-                )
-                if gp_jax is not None:
-                    return gp_jax
-            except ImportError:
-                pass
 
             gp = self.get_celerite_gp_object(mag_err_obs, filt_idx=filt_idx)
             try:
@@ -2361,16 +2350,6 @@ class PSPL_GPnoJitter(ABC):
         if self.use_gp_phot[filt_idx]:
             if t_pred is None:
                 t_pred = t
-            try:
-                from bagle.jax_model import try_get_photometry_with_gp
-
-                gp_jax = try_get_photometry_with_gp(
-                    self, t, mag_obs, mag_err_obs, filt_idx=filt_idx, t_pred=t_pred
-                )
-                if gp_jax is not None:
-                    return gp_jax
-            except ImportError:
-                pass
 
             gp = self.get_celerite_gp_object(filt_idx = filt_idx)
             try:
@@ -3496,6 +3475,66 @@ class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
                          raL=raL, decL=decL, obsLocation=obsLocation)
 
         return
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  raL=None, decL=None, t0par=None):
+        """
+        Traced geoproj photometric log-likelihood.
+
+        Converts fitted ``*_geotr`` parameters to heliocentric values inside
+        the traced function, then calls the same PSPL photometry kernel as
+        :class:`PSPL_PhotParam1`.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times (MJD) and photometry.
+        b_sff : float
+            Filter-local source flux fraction.
+        mag_src : float
+            Source magnitude for this filter.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed heliocentric parallax table.
+        gp_params, fixed_jitter : optional
+            GP likelihood inputs (unused by this class).
+        raL, decL : float
+            Event coordinates (degrees); fixed for a fit.
+        t0par : float
+            Geocentric-projection reference time (MJD); fixed for a fit.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.frame_convert import geo_phot_to_helio_jax
+        from bagle.jax.geometry import derive_pspl_static_geometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # geo_phot_to_helio_jax expects [t0, u0, tE, piEE, piEN, t0par].
+        x_geo = jnp.stack([
+            p['t0_geotr'], p['u0_amp_geotr'], p['tE_geotr'],
+            p['piE_E_geotr'], p['piE_N_geotr'],
+            jnp.asarray(t0par, dtype=jnp.float64),
+        ])
+        t0, u0_amp, tE, piE_E, piE_N = geo_phot_to_helio_jax(
+            x_geo, float(raL), float(decL)
+        )
+
+        u0, thetaE_hat, _ = derive_pspl_static_geometry(u0_amp, piE_E, piE_N)
+        lnL = jax_physics.pspl_log_likely_photometry(
+            t, t0, tE, u0, thetaE_hat, mag_src, b_sff, mag_obs, mag_err,
+            parallax_vectors=parallax_vectors, piE_E=piE_E, piE_N=piE_N,
+            gp_params=gp_params, fixed_jitter=fixed_jitter,
+        )
+
+        return lnL
 
 
 
@@ -7836,14 +7875,6 @@ class PSBL_Phot(PSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
 
         u = self.get_u(t, filt_idx=filt_idx)
 
@@ -18439,14 +18470,6 @@ class BSPL_Phot(BSPL, PSPL_Phot):
         xS_unlensed : numpy array, dtype=float, shape = len(t) x 2
             The unlensed positions of the source in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
 
         u_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         u1_unlens = u_unlens_both[:, 0, :]
@@ -18667,14 +18690,6 @@ class BSPL_PhotAstrom(BSPL, PSPL_PhotAstrom):
             | The unlensed positions of the combined sources in arcseconds.
             | Shape = [len(t), 2 directions]
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
 
         xS_unlens_both = self.get_resolved_source_astrometry_unlensed(t, filt_idx=filt_idx)
         xS1_unlens = xS_unlens_both[:, 0, :]
@@ -28310,15 +28325,6 @@ decL - if parallax model
         centroid_shift : numpy array
             [shape = len(t), 2] in milliarcseoncds
         """
-        if (image_arr is None) and (amp_arr is None):
-            try:
-                from bagle.jax_model import try_get_centroid_shift
-
-                shift_jax = try_get_centroid_shift(self, t, filt_idx=filt_idx)
-                if shift_jax is not None:
-                    return shift_jax
-            except ImportError:
-                pass
         # Note that xS is actually the observed centroid position
         # including all light from the source and lens.
         xS = self.get_astrometry(t, filt_idx=filt_idx, image_arr=image_arr, amp_arr=amp_arr)
@@ -30469,14 +30475,6 @@ class FSBL_Phot(FSBL, PSPL_Phot):
         .. note::
            Note that this is a photometry-only model, so units are in Einstein radii.
         """
-        try:
-            from bagle.jax_model import try_get_source_astrometry_unlensed
-
-            pos_jax = try_get_source_astrometry_unlensed(self, t, filt_idx=filt_idx)
-            if pos_jax is not None:
-                return pos_jax
-        except ImportError:
-            pass
 
         u = self.get_u(t, filt_idx=filt_idx)
 
@@ -39780,6 +39778,99 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
         self.n_outline = n_outline_pri
 
         return None
+
+    @classmethod
+    def _jax_bfspl_phot_geometry(cls, vec):
+        """
+        Traced BFSPL photometry-only geometry from a packed parameter vector.
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+
+        Returns
+        -------
+        p : dict
+            Named parameters from ``vec``.
+        g : dict
+            ``u0_pri``, ``u0_sec``, ``thetaE_hat``, ``rho_pri``, ``rho_sec``,
+            ``gamma_pri`` and ``gamma_sec`` (``None`` when absent).
+        """
+        from bagle.jax.geometry import derive_pspl_static_geometry
+
+        p = dict(zip(cls.fitter_param_names, jnp.asarray(vec)))
+
+        # Primary u0 and Einstein-frame direction from piE.
+        u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(
+            p['u0_amp'], p['piE_E'], p['piE_N']
+        )
+
+        # Secondary offset in Einstein radii (sep is already in thetaE units).
+        phi = p['phi'] * jnp.pi / 180.0
+        phi_piE = jnp.arctan2(p['piE_E'], p['piE_N'])
+        sep_vec = p['sep'] * jnp.stack([
+            jnp.sin(phi_piE + phi), jnp.cos(phi_piE + phi)
+        ])
+        u0_sec = u0_pri + sep_vec
+
+        # Phot-only radii are already Einstein radii (rho).
+        g = dict(
+            u0_pri=u0_pri, u0_sec=u0_sec, thetaE_hat=thetaE_hat,
+            rho_pri=p['radiusS_pri'], rho_sec=p['radiusS_sec'],
+            gamma_pri=p.get('gamma_pri'), gamma_sec=p.get('gamma_sec'),
+        )
+
+        return p, g
+
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True,
+                                  n_outline=400):
+        """
+        Traced BFSPL photometry-only log-likelihood (finite source).
+
+        Parameters
+        ----------
+        vec : array_like, float, shape = (N_params,)
+            Filter-local vector in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, float, shape = (N_times,)
+            Times (MJD) and photometry.
+        b_sff : float
+            Filter-local source flux fraction.
+        mag_src : tuple of float or None
+            ``(mag_src_pri, mag_src_sec)`` from the fitter; ``None`` reads
+            both from ``vec``.
+        parallax_vectors : array_like, float, shape = (N_times, 2), optional
+            Precomputed parallax table (parallax classes only).
+        gp_params, fixed_jitter : optional
+            GP likelihood inputs (unused by these classes).
+        n_outline : int, optional
+            Static limb samples per disk.
+
+        Returns
+        -------
+        lnL : float
+            Summed photometric log-likelihood.
+        """
+        from bagle.jax.bfs import bfspl_log_likely_photometry
+
+        p, g = cls._jax_bfspl_phot_geometry(vec)
+
+        # Source magnitudes from the fitter tuple or the class vector.
+        if isinstance(mag_src, (tuple, list)):
+            mag_pri, mag_sec = mag_src
+        else:
+            mag_pri, mag_sec = p['mag_src_pri'], p['mag_src_sec']
+
+        return bfspl_log_likely_photometry(
+            t, p['t0'], p['tE'], g['u0_pri'], g['u0_sec'], g['thetaE_hat'],
+            g['rho_pri'], g['rho_sec'], n_outline, mag_pri, mag_sec, b_sff,
+            mag_obs, mag_err, gamma_pri=g['gamma_pri'],
+            gamma_sec=g['gamma_sec'], parallax_vectors=parallax_vectors,
+            piE_E=p['piE_E'], piE_N=p['piE_N'], gp_params=gp_params,
+            fixed_jitter=fixed_jitter)
 
 
 class BFSPL_Limb_PhotParam1(BFSPL_PhotParam1):

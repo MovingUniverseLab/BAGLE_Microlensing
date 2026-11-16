@@ -2874,10 +2874,10 @@ def orbiting_lens_offsets(t, t0, sep, alpha_deg, thetaE_amp, dmuL_sec,
 
     Notes
     -----
-    Matches ``PSBL_PhotAstrom.get_resolved_lens_astrometry`` for
+    Matches host ``get_resolved_lens_astrometry`` after ``ef7a5ec`` for
     ``orbitFlag`` ``'linear'`` / ``'accelerated'``: the primary sits at
-    ``-offset`` (the static models put it at ``+offset``) and only the
-    secondary moves.
+    ``+offset`` (same side as static / Keplerian), the secondary at
+    ``-offset``, and only the secondary moves.
     """
     t = jnp.asarray(t, dtype=jnp.float64).reshape(-1)
     dt = ((t - t0) / _DAYS_PER_YEAR).reshape(-1, 1)
@@ -2892,9 +2892,9 @@ def orbiting_lens_offsets(t, t0, sep, alpha_deg, thetaE_amp, dmuL_sec,
     if accL_sec is not None:
         motion = motion + 0.5 * dt ** 2 * jnp.asarray(accL_sec).reshape(1, 2)
 
-    # Primary fixed at -half; secondary at +half plus its motion.
-    off1 = jnp.broadcast_to(-half, motion.shape)
-    off2 = half + motion / thetaE_amp
+    # Primary fixed at +half; secondary at -half plus its motion.
+    off1 = jnp.broadcast_to(half, motion.shape)
+    off2 = -half + motion / thetaE_amp
 
     return off1, off2
 

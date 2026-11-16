@@ -276,6 +276,7 @@ def build_explicit_jax_loglik_fn(fitter):
         has_ast,
         float(fitter.data['raL']) if 'raL' in fitter.data else None,
         float(fitter.data['decL']) if 'decL' in fitter.data else None,
+        float(fitter.data['t0par']) if 't0par' in fitter.data else None,
         tuple(id(fitter.data.get(f't_phot{i + 1}')) for i in range(n_phot)),
         tuple(id(fitter.data.get(f't_ast{i + 1}')) for i in range(n_ast)),
     )
@@ -380,8 +381,8 @@ def build_explicit_jax_loglik_fn(fitter):
         gp_indices = {}
         if is_gp:
             for key in ('gp_log_sigma', 'gp_log_rho', 'gp_rho',
-                        'gp_log_S0', 'gp_log_omega0',
-                        'gp_log_jit_sigma'):
+                        'gp_log_S0', 'gp_log_omega04_S0', 'gp_log_omega0_S0',
+                        'gp_log_omega0', 'gp_log_jit_sigma'):
                 gp_idx = _jax_param_index(names, key, filt_idx)
                 if gp_idx is None:
                     continue
@@ -500,10 +501,23 @@ def build_explicit_jax_loglik_fn(fitter):
                 if gp_indices else None
             )
 
+            # Optional kwargs accepted by some Param mixins (geoproj, etc.).
+            phot_kwargs = dict(
+                parallax_vectors=pvec, gp_params=gp_params,
+                fixed_jitter='GPnoJitter' not in model_class.__name__,
+            )
+            phot_sig = inspect.signature(phot_method)
+            if 'raL' in phot_sig.parameters and 'raL' in fitter.data:
+                phot_kwargs['raL'] = float(fitter.data['raL'])
+            if 'decL' in phot_sig.parameters and 'decL' in fitter.data:
+                phot_kwargs['decL'] = float(fitter.data['decL'])
+            if 't0par' in phot_sig.parameters and 't0par' in fitter.data:
+                phot_kwargs['t0par'] = float(fitter.data['t0par'])
+
             # Add weighted likelihood for this photometric dataset
-            lnL += weight * phot_method(base_vec, t, mag_obs, mag_err, b_sff, mag_param,
-                                        parallax_vectors=pvec, gp_params=gp_params,
-                                        fixed_jitter='GPnoJitter' not in model_class.__name__)
+            lnL += weight * phot_method(
+                base_vec, t, mag_obs, mag_err, b_sff, mag_param, **phot_kwargs
+            )
 
         # Compute sum of log-likelihood contributions from each astrometric dataset
         # Only forward mag_src / dmag to methods that accept them (PSBL/PSTL).
@@ -4060,14 +4074,13 @@ class MicrolensSolverJaxLike(MicrolensSolver):
         lnL : float
             Joint photometry + astrometry log-likelihood (always finite).
         """
-        try:
-            # Reject unphysical dL/dS before the expensive JAX call.
-            if self._unphysical_distances(cube):
-                return self._LN_L_FLOOR
-
-            lnL = float(self.evaluate_loglik_jax(cube))
-        except Exception:
+        # Reject unphysical dL/dS before the expensive JAX call.
+        # Programming errors (KeyError, missing likelihood, etc.) must
+        # propagate; only non-finite numerical lnL is floored below.
+        if self._unphysical_distances(cube):
             return self._LN_L_FLOOR
+
+        lnL = float(self.evaluate_loglik_jax(cube))
 
         if not np.isfinite(lnL):
             return self._LN_L_FLOOR

@@ -17,8 +17,6 @@ from bagle.jax_physics import (
     pspl_resolved_amplification_from_u,
     einstein_source_position,
     derive_pspl_static_geometry,
-    build_jax_joint_likelihood_context,
-    _assemble_class_vector,
 )
 
 
@@ -224,60 +222,4 @@ def bspl_photastrom_source_astrometry_unlensed_from_model(
     return np.asarray(xS, dtype=np.float64)
 
 
-def bspl_astrometry_from_model(model, t, filt_idx, pvec):
-    return None  # use numpy path until full BSPL astrometry port
-
-
-def build_bspl_joint_loglik(fitter, param_cls=None):
-    """Build a BSPL joint likelihood from Param-mixin fitter names."""
-    if param_cls is None:
-        return None, None
-    ctx = build_jax_joint_likelihood_context(fitter)
-    if ctx is None:
-        return None, None
-
-    def _loglik(param_vec):
-        param_vec = jnp.asarray(param_vec, dtype=jnp.float64).reshape(-1)
-        # Shared geometry. This photometric term does not read xS0.
-        base = _assemble_class_vector(
-            param_vec, ctx.filters[0].class_slots
-        )
-        # BSPL PhotAstromParam1: t0_pri, u0_amp_pri, t0_sec, u0_amp_sec, tE, piE_E, piE_N, ...
-        names = param_cls.fitter_param_names
-        p = {names[i]: base[i] for i in range(len(names))}
-        u0_pri, thetaE_hat, _ = derive_pspl_static_geometry(p["u0_amp_pri"], p["piE_E"], p["piE_N"])
-        u0_sec, _, _ = derive_pspl_static_geometry(p["u0_amp_sec"], p["piE_E"], p["piE_N"])
-        lnL = 0.0
-        for block in ctx.filters:
-            b_sff = param_vec[block.ast.idx_b_sff if block.ast else block.phot.idx_b_sff]
-            if block.phot is not None:
-                mag_pri = param_vec[block.phot.idx_mag_src]
-                # secondary mag index follows primary in fitter names
-                idx_sec = block.phot.idx_mag_src + 1
-                mag_sec = param_vec[idx_sec]
-                pvec = (
-                    None
-                    if block.phot.parallax_vectors is None
-                    else jnp.asarray(block.phot.parallax_vectors, dtype=jnp.float64)
-                )
-                mag_model = bspl_photometry_jax(
-                    jnp.asarray(block.phot.t, dtype=jnp.float64),
-                    p["t0_pri"],
-                    p["t0_sec"],
-                    p["tE"],
-                    u0_pri,
-                    u0_sec,
-                    thetaE_hat,
-                    mag_pri,
-                    mag_sec,
-                    b_sff,
-                    pvec=pvec,
-                    piE_E=p["piE_E"],
-                    piE_N=p["piE_N"],
-                )
-                lnL = lnL + block.phot.weight * gaussian_log_likelihood_sum(
-                    mag_model, block.phot.mag_obs, block.phot.mag_err
-                )
-        return lnL
-
-    return jax.jit(_loglik), (ctx, param_cls)
+# BSPL PhotAstrom traced astrometry / joint loglik: see jax_swap_plan Step 7.
