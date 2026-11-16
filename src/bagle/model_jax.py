@@ -14566,7 +14566,7 @@ class PSBL_GP_PhotAstromParam2(PSBL_PhotAstromParam2):
 ######################################################
 # Ported from origin/jax_dex (Dex Bhadra / 10ay; 2df0010, ea87c40)
 # with multi-location, fitter-param, and defect fixes from
-# docs/finite_source_jax_plan.md section 3.1 / A.2.5.
+# docs/dev/finite_source_jax_plan.md section 3.1 / A.2.5.
 # --------------------------------------------------
 #
 # Data Class Family - PSTL

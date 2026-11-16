@@ -45,7 +45,7 @@ Binary reference frames (PSBL / FSBL / BSBL / BFSBL)
 
 Fit results for the classes below change: their constructors now honor the
 input frame exactly and fill every frame consistently. See
-:ref:`binary-reference-frames` and ``docs/audits/binary_frames/``.
+:ref:`binary-reference-frames` and ``docs/dev/audits/binary_frames/``.
 
 * **Suffix rule.** ``_com`` = source CoM to lens CoM, ``_p`` = primary
   source to primary lens, ``_mid`` = primary source to lens geometric

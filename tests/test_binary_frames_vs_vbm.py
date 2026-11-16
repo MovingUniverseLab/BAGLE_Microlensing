@@ -10,7 +10,7 @@ VBM's CoM frame, and compares light curves. Only the orientation (the VBM
 
 Several motion directions are used because the sign of the CoM / primary
 ``u0_amp`` shift depends on which side of the motion the positive-``u0_amp``
-direction lies (see ``docs/audits/binary_frames/binary_frame_audit.md``).
+direction lies (see ``docs/dev/audits/binary_frames/binary_frame_audit.md``).
 """
 from __future__ import annotations
 

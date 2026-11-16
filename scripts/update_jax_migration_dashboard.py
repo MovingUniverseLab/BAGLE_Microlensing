@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate docs/jax_migration_dashboard.md from jax_migration_status.json."""
+"""Regenerate docs/dev/jax_migration_dashboard.md from jax_migration_status.json."""
 from __future__ import annotations
 
 import json
@@ -14,7 +14,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 from bagle.jax.migration_tasks import FAMILY_ORDER, family_summary, generate_tasks  # noqa: E402
 from jax_migration_status_utils import grad_pass_done, overall_status, summarize_tasks  # noqa: E402
 
-DOCS = REPO / "docs"
+DOCS = REPO / "docs" / "dev"
 STATUS_JSON = DOCS / "jax_migration_status.json"
 DASHBOARD_MD = DOCS / "jax_migration_dashboard.md"
 

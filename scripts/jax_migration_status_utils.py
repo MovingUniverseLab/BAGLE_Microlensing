@@ -1,4 +1,4 @@
-"""Shared helpers for ``docs/jax_migration_status.json`` updates."""
+"""Shared helpers for ``docs/dev/jax_migration_status.json`` updates."""
 from __future__ import annotations
 
 GRAD_TERMINAL = frozenset(("pass", "skip"))

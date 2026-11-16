@@ -12,7 +12,7 @@ sys.path.insert(0, str(REPO / "tests"))
 
 from model_old_vs_jax_fixtures import pspl_gp_pairs  # noqa: E402
 
-STATUS_JSON = REPO / "docs" / "jax_migration_status.json"
+STATUS_JSON = REPO / "docs" / "dev" / "jax_migration_status.json"
 
 
 def main() -> int:

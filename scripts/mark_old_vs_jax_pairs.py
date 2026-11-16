@@ -15,7 +15,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 from jax_migration_status_utils import summarize_tasks  # noqa: E402
 
-STATUS_JSON = REPO / "docs" / "jax_migration_status.json"
+STATUS_JSON = REPO / "docs" / "dev" / "jax_migration_status.json"
 
 
 def main() -> int:

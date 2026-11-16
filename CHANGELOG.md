@@ -41,7 +41,7 @@
 
 Fit results for the classes below change: their constructors now honor the
 input frame exactly and fill every frame consistently. See
-`docs/audits/binary_frames/` for the audit and the plan.
+`docs/dev/audits/binary_frames/` for the audit and the plan.
 
 - **Suffix rule.** `_com` = source CoM to lens CoM, `_p` = primary source to
   primary lens, `_mid` = primary source to lens geometric midpoint. The
