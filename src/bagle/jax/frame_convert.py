@@ -10,7 +10,43 @@ import numpy as np
 _AU_DAY_TO_KM_S = 1731.45683
 
 
+def _geo_phot_callback(x, ra, dec):
+    """Run the NumPy geocentric conversion outside a JAX trace.
+
+    Parameters
+    ----------
+    x : array_like, shape (6,)
+        ``[t0, u0, tE, piE_E, piE_N, t0par]`` in the geocentric frame.
+    ra, dec : float
+        Lens coordinates in degrees.
+
+    Returns
+    -------
+    helio : ndarray, shape (5,)
+        ``[t0, u0, tE, piE_E, piE_N]`` in the heliocentric frame.
+    """
+    # Concrete values: this callback is invoked by pure_callback, not traced.
+    helio = _geo_phot_to_helio_np(
+        np.asarray(x, dtype=np.float64), float(ra), float(dec))
+
+    return helio
+
+
 def _geo_phot_to_helio_np(x: np.ndarray, ra: float, dec: float) -> np.ndarray:
+    """Convert one geocentric photometry vector with the NumPy frame code.
+
+    Parameters
+    ----------
+    x : ndarray, shape (6,)
+        ``[t0, u0, tE, piE_E, piE_N, t0par]``.
+    ra, dec : float
+        Lens coordinates in degrees.
+
+    Returns
+    -------
+    helio : ndarray, shape (5,)
+        ``[t0, u0, tE, piE_E, piE_N]``.
+    """
     from bagle import frame_convert as fc
 
     ra = float(ra)
@@ -37,13 +73,53 @@ def _geo_phot_to_helio_np(x: np.ndarray, ra: float, dec: float) -> np.ndarray:
 
 @partial(jax.custom_vjp, nondiff_argnums=(1, 2))
 def geo_phot_to_helio_jax(x, ra: float, dec: float):
-    """Convert geo-projected photometry params to heliocentric (5 outputs)."""
-    return jnp.asarray(_geo_phot_to_helio_np(np.asarray(x, dtype=np.float64), ra, dec))
+    """Convert geo-projected photometry params to heliocentric (5 outputs).
+
+    The NumPy frame transform is not traceable. ``jax.pure_callback``
+    runs it from a jitted likelihood, which is how the fitter calls this.
+
+    Parameters
+    ----------
+    x : array_like, shape (6,)
+        ``[t0, u0, tE, piE_E, piE_N, t0par]`` in the geocentric frame.
+    ra, dec : float
+        Lens coordinates in degrees. Not differentiated.
+
+    Returns
+    -------
+    helio : jax.Array, shape (5,)
+        ``[t0, u0, tE, piE_E, piE_N]`` in the heliocentric frame.
+    """
+    # ra and dec stay concrete (nondiff). x may be a tracer under jit.
+    return jax.pure_callback(
+        _geo_phot_callback,
+        jax.ShapeDtypeStruct((5,), jnp.float64),
+        jnp.asarray(x, dtype=jnp.float64),
+        jnp.asarray(ra, dtype=jnp.float64),
+        jnp.asarray(dec, dtype=jnp.float64),
+    )
 
 
 def _geo_phot_fwd(x, ra, dec):
+    """Forward rule for ``geo_phot_to_helio_jax``.
+
+    Parameters
+    ----------
+    x : array_like, shape (6,)
+        Geocentric parameter vector. Kept as a residual tracer.
+    ra, dec : float
+        Lens coordinates in degrees.
+
+    Returns
+    -------
+    y : jax.Array, shape (5,)
+        Heliocentric parameters.
+    residuals : tuple
+        ``(x, ra, dec)`` for the finite-difference backward pass.
+    """
     y = geo_phot_to_helio_jax(x, ra, dec)
-    return y, (np.asarray(x, dtype=np.float64), ra, dec)
+
+    return y, (x, ra, dec)
 
 
 def _geo_phot_bwd(ra, dec, res, g):

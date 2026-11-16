@@ -54,6 +54,8 @@ CANONICAL: dict[str, Any] = {
     "log10_thetaE": math.log10(0.8),
     "thetaE": 0.8,
     "piS": 0.15,
+    # Reference-frame parallax (mas), one entry per filter.
+    "pi_ref_frame": [0.05],
     "q": 0.3,
     "sep": 1.2,
     "phi": 45.0,
@@ -93,9 +95,13 @@ CANONICAL: dict[str, Any] = {
     "accSsec_E": 1e-4,
     "accSsec_N": -1e-4,
     "omega_pri": 90.0,
+    # Secondary argument of periastron: primary + 180 deg.
+    "omega_sec": 270.0,
     "omegaL_pri": 90.0,
     "omegaS_pri": 90.0,
     "big_omega_sec": 0.0,
+    # Tertiary ascending node for PSTL hierarchical orbits (deg).
+    "big_omega_ter": 20.0,
     "big_omegaL_sec": 0.0,
     "big_omegaS_sec": 0.0,
     "iL": 45.0,
@@ -114,6 +120,15 @@ CANONICAL: dict[str, Any] = {
     "e": 0.1,
     "tp": 40.0,
     "a": 1.0,
+    # PSTL hierarchical (primary-secondary and secondary-tertiary) orbits.
+    "i_12": 45.0,
+    "e_12": 0.1,
+    "tp_12": 40.0,
+    "a_12": 1.0,
+    "i_23": 30.0,
+    "e_23": 0.1,
+    "tp_23": 40.0,
+    "a_23": 1.0,
     "log_a": math.log10(1.0),
     "mSp": 1.0,
     "mSs": 1.0,
@@ -238,7 +253,9 @@ def build_init_args(cls: type, model_module) -> tuple[list[Any], dict[str, Any]]
             kwargs[pname] = val
         else:
             args.append(val)
-    if "_Par_" in cls.__name__:
+    # Sky position for parallax and reference-frame parallax.
+    # ``RefPar`` does not contain the substring ``_Par_``.
+    if "_Par_" in cls.__name__ or "RefPar" in cls.__name__:
         kwargs.update(PARALLAX_KW)
     return args, kwargs
 

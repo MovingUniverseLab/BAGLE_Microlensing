@@ -40514,6 +40514,11 @@ class PSPL_Phot_Par_Param1_geoproj(ModelClassABC,
                                    PSPL_Parallax,
                                    PSPL_Phot,
                                    PSPL_PhotParam1_geoproj):
+    # t0par is required by the mixin and is not a fitted parameter.
+    # PSPL_Parallax only lists raL and decL, so the fitter never
+    # forwarded the geocentric reference time.
+    fixed_param_names = ['raL', 'decL', 't0par']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
