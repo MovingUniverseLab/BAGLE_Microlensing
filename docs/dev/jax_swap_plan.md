@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Step 5 is on `jaxswap/step5-model-api`. Steps 1–4 are on `fsbl_ld_jax`. Item 4.7 is still open.
+**Status:** Step 6 is on `jaxswap/step6-fitter-api`. Steps 1–5 are on `fsbl_ld_jax` and `jax_pymc` (`e5b62a9`). Item 4.7 is still open.
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -870,7 +870,7 @@ for everything except priors (deferred).
 
 ### 6.1 Restore the `def_best=` keyword
 
-- [ ] Item 6.1 done.
+- [x] Item 6.1 done.
 
 `model_fitter.py` has `def_best='maxl'` on `print_likelihood` (line 3098),
 `calc_chi2` (3118 and 3737), `calc_chi2_manual` (3237 and 3852), and `get_residual`
@@ -881,7 +881,7 @@ copy the logic.
 
 ### 6.2 Port the missing `MicrolensSolver` methods
 
-- [ ] Item 6.2 done.
+- [x] Item 6.2 done.
 
 - `load_priors` (`model_fitter.py:2404`) and `write_priors_pkl`
   (`model_fitter.py:2113`): port only the file input and output (reading and writing
@@ -890,7 +890,7 @@ copy the logic.
 
 ### 6.3 Port the missing module functions
 
-- [ ] Item 6.3 done.
+- [x] Item 6.3 done.
 
 `save_params` (`model_fitter.py:4953`), `make_sed_distance_gen`
 (`model_fitter.py:4490`), `make_fdfdt` (4584), and `random_prob` (4588). Copy them
@@ -900,7 +900,7 @@ the deferred prior work).
 
 ### 6.4 API test
 
-- [ ] Item 6.4 done.
+- [x] Item 6.4 done.
 
 `test_fitter_public_api_matches`: every public function and every public
 `MicrolensSolver` method in `model_fitter.py` exists in `model_fitter_jax.py` with a
@@ -976,6 +976,7 @@ keyword:
 
 ## Log
 
+- 2026-11-17: Step 6 (`jaxswap/step6-fitter-api`). Restored `def_best='maxl'` on `print_likelihood`, `calc_chi2`, `calc_chi2_manual`, and `get_residual`. `MicrolensSolverWeighted` does not override those methods, so the keyword applies there too; the separate weighted chi-squared body in `model_fitter.py` was not copied. Ported `write_priors_pkl` and `load_priors` (pickle I/O only) and call `write_priors_pkl` from `solve`, matching `model_fitter.py`. Ported `plot_ultranest_style`, `save_params`, `make_sed_distance_gen`, `make_fdfdt`, and `random_prob` with the same signatures. `make_sed_distance_gen` stays the NumPy generator, not the JAX `make_*_gen` form. `tests/test_fitter_jax_api.py`: 9 passed. Deferred prior signatures are skipped (`make_*_gen`, `weighted_quantile`, `make_default_priors`). The five-file regression was not re-run; Step 6 does not change likelihoods. Item 4.7 is still open. Class rows in Appendix A are unchanged.
 - 2026-11-16: Step 5 (`jaxswap/step5-model-api`, commit `76c8879`). Ported `PSPL_PhotAstromParam7` and the noPar/Par concrete classes (no default prior, no JAX likelihood; both names are in `KNOWN_JAX_LNL_GAPS`). The traced geometry path accepts `log10_piE` the same way it accepts `log_piE`, so the existing gradient checks can run the new class. A JAX likelihood is still Step 7. Ported `get_astrometry_unlensed_noparallax` and `get_astrometry_pm_removed` onto `PSPL`, and `FSPL.cent`. `tests/test_model_jax_api.py`: 623 passed, 8 skipped. Astrometry helpers, including finite-source, match at 1e-8 (worst ~1e-12, PSTL phot; FSPL limb centroid ~1e-18). The item 3.3 limb difference is in the traced likelihood, so these host comparisons were not relaxed. `FSPL.cent` matches at 1e-8 with the lens at the origin; an offset lens is not compared at 1e-8 because `model.py` `detJac` ignores the lens position. Eight FSPL phot-only classes are skipped (no `xS0` on `model.py`). Required regression files had no failures through 4403 of 6473 tests, into pre-existing FSBL gradient checks (`FSBL_PhotAstrom_Par_CircOrbs_Param3`); that suite was still running when this was committed. Param6 and Param7 old-vs-jax parity and gradients: 84 passed. Item 4.7 is still open.
 - 2026-11-16: Step 4 (`jaxswap/step4-parity-tests`). Added `tests/test_swap_parity.py` and the missing `CANONICAL` values (`pi_ref_frame`, PSTL EllOrbs elements). Non-slow run: 315 passed, 12 skipped, 1 xfailed (`PSTL_Phot_Par_Param1` forward), 22 slow deselected. Coverage: every concrete `model_jax` class is in `JAX_LIKELIHOOD_CLASSES` (109) or `KNOWN_JAX_LNL_GAPS`. Likelihood atol is 1e-6 except GP 1e-3 (tinygp vs celerite, measured ≤3e-5), FSBL 1e-4 (measured ~4e-5), BFSBL 5e-2 (measured ~2e-2; host adaptive contour vs traced kernel), and FSPL/BFSPL phot+astrom 1e-1 (item 3.3 host NumPy limb vs JAX kernel, measured ≤0.06, almost all in the photometry term). `PSPL_Phot_Par_Param1_geoproj` now lists `t0par` in `fixed_param_names`; the traced conversion uses `jax.pure_callback` so the jitted fitter can call the NumPy frame transform. `model.py` still omits `t0par` (frozen); the NumPy comparison installs it for that one call. Open: item 3.3 host limb sampler; BFSBL traced kernel vs host adaptive contour; slow limb phot+astrom and FSBL Lin/Acc likelihoods not run; PhotAstrom geoproj is not in the likelihood registry and still omits `t0par`.
 - 2026-11-16: Step 2 (`jaxswap/step2-raise-missing`): added `model_jax.JAX_LIKELIHOOD_CLASSES` (109 classes: Appendix A JAX-likelihood ✅ plus Step 1 geoproj / BFSPL Phot). `build_explicit_jax_loglik_fn` raises `NotImplementedError` naming the class (or `add_err`/`mult_err`); removed host fallback in `evaluate_loglik_jax`. Open question remains: Jessica — confirm raising for `add_err`/`mult_err` (implemented as raise per Change text). Tests: `tests/test_jax_lnl_registry.py`.
@@ -991,9 +992,9 @@ keyword:
 
 ---
 
-## Appendix A. Per-class status after Step 5
+## Appendix A. Per-class status after Step 6
 
-Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 is in both modules and has no JAX likelihood (Step 7). Item 4.7 is still open.
+Step 6 changes the fitter API only. Class rows are the Step 5 table. Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 is in both modules and has no JAX likelihood (Step 7). Item 4.7 is still open.
 
 ### PSPL Astrom (1 of 2 good)
 
