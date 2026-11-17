@@ -878,6 +878,78 @@ class PSPL(ABC):
 
         return pos_unlensed
 
+    def get_astrometry_unlensed_noparallax(self, t, filt_idx=0):
+        """
+        Unlensed source+lens centroid with proper motion only.
+
+        Same as :meth:`get_astrometry_unlensed` with parallax turned off,
+        including a reference-frame parallax. Subtract this from a
+        parallax-enabled track to leave parallax and lensing.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+
+        Returns
+        -------
+        pos_nopar : numpy array, dtype=float, shape = [len(t), 2]
+            Unlensed positions in arcsec with parallax omitted.
+            Second dimension is [RA, Dec].
+        """
+        # Remember both parallax switches. A class without a
+        # reference-frame parallax simply has the flag absent.
+        old_par = self.parallaxFlag
+        old_ref = getattr(self, "ref_frame_parallax_flag", False)
+        self.parallaxFlag = False
+        self.ref_frame_parallax_flag = False
+        try:
+            pos_nopar = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        finally:
+            self.parallaxFlag = old_par
+            self.ref_frame_parallax_flag = old_ref
+
+        return pos_nopar
+
+    def get_astrometry_pm_removed(self, t, filt_idx=0, unlensed=False):
+        """
+        Astrometry with rectilinear proper motion subtracted.
+
+        Parallax is kept. Microlensing is kept unless ``unlensed`` is
+        True. The subtracted track is the flux-weighted source+lens
+        motion with parallax off.
+
+        Parameters
+        ----------
+        t : array_like
+            Time (in MJD).
+        filt_idx : int, optional
+            Index of the astrometric filter or data set.
+        unlensed : bool, optional
+            If False (default), start from :meth:`get_astrometry`
+            so the result includes parallax and microlensing.
+            If True, start from :meth:`get_astrometry_unlensed`
+            so the result is the unlensed parallax motion only.
+
+        Returns
+        -------
+        pos_pm_removed : numpy array, dtype=float, shape = [len(t), 2]
+            Positions in arcsec with proper motion removed.
+            Second dimension is [RA, Dec].
+        """
+        # Lensed track includes the centroid shift. Unlensed does not.
+        if unlensed:
+            pos = self.get_astrometry_unlensed(t, filt_idx=filt_idx)
+        else:
+            pos = self.get_astrometry(t, filt_idx=filt_idx)
+
+        pos_linear = self.get_astrometry_unlensed_noparallax(
+            t, filt_idx=filt_idx)
+
+        return pos - pos_linear
+
     def get_all_arrays(self, t, filt_idx=0):
         """
         Positions and amplifications of the plus and minus images.
@@ -5377,6 +5449,181 @@ class PSPL_PhotAstromParam6(PSPL_Param):
         self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
 
         return
+
+
+class PSPL_PhotAstromParam7(PSPL_Param):
+    """
+    Point-source point-lens photometry and astrometry.
+
+    Same as :class:`PSPL_PhotAstromParam3`, except the microlensing
+    parallax is an amplitude and a direction, ``log10_piE`` and
+    ``phi_muRel``, instead of Cartesian ``(piE_E, piE_N)``. Fits
+    ``log10_thetaE`` and ``mag_base``.
+
+    ``phi_muRel`` is the angle of muRel (and of piE) in degrees East
+    of North:
+
+        (piE_E, piE_N) = 10**log10_piE * (sin(phi), cos(phi)).
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD).
+    u0_amp : float
+        Closest approach in units of thetaE. Positive when
+        u0_hat[0] > 0 and negative when u0_hat[0] < 0.
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        log10 of the Einstein radius in mas.
+    piS : float
+        Source parallax (mas).
+    log10_piE : float
+        log10 of the microlensing parallax amplitude.
+    phi_muRel : float
+        Angle of muRel and piE, degrees East of North.
+    xS0_E, xS0_N : array_like
+        Source position at t0 (arcsec), one entry per filter.
+    muS_E, muS_N : float
+        Source proper motion (mas/yr).
+    b_sff : array_like
+        Source flux fraction in each filter.
+    mag_base : array_like
+        Baseline magnitude in each photometric filter.
+
+    Notes
+    -----
+    Parallax calculations also need ``raL``, ``decL``, and
+    ``obsLocation`` (default ``'earth'``).
+    """
+
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_thetaE', 'piS',
+                          'log10_piE', 'phi_muRel',
+                          'xS0_E', 'xS0_N',
+                          'muS_E', 'muS_N',
+                          'b_sff', 'mag_base']
+    # muS is shared. xS0 is per astrometric filter.
+    filt_param_names = ['xS0_E', 'xS0_N', 'b_sff', 'mag_base']
+    filt_param_usage = ['astrom', 'astrom', 'both', 'phot']
+    additional_param_names = ['thetaE_amp', 'piE_E', 'piE_N',
+                              'mL', 'piL', 'piRel',
+                              'muL_E', 'muL_N',
+                              'muRel_E', 'muRel_N',
+                              'mag_src']
+
+    paramAstromFlag = True
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 log10_piE, phi_muRel,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        """
+        Set the fit parameters and the quantities derived from them.
+
+        Parameters
+        ----------
+        t0 : float
+            Time of photometric peak (MJD).
+        u0_amp : float
+            Closest approach in units of thetaE.
+        tE : float
+            Einstein crossing time (days).
+        log10_thetaE : float
+            log10 of the Einstein radius (mas).
+        piS : float
+            Source parallax (mas).
+        log10_piE : float
+            log10 of the microlensing parallax amplitude.
+        phi_muRel : float
+            Direction of muRel and piE (degrees East of North).
+        xS0_E, xS0_N : array_like
+            Source position at t0 (arcsec), one entry per filter.
+        muS_E, muS_N : float
+            Source proper motion (mas/yr).
+        b_sff : array_like
+            Source flux fraction in each filter.
+        mag_base : array_like
+            Baseline magnitude in each filter.
+        raL, decL : float, optional
+            Lens sky position (degrees). Required when parallax is on.
+        obsLocation : str or list, optional
+            Observer location for each data set. Default ``'earth'``.
+
+        Returns
+        -------
+        None
+        """
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.log10_thetaE = log10_thetaE
+        self.thetaE_amp = 10 ** log10_thetaE
+        self.log10_piE = log10_piE
+        self.phi_muRel = phi_muRel
+        self.xS0_E = xS0_E
+        self.xS0_N = xS0_N
+        self.muS = np.array([muS_E, muS_N])
+        self.piS = piS
+        self.b_sff = b_sff
+        self.mag_base = mag_base
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+
+        # Reshape per-filter parameters and build xS0.
+        super().__init__()
+
+        # piE points along muRel: East = sin(phi), North = cos(phi).
+        self.phi_muRel_rad = np.deg2rad(phi_muRel)
+        self.piE_amp = 10 ** log10_piE
+        self.piE = self.piE_amp * np.array([
+            np.sin(self.phi_muRel_rad),
+            np.cos(self.phi_muRel_rad)])
+        self.piE_E, self.piE_N = self.piE
+
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+        self.beta = self.u0_amp * self.thetaE_amp
+        self.piRel = self.piE_amp * self.thetaE_amp
+        self.muRel_amp = self.thetaE_amp / (self.tE / days_per_year)
+
+        # kappa converts thetaE^2 / piRel into a lens mass (solar masses).
+        kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+        kappa = kappa_tmp.to(
+            units.mas / units.Msun,
+            equivalencies=units.dimensionless_angles()).value
+        self.mL = self.thetaE_amp ** 2 / (self.piRel * kappa)
+
+        self.piL = self.piRel + self.piS
+
+        # Distances from the parallaxes, in parsecs.
+        dL = (self.piL * units.mas).to(
+            units.parsec, equivalencies=units.parallax())
+        dS = (self.piS * units.mas).to(
+            units.parsec, equivalencies=units.parallax())
+        self.dL = dL.to('pc').value
+        self.dS = dS.to('pc').value
+
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+        self.thetaE = self.thetaE_amp * self.thetaE_hat
+
+        self.muRel = self.muRel_amp * self.thetaE_hat
+        self.muRel_E, self.muRel_N = self.muRel
+        self.muL = self.muS - self.muRel
+        self.muL_E, self.muL_N = self.muL
+
+        # u0_amp > 0 means u0_E > 0 (Gould 2004), same as Param3.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        # thetaS0 is in mas. xS0 and xL0 are in arcsec.
+        self.thetaS0 = self.u0 * self.thetaE_amp
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return None
 
 
 class PSPL_GP_PhotParam1(PSPL_PhotParam1):
@@ -27769,6 +28016,36 @@ class FSPL(PSPL):
         """
         return 1.0 - 1.0 / np.abs(z - z1) ** 4
 
+    def cent(self, ims, z1bar):
+        """
+        Amplification-weighted centroid of the images.
+
+        Each image is weighted by ``1/|det J|``. This class evaluates
+        ``detJac`` as ``1 - 1/|z - z1|^4``. ``model.py`` uses the same
+        weights with the lens at the origin (``1 - 1/|z|^4``) and does
+        not use ``z1bar``. The two agree when the lens position passed
+        here is 0.
+
+        Parameters
+        ----------
+        ims : array_like, complex
+            Image positions. The average is over axis 1.
+        z1bar : complex
+            Second argument of :meth:`detJac`. On this class that
+            argument is the lens position, not its conjugate.
+
+        Returns
+        -------
+        centroid : ndarray, complex
+            Weighted mean of the images along axis 1.
+        """
+        # Point-lens magnification weight. A zero Jacobian is a
+        # critical curve; callers should not pass those images.
+        det = np.abs(self.detJac(ims, z1bar))
+        centroid = np.sum(ims / det, axis=1) / np.sum(1.0 / det, axis=1)
+
+        return centroid
+
     def get_all_arrays(self, t, filt_idx=0):
         """
         Integrated plus and minus FSPL images and their amplifications.
@@ -40424,6 +40701,72 @@ class PSPL_PhotAstrom_Par_Param6(ModelClassABC,
         super().__init__(*args, **kwargs)
         startbases(self)
         checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_noPar_Param7(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam7):
+    """
+    Photometry and astrometry with log10_piE and log10_thetaE.
+
+    No parallax. ``phi_muRel`` still sets the direction of muRel.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Build the model and run the shared base checks.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments for ``PSPL_PhotAstromParam7``.
+        **kwargs : dict
+            Keyword arguments for ``PSPL_PhotAstromParam7``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_Param7(ModelClassABC,
+                                 PSPL_PhotAstrom,
+                                 PSPL_Parallax,
+                                 PSPL_PhotAstromParam7):
+    """
+    Photometry and astrometry with log10_piE and log10_thetaE.
+
+    Parallax is on. ``phi_muRel`` is the direction of piE and muRel.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Build the model and run the shared base checks.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments for ``PSPL_PhotAstromParam7``.
+        **kwargs : dict
+            Keyword arguments for ``PSPL_PhotAstromParam7``.
+
+        Returns
+        -------
+        None
+        """
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+        return None
 
 
 @inheritdocstring

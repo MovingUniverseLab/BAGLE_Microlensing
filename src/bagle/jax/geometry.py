@@ -556,6 +556,41 @@ def derive_pstl_photastrom_ellorbs_param2(
             off1 / thetaE_as, off2 / thetaE_as, off3 / thetaE_as)
 
 
+def _piE_EN(p):
+    """
+    East and North microlensing parallax from a parameter dict.
+
+    ``log_piE`` and ``log10_piE`` are both log10 of the amplitude.
+    ``phi_muRel`` is degrees East of North. Param7 uses ``log10_piE``;
+    Param6 uses ``log_piE``.
+
+    Parameters
+    ----------
+    p : dict
+        Fitter parameters for one sample.
+
+    Returns
+    -------
+    piE_E, piE_N : float
+        Microlensing parallax components.
+    """
+    # Amplitude plus direction, rather than Cartesian piE_E / piE_N.
+    if "phi_muRel" in p and ("log10_piE" in p or "log_piE" in p):
+        if "log10_piE" in p:
+            log_pi = p["log10_piE"]
+        else:
+            log_pi = p["log_piE"]
+        piE_amp = 10.0 ** log_pi
+        phi = p["phi_muRel"] * jnp.pi / 180.0
+        return piE_amp * jnp.sin(phi), piE_amp * jnp.cos(phi)
+
+    # Param5 stores the North/East ratio instead of piE_N.
+    if "piEN_piEE" in p:
+        return p["piE_E"], p["piE_E"] * p["piEN_piEE"]
+
+    return p["piE_E"], p["piE_N"]
+
+
 def unpack_base_params(names: tuple[str, ...], vec):
     vec = jnp.asarray(vec, dtype=jnp.float64).reshape(-1)
     return {n: vec[i] for i, n in enumerate(names)}
@@ -607,17 +642,7 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
     if eval_kind in ("pspl_photastrom_reduced", "pspl_astrom_reduced"):
         te_key = "log10_thetaE" if "log10_thetaE" in p else "thetaE"
         theta = 10.0 ** p[te_key] if te_key == "log10_thetaE" else p[te_key]
-        if "log_piE" in p and "phi_muRel" in p:
-            piE_amp = 10.0 ** p["log_piE"]
-            phi = p["phi_muRel"] * jnp.pi / 180.0
-            piE_E = piE_amp * jnp.sin(phi)
-            piE_N = piE_amp * jnp.cos(phi)
-        elif "piEN_piEE" in p:
-            piE_E = p["piE_E"]
-            piE_N = p["piE_E"] * p["piEN_piEE"]
-        else:
-            piE_E = p["piE_E"]
-            piE_N = p["piE_N"]
+        piE_E, piE_N = _piE_EN(p)
         return derive_pspl_photastrom_reduced(
             p["t0"],
             p["u0_amp"],
@@ -744,17 +769,7 @@ def derive_geometry_from_layout(layout_id: str, eval_kind: str, base_vec, names:
             )
         te_key = "log10_thetaE" if "log10_thetaE" in p else "thetaE"
         theta = 10.0 ** p[te_key] if te_key == "log10_thetaE" else p[te_key]
-        if "log_piE" in p and "phi_muRel" in p:
-            piE_amp = 10.0 ** p["log_piE"]
-            phi = p["phi_muRel"] * jnp.pi / 180.0
-            piE_E = piE_amp * jnp.sin(phi)
-            piE_N = piE_amp * jnp.cos(phi)
-        elif "piEN_piEE" in p:
-            piE_E = p["piE_E"]
-            piE_N = p["piE_E"] * p["piEN_piEE"]
-        else:
-            piE_E = p["piE_E"]
-            piE_N = p["piE_N"]
+        piE_E, piE_N = _piE_EN(p)
         return derive_pspl_photastrom_reduced(
             p["t0"],
             p["u0_amp"],

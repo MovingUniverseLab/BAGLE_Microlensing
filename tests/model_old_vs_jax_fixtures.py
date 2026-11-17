@@ -25,6 +25,8 @@ CANONICAL: dict[str, Any] = {
     "piE_E_geotr": 0.01,
     "piE_N_geotr": 0.02,
     "log_piE": math.log10(0.022360679775),
+    # Param7 samples log10(|piE|). Same amplitude as (piE_E, piE_N).
+    "log10_piE": math.log10(math.hypot(0.01, 0.02)),
     "phi_muRel": 45.0,
     "piEN_piEE": 0.02,
     "b_sff": 0.8,

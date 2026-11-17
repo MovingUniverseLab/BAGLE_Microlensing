@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Step 4 is on `jaxswap/step4-parity-tests`. Steps 1–3 are on `fsbl_ld_jax`.
+**Status:** Step 5 is on `jaxswap/step5-model-api`. Steps 1–4 are on `fsbl_ld_jax`. Item 4.7 is still open.
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -809,7 +809,7 @@ Branch: `jaxswap/step5-model-api`. New test file: `tests/test_model_jax_api.py`.
 
 ### 5.1 Add the Param7 classes
 
-- [ ] Item 5.1 done.
+- [x] Item 5.1 done.
 
 `model.py` has `PSPL_PhotAstromParam7` (`model.py:4939`) and the concrete classes
 `PSPL_PhotAstrom_noPar_Param7` (`model.py:29807`) and `PSPL_PhotAstrom_Par_Param7`
@@ -820,7 +820,7 @@ tests pass explicit priors. A JAX likelihood for Param7 is part of Step 7.
 
 ### 5.2 Add the missing astrometry methods
 
-- [ ] Item 5.2 done.
+- [x] Item 5.2 done.
 
 `model.py` defines `get_astrometry_unlensed_noparallax(t, filt_idx=0)`
 (`model.py:638`) and `get_astrometry_pm_removed(t, filt_idx=0, unlensed=False)`
@@ -829,19 +829,35 @@ tests pass explicit priors. A JAX likelihood for Param7 is part of Step 7.
 
 ### 5.3 Add `FSPL.cent`
 
-- [ ] Item 5.3 done.
+- [x] Item 5.3 done.
 
 `model.py:26731` defines `FSPL.cent(self, ims, z1bar)`, used by about 22 FSPL-family
 classes; `model_jax.py` lacks it. Port it with the same signature.
 
 ### 5.4 API test
 
-- [ ] Item 5.4 done.
+- [x] Item 5.4 done.
 
 `test_public_api_matches`: for every class in both modules, the set of public
 methods and attributes of the `model_jax` class contains the set of the `model.py`
-class, and the constructor signatures are identical (true today for all 220 shared
-classes). For the three methods above, compare outputs with `model.py` to `atol=1e-8`.
+class, and a constructor call written for `model.py` still binds on `model_jax`.
+Four BFSPL mixins (`BFSPL_PhotParam1`, `BFSPL_PhotAstromParam1`, and the two
+limb-darkened versions) take an extra optional `n_outline=None` added in Step 3.
+`model.py` is frozen and does not have that parameter. Omitting it still binds.
+
+Output comparison is `atol=1e-8` (arcsec) for both astrometry helpers, including
+finite-source classes. On the canonical 10-epoch grid the largest residual is
+about 1e-12 (`PSTL_Phot_Par_Param1`). An FSPL limb phot+astrom model on a
+41-epoch grid across the peak agrees to about 1e-18. The finite-source
+difference from item 3.3 is in the traced likelihood, not in these host
+forward methods, so the astrometry comparison did not need a wider tolerance.
+`FSPL.cent` matches at 1e-8 when the lens is at the origin. `model.py`'s
+`detJac` ignores the lens position (`1 - 1/|z|^4`), while `model_jax` uses
+`1 - 1/|z - z1|^4`, so an offset lens is not compared at 1e-8.
+
+Eight FSPL phot-only classes (`FSPL_Phot_*` and `FSPL_Limb_Phot_*`) are
+skipped: `model.py`'s unlensed astrometry reads `xS0`, and those models have
+no sky position. The JAX helpers still run for them.
 
 ---
 
@@ -960,6 +976,7 @@ keyword:
 
 ## Log
 
+- 2026-11-16: Step 5 (`jaxswap/step5-model-api`). Ported `PSPL_PhotAstromParam7` and the noPar/Par concrete classes (no default prior, no JAX likelihood; both names are in `KNOWN_JAX_LNL_GAPS`). The traced geometry path accepts `log10_piE` the same way it accepts `log_piE`, so the existing gradient checks can run the new class. A JAX likelihood is still Step 7. Ported `get_astrometry_unlensed_noparallax` and `get_astrometry_pm_removed` onto `PSPL`, and `FSPL.cent`. `tests/test_model_jax_api.py`: 623 passed, 8 skipped. Astrometry helpers, including finite-source, match at 1e-8 (worst ~1e-12, PSTL phot; FSPL limb centroid ~1e-18). The item 3.3 limb difference is in the traced likelihood, so these host comparisons were not relaxed. `FSPL.cent` matches at 1e-8 with the lens at the origin; an offset lens is not compared at 1e-8 because `model.py` `detJac` ignores the lens position. Eight FSPL phot-only classes are skipped (no `xS0` on `model.py`). Required regression files had no failures through 4403 of 6473 tests, into pre-existing FSBL gradient checks (`FSBL_PhotAstrom_Par_CircOrbs_Param3`); that suite was still running when this was committed. Param6 and Param7 old-vs-jax parity and gradients: 84 passed. Item 4.7 is still open.
 - 2026-11-16: Step 4 (`jaxswap/step4-parity-tests`). Added `tests/test_swap_parity.py` and the missing `CANONICAL` values (`pi_ref_frame`, PSTL EllOrbs elements). Non-slow run: 315 passed, 12 skipped, 1 xfailed (`PSTL_Phot_Par_Param1` forward), 22 slow deselected. Coverage: every concrete `model_jax` class is in `JAX_LIKELIHOOD_CLASSES` (109) or `KNOWN_JAX_LNL_GAPS`. Likelihood atol is 1e-6 except GP 1e-3 (tinygp vs celerite, measured ≤3e-5), FSBL 1e-4 (measured ~4e-5), BFSBL 5e-2 (measured ~2e-2; host adaptive contour vs traced kernel), and FSPL/BFSPL phot+astrom 1e-1 (item 3.3 host NumPy limb vs JAX kernel, measured ≤0.06, almost all in the photometry term). `PSPL_Phot_Par_Param1_geoproj` now lists `t0par` in `fixed_param_names`; the traced conversion uses `jax.pure_callback` so the jitted fitter can call the NumPy frame transform. `model.py` still omits `t0par` (frozen); the NumPy comparison installs it for that one call. Open: item 3.3 host limb sampler; BFSBL traced kernel vs host adaptive contour; slow limb phot+astrom and FSBL Lin/Acc likelihoods not run; PhotAstrom geoproj is not in the likelihood registry and still omits `t0par`.
 - 2026-11-16: Step 2 (`jaxswap/step2-raise-missing`): added `model_jax.JAX_LIKELIHOOD_CLASSES` (109 classes: Appendix A JAX-likelihood ✅ plus Step 1 geoproj / BFSPL Phot). `build_explicit_jax_loglik_fn` raises `NotImplementedError` naming the class (or `add_err`/`mult_err`); removed host fallback in `evaluate_loglik_jax`. Open question remains: Jessica — confirm raising for `add_err`/`mult_err` (implemented as raise per Change text). Tests: `tests/test_jax_lnl_registry.py`.
 - 2026-11-15: Step 1 (`jaxswap/step1-correctness`): fixed W1–W4 and hygiene items 1.1–1.9 (orbiting_lens_offsets sign, BFSPL phot jax_log_likely, GP SHO sigma=sqrt(S0*omega0*Q), alt S0 names, geoproj jax_log_likely via geo_phot_to_helio_jax, narrow MicrolensSolverJaxLike except, remove tkinter / bagle.jax_model / dead BSPL helpers). Added tests/test_jax_swap_fixes.py; updated test_psbl_orbit_jax static-offset check for the new primary side. commit 260b2b3
@@ -974,9 +991,9 @@ keyword:
 
 ---
 
-## Appendix A. Per-class status after Step 4
+## Appendix A. Per-class status after Step 5
 
-Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` (non-slow run: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected). Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Existence columns are unchanged from the 5368a88 audit.
+Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 is in both modules and has no JAX likelihood (Step 7). Item 4.7 is still open.
 
 ### PSPL Astrom (1 of 2 good)
 
@@ -1046,14 +1063,14 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` (non-
 | `PSPL_PhotAstrom_Par_Param4_geoproj` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
 | `PSPL_PhotAstrom_Par_Param5` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
 | `PSPL_PhotAstrom_Par_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_Param7` | ✅ | ❌ | ❌ | ➖ | ➖ | ❌ |  |
+| `PSPL_PhotAstrom_Par_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ | no JAX likelihood (step 7) |
 | `PSPL_PhotAstrom_RefPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_RefPar_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_noPar_Param7` | ✅ | ❌ | ❌ | ➖ | ➖ | ❌ |  |
+| `PSPL_PhotAstrom_noPar_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ | no JAX likelihood (step 7) |
 
 ### PSBL GP Phot (2 of 2 good)
 
