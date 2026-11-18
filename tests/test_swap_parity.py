@@ -100,20 +100,14 @@ _EXPLICIT_PRIORS = {
     "phi_L": ("make_gen", 0.0, 360.0),
     # BSBL source semi-major axis (mas). Neither fitter lists a default.
     "aS": ("make_gen", 0.1, 10.0),
+    # PSPL Param7. Neither fitter lists a default. Test only.
+    "log10_piE": ("make_gen", -3.0, 1.0),
 }
 
 KNOWN_JAX_LNL_GAPS = frozenset([
-    "PSPL_Astrom_Par_Param4",
     "PSPL_PhotAstrom_Par_GP_Param4",
     "PSPL_PhotAstrom_Par_GP_Param4_1",
     "PSPL_PhotAstrom_Par_GP_Param4_2",
-    "PSPL_PhotAstrom_Par_Param4",
-    "PSPL_PhotAstrom_Par_Param4_geoproj",
-    "PSPL_PhotAstrom_Par_Param5",
-    "PSPL_PhotAstrom_Par_Param6",
-    "PSPL_PhotAstrom_Par_Param7",
-    "PSPL_PhotAstrom_noPar_Param4",
-    "PSPL_PhotAstrom_noPar_Param7",
     "PSBL_PhotAstrom_Par_AccOrbs_Param6",
     "PSBL_PhotAstrom_Par_AccOrbs_Param7",
     "PSBL_PhotAstrom_Par_GP_Param2",

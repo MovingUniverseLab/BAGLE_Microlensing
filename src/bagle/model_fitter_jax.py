@@ -576,6 +576,13 @@ def build_explicit_jax_loglik_fn(fitter):
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            # Geoproj astrometry converts t0 / piE with the same fixed data.
+            if 'raL' in ast_sig.parameters and 'raL' in fitter.data:
+                kwargs['raL'] = fitter.data['raL']
+            if 'decL' in ast_sig.parameters and 'decL' in fitter.data:
+                kwargs['decL'] = fitter.data['decL']
+            if 't0par' in ast_sig.parameters and 't0par' in fitter.data:
+                kwargs['t0par'] = fitter.data['t0par']
             # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
             if 'n_outline' in ast_sig.parameters:
                 n_outline_default = ast_sig.parameters['n_outline'].default

@@ -761,6 +761,7 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSBL_Phot_noPar_GP_Param1',
     'PSBL_Phot_noPar_Param1',
     'PSPL_Astrom_Par_Param3',
+    'PSPL_Astrom_Par_Param4',
     'PSPL_PhotAstrom_Par_GP_Param1',
     'PSPL_PhotAstrom_Par_GP_Param2',
     'PSPL_PhotAstrom_Par_GP_Param3',
@@ -770,6 +771,11 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSPL_PhotAstrom_Par_Param1',
     'PSPL_PhotAstrom_Par_Param2',
     'PSPL_PhotAstrom_Par_Param3',
+    'PSPL_PhotAstrom_Par_Param4',
+    'PSPL_PhotAstrom_Par_Param4_geoproj',
+    'PSPL_PhotAstrom_Par_Param5',
+    'PSPL_PhotAstrom_Par_Param6',
+    'PSPL_PhotAstrom_Par_Param7',
     'PSPL_PhotAstrom_RefPar_GP_Param3',
     'PSPL_PhotAstrom_RefPar_GP_Param3_1',
     'PSPL_PhotAstrom_RefPar_GP_Param4',
@@ -781,6 +787,8 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSPL_PhotAstrom_noPar_Param1',
     'PSPL_PhotAstrom_noPar_Param2',
     'PSPL_PhotAstrom_noPar_Param3',
+    'PSPL_PhotAstrom_noPar_Param4',
+    'PSPL_PhotAstrom_noPar_Param7',
     'PSPL_Phot_Par_GP_Param1',
     'PSPL_Phot_Par_GP_Param1_2',
     'PSPL_Phot_Par_GP_Param2',
@@ -40938,6 +40946,9 @@ class PSPL_PhotAstrom_Par_Param4_geoproj(ModelClassABC,
                                          PSPL_Parallax,
                                          PSPL_PhotAstrom,
                                          PSPL_PhotAstromParam4_geoproj):
+    # t0par is fixed data, same as the photometry-only geoproj class.
+    fixed_param_names = ['raL', 'decL', 't0par']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -46054,4 +46065,36 @@ for _bfsbl_name, _bfsbl_cls in list(globals().items()):
     if 'xS0_E' in _bfsbl_names or 'xS0_com_E' in _bfsbl_names or (
             'xS0_p_E' in _bfsbl_names):
         _bfsbl_cls.jax_log_likely_astrometry = _bfsbl_ast
+
+
+# Reduced PSPL PhotAstrom (Param4, Param5, Param6, Param7) and Astrom Param4.
+from bagle.jax.pspl_reduced import _PSPLGeoLnL, _PSPLReducedLnL
+
+_pspl_phot = _PSPLReducedLnL.__dict__['jax_log_likely_photometry']
+_pspl_ast = _PSPLReducedLnL.__dict__['jax_log_likely_astrometry']
+_pspl_geo_phot = _PSPLGeoLnL.__dict__['jax_log_likely_photometry']
+_pspl_geo_ast = _PSPLGeoLnL.__dict__['jax_log_likely_astrometry']
+for _pspl_name, _pspl_cls in list(globals().items()):
+    if not isinstance(_pspl_cls, type):
+        continue
+    _pspl_names = getattr(_pspl_cls, 'fitter_param_names', None)
+    if not _pspl_names:
+        continue
+    if _pspl_name.startswith('PSPL_Astrom') and 'Param4' in _pspl_name:
+        _pspl_cls.jax_log_likely_astrometry = _pspl_ast
+        continue
+    if not _pspl_name.startswith('PSPL_PhotAstrom'):
+        continue
+    if not any(tag in _pspl_name for tag in (
+            'Param4', 'Param5', 'Param6', 'Param7')):
+        continue
+    if 'geoproj' in _pspl_name:
+        _pspl_cls.jax_log_likely_photometry = _pspl_geo_phot
+        _pspl_cls.jax_log_likely_astrometry = _pspl_geo_ast
+        continue
+    # Param2 and earlier parameterizations already define their own methods.
+    if 'jax_log_likely_photometry' in _pspl_cls.__dict__:
+        continue
+    _pspl_cls.jax_log_likely_photometry = _pspl_phot
+    _pspl_cls.jax_log_likely_astrometry = _pspl_ast
 
