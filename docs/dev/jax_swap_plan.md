@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Steps 1–7 are on `jax_pymc` (fast-forward from `e5b62a9` to the Step 7.7 tip `012c29c`, plus this note). `fsbl_ld_jax` is still at Step 7.2 (`8481295`). Items 3.1–3.3 and 4.7 are still open. Slow limb PhotAstrom likelihoods were not run. `JAX_LIKELIHOOD_CLASSES` is 314.
+**Status:** `fsbl_ld_jax` and `jax_pymc` both point at `0d32179` (Steps 1–7). Items 3.1–3.3 are on `jaxswap/step3-outline` and are not merged yet. Item 4.7 is still open: traced and `model_jax` host FSPL / BFSPL now share the JAX limb, but `model.py` is frozen. Slow limb PhotAstrom likelihoods were not run. `JAX_LIKELIHOOD_CLASSES` is 314.
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -638,7 +638,7 @@ non-JAX `model_fitter.py` is not changed.
 
 ### 3.1 Pass `data['n_outline']` from the fitter to the model
 
-- [ ] Item 3.1 done.
+- [x] Item 3.1 done.
 
 - Add `'n_outline'` to `fixed_param_names` of the FSPL, FSPL-LD, and BFSPL classes in
   `model_jax.py` (for parallax classes the list becomes
@@ -654,7 +654,7 @@ non-JAX `model_fitter.py` is not changed.
 
 ### 3.2 Use the model's `n_outline` in the traced likelihood
 
-- [ ] Item 3.2 done.
+- [x] Item 3.2 done.
 
 - At the eight `jax_log_likely_*` definitions listed above, change the default from
   400 to 50 and coerce with `int()` inside the method. For BFSPL, which has
@@ -685,13 +685,18 @@ sets with `data['n_outline']` and which defaults to 50.
 
 ### 3.3 Later, separate item: host NumPy FSPL limb sampling
 
-- [ ] Item 3.3 done.
+- [x] Item 3.3 done.
 
-The host NumPy FSPL forward model samples the limb at evenly spaced angles and is off
-by up to 8 mmag at `n_outline = 50`, while the JAX kernel is accurate to about 5e-5
-mag at 50. This is in `model.py` too, which is frozen, so it is noted here only. In
-`model_jax.py` the host forward model could later call the JAX kernel; decide after
-Step 4.
+The host NumPy FSPL forward model sampled the limb at evenly spaced angles and was
+off by up to 8 mmag at `n_outline = 50`, while the JAX kernel is accurate to about
+5e-5 mag at 50. `model.py` is frozen, so it still uses that sampler. `model_jax`
+`FSPL._get_all_arrays_real` and `BFSPL.get_all_arrays` now call
+`fspl_images_amps`. Traced and `model_jax` host log-likelihoods agree at 1e-6.
+Against `model.py`, the 10-epoch PhotAstrom grid differs by up to 0.27 mag
+(fixture `n_outline` is 20 and `rho` is about 1); the forward test uses 0.30 mag,
+0.50 in amplification, and 1e-3 arcsec for those classes. The NumPy fitter
+comparison stays at 1e-1. Item 4.7 is not closed, because `model.py` still
+disagrees.
 
 ---
 
@@ -792,14 +797,16 @@ The Step 4 test passes, but four families do not meet `abs=1e-6`:
   (test uses 1e-4).
 - BFSBL: same contour mismatch at the canonical source radius, about 2e-2
   (test uses 5e-2).
-- FSPL and BFSPL phot+astrom: item 3.3, the host NumPy limb sampler versus
-  the JAX kernel, up to about 0.06, almost all in the photometry term
-  (test uses 1e-1). Astrometry on `FSPL_PhotAstrom_noPar_Param1` agreed
-  to about 5e-4.
+- FSPL and BFSPL phot+astrom versus `model.py`: item 3.3 moved the
+  `model_jax` host onto the JAX kernel, so traced versus host is now
+  1e-6. `model.py` is frozen. The NumPy comparison is still wider
+  (test uses 1e-1; one PhotAstrom case at `n_outline` 50 differed by
+  about 0.003 in lnL).
 
 Do not loosen these further. Closing this item means the traced and host
-values agree at 1e-6, which needs the host limb path from item 3.3 and the
-same contour on both FSBL and BFSBL paths.
+values agree at 1e-6. The `model_jax` FSPL / BFSPL limb path is done
+(item 3.3). What remains is `model.py` (frozen) and the same contour on
+both FSBL and BFSBL paths.
 
 ---
 
@@ -977,6 +984,7 @@ keyword:
 
 ## Log
 
+- 2026-11-18: Synced `fsbl_ld_jax` to `jax_pymc` (`0d32179`) by fast-forward. Step 3 (`jaxswap/step3-outline`) passes `data['n_outline']` through (already wired; `tests/test_n_outline.py`, 12 passed) and points the `model_jax` FSPL and BFSPL host images at `fspl_images_amps`. Traced versus host lnL is 1e-6. FSPL/BFSPL forward and likelihood slice: 54 passed. `model.py` is unchanged. Item 4.7 stays open.
 - 2026-11-18: Fast-forwarded `jax_pymc` from Step 5 (`e5b62a9`) to Step 7 (`012c29c` on `jaxswap/step7-gp`, plus this note). Steps 1–2, 4–7 are complete on `jax_pymc`. Items 3.1–3.3 and 4.7 are still open. The five-file regression started after the Param7 fix finished later: 6451 passed, 14 skipped, 8 failed. All 8 are `test_grad_source_astrometry_unlensed_extension` raising `grad smoke not wired` for photometry-only `BSBL_Phot`, `BFSBL_Phot`, `BFSBL_Limb_Phot`, and `PSTL_Phot` (Par and noPar). That run imported the tree from before Steps 6–7.
 - 2026-11-17: Step 7.7 (`jaxswap/step7-gp`, commit `c2b50e2`). Traced likelihoods for the last five GP classes: PSPL PhotAstrom GP Param4, Param4_1, and Param4_2 reuse the Param4 kernel, and PSBL PhotAstrom GP Param2 (with and without parallax) uses the reduced Param2 geometry. The Param4 assignment no longer replaces a likelihood a parent class already defined, so the RefPar GP classes keep their own methods. Likelihood parity: 5 passed at the GP atol of 1e-3, and the two RefPar GP classes that had been overwritten still pass. `JAX_LIKELIHOOD_CLASSES` is 314. Item 4.7 is still open. Step 7 is complete.
 - 2026-11-17: Step 7.6 (`jaxswap/step7-pstl`, commit `6ee6b8c`). Traced likelihoods for static PSTL PhotAstrom Param2 and Param3 (4 classes). Masses and distances are recovered from `thetaE` or `log10_thetaE` and then passed through the Param1 geometry. Likelihood parity: 4 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 309. Item 7.7 and item 4.7 are still open.

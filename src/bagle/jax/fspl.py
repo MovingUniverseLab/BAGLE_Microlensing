@@ -517,6 +517,38 @@ def fspl_point_source_limit_mag(u):
     return pspl_amplification_from_u(u)
 
 
+def static_n_outline(*values):
+    """
+    Limb sample count used by the traced FSPL and BFSPL likelihoods.
+
+    ``False`` and ``None`` are the host point-source flags and are skipped.
+    When every value is skipped the host default of 50 is used. When
+    several counts are given (BFSPL primary and secondary), the larger
+    one is used so both disks share one static compile.
+
+    Parameters
+    ----------
+    values : int, bool, or None
+        Candidate limb counts.
+
+    Returns
+    -------
+    n_outline : int
+        Static limb sample count.
+    """
+    counts = []
+    for value in values:
+        # Point-source flag or an unset outline: not a sample count.
+        if value is None or value is False:
+            continue
+        counts.append(int(value))
+
+    if not counts:
+        return 50
+
+    return max(counts)
+
+
 # ---------------------------------------------------------------------------
 # Host-model wrappers (pre-traced likelihood path)
 # ---------------------------------------------------------------------------

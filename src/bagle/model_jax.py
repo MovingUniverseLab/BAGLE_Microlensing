@@ -28354,6 +28354,7 @@ class FSPL(PSPL):
             the lens is inside the source).
         """
         # Real centroids [N_times, [+, -], [E, N]] and amps [N_times, [+, -]].
+        # The JAX kernel (clustered limb), not the evenly spaced NumPy sampler.
         img_real, amps = self._get_all_arrays_real(t, filt_idx=filt_idx)
 
         # Complex East + i North with the source axis: [N_times, 1, [+, -]].
@@ -28367,9 +28368,10 @@ class FSPL(PSPL):
         """
         Real-valued FSPL image centroids and amplifications (host path).
 
-        Uniform contour integration when ``|u| >= 2 rho``; adaptive mesh
-        when the source limb can pass close to the lens. One preallocated
-        output when a light curve mixes both regimes.
+        The clustered-limb JAX kernel (:func:`bagle.jax.fspl.fspl_images_amps`)
+        at this model's ``n_outline``. That is the same sampler the traced
+        likelihood uses. ``get_all_arrays_CI`` and ``get_all_arrays_amg``
+        remain the older NumPy paths.
 
         Parameters
         ----------
@@ -28385,28 +28387,27 @@ class FSPL(PSPL):
         amps : ndarray, shape (len(t), 2)
             Image amplifications.
         """
+        from bagle.jax.fspl import fspl_images_amps, static_n_outline
+
         t = np.atleast_1d(np.asarray(t, dtype=float))
-        u_amp = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
+        u = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
+        rho = float(self.source_radius_thetaE_units())
+        n_out = static_n_outline(getattr(self, 'n_outline', None))
 
-        # Adaptive mesh is only needed when a source-boundary point can sit
-        # near the lens (|u| ~ rho). Uniform CI is enough farther away.
-        rho = self.source_radius_thetaE_units()
-        close = u_amp < (2.0 * rho)
-        if not np.any(close):
-            self.amgFlag = False
-            return self.get_all_arrays_CI(t, filt_idx)
-        if np.all(close):
-            self.amgFlag = True
-            return self.get_all_arrays_amg(t, filt_idx)
+        # Uniform disk when limb darkening is off.
+        gamma = float(self.limb_gamma(filt_idx))
+        gamma_arg = None if gamma == 0.0 else gamma
 
-        far = ~close
-        images = np.empty((t.size, 2, 2), dtype=float)
-        amps = np.empty((t.size, 2), dtype=float)
-        images[far], amps[far] = self.get_all_arrays_CI(t[far], filt_idx)
-        images[close], amps[close] = self.get_all_arrays_amg(
-            t[close], filt_idx
-        )
-        self.amgFlag = True
+        images, amps = fspl_images_amps(
+            u, rho, n_out, gamma=gamma_arg, n_ld=int(self.ld_n_nodes))
+        images = np.asarray(images, dtype=float)
+        amps = np.asarray(amps, dtype=float)
+
+        # Astrometric models want sky arcsec; photometry stays in thetaE.
+        images = np.asarray(
+            self.fspl_images_to_sky(images, t, filt_idx=filt_idx), dtype=float)
+        self.amgFlag = False
+
         return images, amps
 
     def get_all_arrays_amg_only(self, t, filt_idx=0):
@@ -29333,8 +29334,7 @@ class FSPL_PhotParam1(PSPL_Param):
         parallax_vectors, gp_params, fixed_jitter : optional
             Parallax table and optional GP path.
         n_outline : int, optional
-            Static limb count (not sampled). Default 400 matches A-09
-            host/JAX magnitude parity away from the limb.
+            Static limb count (not sampled). Default 50, same as the host.
 
         Returns
         -------
@@ -39575,12 +39575,10 @@ class BFSPL(PSPL):
         """
         Image centroids and amplifications for both finite sources.
 
-        Each source uses the point-lens contour integrals in
-        :mod:`bagle.fspl_contour`. Adaptive limb sampling is used when
-        ``|u| < 2 rho`` for that source; otherwise ``n_outline`` equally
-        spaced samples. Limb darkening (when
-        :meth:`limb_gamma_pri` / :meth:`limb_gamma_sec` are non-zero) sums
-        nested uniform disks.
+        Each source uses the clustered-limb JAX kernel
+        (:func:`bagle.jax.fspl.fspl_images_amps`) at that source's
+        ``n_outline``. Limb darkening sums nested uniform disks inside
+        the kernel.
 
         Parameters
         ----------
@@ -39601,10 +39599,7 @@ class BFSPL(PSPL):
         t = np.atleast_1d(np.asarray(t, dtype=float))
         n_t = t.size
 
-        # Source centres relative to the lens (Einstein radii).
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-        zeta_pri = u_vec[:, 0, 0] + 1j * u_vec[:, 0, 1]
-        zeta_sec = u_vec[:, 1, 0] + 1j * u_vec[:, 1, 1]
+        from bagle.jax.fspl import fspl_images_amps
 
         rho_pri = self._bfspl_rho('pri')
         rho_sec = self._bfspl_rho('sec')
@@ -39613,32 +39608,36 @@ class BFSPL(PSPL):
         n_pri = self._bfspl_outline('pri')
         n_sec = self._bfspl_outline('sec')
 
-        # Adaptive mesh only when a limb point can sit near the lens.
-        close_pri = np.abs(zeta_pri) < (2.0 * rho_pri)
-        close_sec = np.abs(zeta_sec) < (2.0 * rho_sec)
+        # Same clustered limb the traced likelihood uses, per source.
+        def _disk(u_rows, rho, gamma, n_out):
+            """
+            One source through the clustered-limb kernel.
 
-        img_pri = np.empty((n_t, 2, 2), dtype=float)
-        amp_pri = np.empty((n_t, 2), dtype=float)
-        img_sec = np.empty((n_t, 2, 2), dtype=float)
-        amp_sec = np.empty((n_t, 2), dtype=float)
+            Parameters
+            ----------
+            u_rows : ndarray, shape (N_times, 2)
+                Source-lens separation in Einstein radii.
+            rho : float
+                Source radius in Einstein radii.
+            gamma : float or None
+                Linear limb-darkening coefficient. 0 is uniform.
+            n_out : int
+                Static limb sample count.
 
-        # Primary: split close / far epochs like FSPL.get_all_arrays.
-        if n_t > 0:
-            far = ~close_pri
-            if np.any(far):
-                img_pri[far], amp_pri[far] = self._bfspl_one_source(
-                    zeta_pri[far], rho_pri, g_pri, n_pri, use_amg=False)
-            if np.any(close_pri):
-                img_pri[close_pri], amp_pri[close_pri] = self._bfspl_one_source(
-                    zeta_pri[close_pri], rho_pri, g_pri, n_pri, use_amg=True)
+            Returns
+            -------
+            img : ndarray, shape (N_times, 2, 2)
+            amp : ndarray, shape (N_times, 2)
+            """
+            gamma_arg = None if gamma in (0, 0.0, None) else float(gamma)
+            img, amp = fspl_images_amps(
+                u_rows, float(rho), int(n_out), gamma=gamma_arg)
 
-            far = ~close_sec
-            if np.any(far):
-                img_sec[far], amp_sec[far] = self._bfspl_one_source(
-                    zeta_sec[far], rho_sec, g_sec, n_sec, use_amg=False)
-            if np.any(close_sec):
-                img_sec[close_sec], amp_sec[close_sec] = self._bfspl_one_source(
-                    zeta_sec[close_sec], rho_sec, g_sec, n_sec, use_amg=True)
+            return np.asarray(img, dtype=float), np.asarray(amp, dtype=float)
+
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        img_pri, amp_pri = _disk(u_vec[:, 0, :], rho_pri, g_pri, n_pri)
+        img_sec, amp_sec = _disk(u_vec[:, 1, :], rho_sec, g_sec, n_sec)
 
         # Convert lens-relative Einstein radii to sky arcsec when needed.
         if getattr(self, 'astrometryFlag', False):
@@ -40133,15 +40132,14 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
             Summed photometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_photometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         # Source magnitudes from the fitter tuple or the class vector.
         if isinstance(mag_src, (tuple, list)):
@@ -40184,15 +40182,14 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
             Summed astrometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_astrometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         return bfspl_log_likely_astrometry(
             t, p['t0'], g['tE'], g['u0_pri'], g['u0_sec'], g['thetaE_hat'],
@@ -40610,15 +40607,14 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
             Summed photometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_photometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_phot_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         # Source magnitudes from the fitter tuple or the class vector.
         if isinstance(mag_src, (tuple, list)):
