@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Step 7 is complete on `jaxswap/step7-gp` (7.7). Earlier step branches: 7.6 `jaxswap/step7-pstl`, 7.5 `jaxswap/step7-pspl`, 7.4 `jaxswap/step7-bfsbl`, 7.3 `jaxswap/step7-bsbl`. Steps 7.1–7.2 are on `fsbl_ld_jax` (`8481295`). `jax_pymc` is still at Step 5 (`e5b62a9`). Item 4.7 is still open. Slow limb PhotAstrom likelihoods were not run.
+**Status:** Steps 1–7 are on `jax_pymc` (fast-forward from `e5b62a9` to the Step 7.7 tip `012c29c`, plus this note). `fsbl_ld_jax` is still at Step 7.2 (`8481295`). Items 3.1–3.3 and 4.7 are still open. Slow limb PhotAstrom likelihoods were not run. `JAX_LIKELIHOOD_CLASSES` is 314.
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -977,6 +977,7 @@ keyword:
 
 ## Log
 
+- 2026-11-18: Fast-forwarded `jax_pymc` from Step 5 (`e5b62a9`) to Step 7 (`012c29c` on `jaxswap/step7-gp`, plus this note). Steps 1–2, 4–7 are complete on `jax_pymc`. Items 3.1–3.3 and 4.7 are still open. The five-file regression started after the Param7 fix finished later: 6451 passed, 14 skipped, 8 failed. All 8 are `test_grad_source_astrometry_unlensed_extension` raising `grad smoke not wired` for photometry-only `BSBL_Phot`, `BFSBL_Phot`, `BFSBL_Limb_Phot`, and `PSTL_Phot` (Par and noPar). That run imported the tree from before Steps 6–7.
 - 2026-11-17: Step 7.7 (`jaxswap/step7-gp`, commit `c2b50e2`). Traced likelihoods for the last five GP classes: PSPL PhotAstrom GP Param4, Param4_1, and Param4_2 reuse the Param4 kernel, and PSBL PhotAstrom GP Param2 (with and without parallax) uses the reduced Param2 geometry. The Param4 assignment no longer replaces a likelihood a parent class already defined, so the RefPar GP classes keep their own methods. Likelihood parity: 5 passed at the GP atol of 1e-3, and the two RefPar GP classes that had been overwritten still pass. `JAX_LIKELIHOOD_CLASSES` is 314. Item 4.7 is still open. Step 7 is complete.
 - 2026-11-17: Step 7.6 (`jaxswap/step7-pstl`, commit `6ee6b8c`). Traced likelihoods for static PSTL PhotAstrom Param2 and Param3 (4 classes). Masses and distances are recovered from `thetaE` or `log10_thetaE` and then passed through the Param1 geometry. Likelihood parity: 4 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 309. Item 7.7 and item 4.7 are still open.
 - 2026-11-17: Step 7.5 (`jaxswap/step7-pspl`, commit `100251e`). Traced likelihoods for PSPL PhotAstrom Param4, Param5, Param6, Param7, Param4 geoproj, and Astrom Param4 (8 classes). Geoproj photometry parameters are converted to the heliocentric frame before the Param2 kernel, and the astrometry call now receives `raL`, `decL`, and `t0par`. Likelihood parity: 8 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 305. `log10_piE` has a test-only prior. Items 7.6–7.7 and 4.7 are still open.
