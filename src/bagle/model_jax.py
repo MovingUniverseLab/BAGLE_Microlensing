@@ -512,10 +512,50 @@ from bagle import jax_physics
 # against the host. Add a class here only together with a
 # likelihood-parity test (see docs/dev/jax_swap_plan.md Step 2 / 7).
 JAX_LIKELIHOOD_CLASSES = frozenset([
+    'BFSBL_Limb_PhotAstrom_Par_AccOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_Par_LinOrbs_Param1',
     'BFSBL_Limb_PhotAstrom_Par_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1',
     'BFSBL_Limb_PhotAstrom_noPar_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_Param2',
+    'BFSBL_Limb_Phot_Par_Param1',
+    'BFSBL_Limb_Phot_noPar_Param1',
+    'BFSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param2',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param2',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'BFSBL_PhotAstrom_Par_LinOrbs_Param1',
     'BFSBL_PhotAstrom_Par_Param1',
+    'BFSBL_PhotAstrom_Par_Param2',
+    'BFSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BFSBL_PhotAstrom_noPar_LinOrbs_Param1',
     'BFSBL_PhotAstrom_noPar_Param1',
+    'BFSBL_PhotAstrom_noPar_Param2',
+    'BFSBL_Phot_Par_Param1',
+    'BFSBL_Phot_noPar_Param1',
     'BFSPL_Limb_PhotAstrom_Par_Param1',
     'BFSPL_Limb_PhotAstrom_noPar_Param1',
     'BFSPL_Limb_Phot_Par_Param1',
@@ -45990,4 +46030,28 @@ for _bsbl_name, _bsbl_cls in list(globals().items()):
     if 'xS0_E' in _bsbl_names or 'xS0_com_E' in _bsbl_names or (
             'xS0_p_E' in _bsbl_names):
         _bsbl_cls.jax_log_likely_astrometry = _bsbl_ast
+
+
+# BFSBL likelihoods. Static Param1 already defines its own methods.
+from bagle.jax.bfsbl import _BFSBLLnL
+
+_bfsbl_phot = _BFSBLLnL.__dict__['jax_log_likely_photometry']
+_bfsbl_ast = _BFSBLLnL.__dict__['jax_log_likely_astrometry']
+for _bfsbl_name, _bfsbl_cls in list(globals().items()):
+    if not isinstance(_bfsbl_cls, type):
+        continue
+    if not _bfsbl_name.startswith('BFSBL'):
+        continue
+    if '_Par_' not in _bfsbl_name and '_noPar_' not in _bfsbl_name:
+        continue
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _bfsbl_cls.__mro__):
+        continue
+    _bfsbl_names = getattr(_bfsbl_cls, 'fitter_param_names', None)
+    if not _bfsbl_names:
+        continue
+    _bfsbl_cls.jax_log_likely_photometry = _bfsbl_phot
+    if 'xS0_E' in _bfsbl_names or 'xS0_com_E' in _bfsbl_names or (
+            'xS0_p_E' in _bfsbl_names):
+        _bfsbl_cls.jax_log_likely_astrometry = _bfsbl_ast
 
