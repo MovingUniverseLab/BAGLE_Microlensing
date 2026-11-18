@@ -734,6 +734,7 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSBL_PhotAstrom_Par_EllOrbs_Param7',
     'PSBL_PhotAstrom_Par_EllOrbs_Param8',
     'PSBL_PhotAstrom_Par_GP_Param1',
+    'PSBL_PhotAstrom_Par_GP_Param2',
     'PSBL_PhotAstrom_Par_LinOrbs_Param1',
     'PSBL_PhotAstrom_Par_Param1',
     'PSBL_PhotAstrom_noPar_AccOrbs_Param1',
@@ -750,6 +751,7 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSBL_PhotAstrom_noPar_EllOrbs_Param7',
     'PSBL_PhotAstrom_noPar_EllOrbs_Param8',
     'PSBL_PhotAstrom_noPar_GP_Param1',
+    'PSBL_PhotAstrom_noPar_GP_Param2',
     'PSBL_PhotAstrom_noPar_LinOrbs_Param1',
     'PSBL_PhotAstrom_noPar_Param1',
     'PSBL_Phot_Par_CircOrbs_Param1',
@@ -767,6 +769,9 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSPL_PhotAstrom_Par_GP_Param3',
     'PSPL_PhotAstrom_Par_GP_Param3_1',
     'PSPL_PhotAstrom_Par_GP_Param3_2',
+    'PSPL_PhotAstrom_Par_GP_Param4',
+    'PSPL_PhotAstrom_Par_GP_Param4_1',
+    'PSPL_PhotAstrom_Par_GP_Param4_2',
     'PSPL_PhotAstrom_Par_GPnoJitter_Param3_1',
     'PSPL_PhotAstrom_Par_Param1',
     'PSPL_PhotAstrom_Par_Param2',
@@ -46096,8 +46101,9 @@ for _pspl_name, _pspl_cls in list(globals().items()):
         _pspl_cls.jax_log_likely_photometry = _pspl_geo_phot
         _pspl_cls.jax_log_likely_astrometry = _pspl_geo_ast
         continue
-    # Param2 and earlier parameterizations already define their own methods.
-    if 'jax_log_likely_photometry' in _pspl_cls.__dict__:
+    # RefPar and earlier parameterizations already define their own methods.
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _pspl_cls.__mro__):
         continue
     _pspl_cls.jax_log_likely_photometry = _pspl_phot
     _pspl_cls.jax_log_likely_astrometry = _pspl_ast
@@ -46112,4 +46118,17 @@ for _pstl_name in ('PSTL_PhotAstromParam2', 'PSTL_PhotAstromParam3'):
     _pstl_cls = globals()[_pstl_name]
     _pstl_cls.jax_log_likely_photometry = _pstl_phot
     _pstl_cls.jax_log_likely_astrometry = _pstl_ast
+
+
+# PSBL GP Param2 only. The other reduced PSBL classes stay unregistered.
+from bagle.jax.psbl_reduced import _PSBLReducedLnL
+
+_psbl_gp_phot = _PSBLReducedLnL.__dict__['jax_log_likely_photometry']
+_psbl_gp_ast = _PSBLReducedLnL.__dict__['jax_log_likely_astrometry']
+for _psbl_gp_name in (
+        'PSBL_PhotAstrom_Par_GP_Param2',
+        'PSBL_PhotAstrom_noPar_GP_Param2'):
+    _psbl_gp_cls = globals()[_psbl_gp_name]
+    _psbl_gp_cls.jax_log_likely_photometry = _psbl_gp_phot
+    _psbl_gp_cls.jax_log_likely_astrometry = _psbl_gp_ast
 

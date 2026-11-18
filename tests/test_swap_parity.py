@@ -105,12 +105,8 @@ _EXPLICIT_PRIORS = {
 }
 
 KNOWN_JAX_LNL_GAPS = frozenset([
-    "PSPL_PhotAstrom_Par_GP_Param4",
-    "PSPL_PhotAstrom_Par_GP_Param4_1",
-    "PSPL_PhotAstrom_Par_GP_Param4_2",
     "PSBL_PhotAstrom_Par_AccOrbs_Param6",
     "PSBL_PhotAstrom_Par_AccOrbs_Param7",
-    "PSBL_PhotAstrom_Par_GP_Param2",
     "PSBL_PhotAstrom_Par_LinOrbs_Param6",
     "PSBL_PhotAstrom_Par_LinOrbs_Param7",
     "PSBL_PhotAstrom_Par_Param2",
@@ -120,7 +116,6 @@ KNOWN_JAX_LNL_GAPS = frozenset([
     "PSBL_PhotAstrom_Par_Param7",
     "PSBL_PhotAstrom_noPar_AccOrbs_Param6",
     "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
-    "PSBL_PhotAstrom_noPar_GP_Param2",
     "PSBL_PhotAstrom_noPar_LinOrbs_Param6",
     "PSBL_PhotAstrom_noPar_LinOrbs_Param7",
     "PSBL_PhotAstrom_noPar_Param2",
