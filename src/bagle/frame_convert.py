@@ -1906,3 +1906,20 @@ def convert_u0_t0_psbl(t0_in, u0_x_in, u0_y_in, tE, theta_E,
     t0_out = t0_in + sign*tE*d*np.cos(phi)
     
     return u0_x_out, u0_y_out, t0_out
+
+def convert_astrometry_to_scan_frame(x, y, scan_angle):
+    """
+    Convert RA/Dec frame astrometry to alternative frame based on
+    a scan angle.
+    
+    Parameters
+    ----------
+    x, y : array_like
+        Astrometry time series data in delta RA/Dec (arcsec)
+    scan_angle: array_like
+        Scan angle (theta as defined by Gaia) time series
+    """
+    scan_angle_rad = np.deg2rad(scan_angle)
+    w = x*np.sin(scan_angle_rad) + y*np.cos(scan_angle_rad)
+    z = x*np.cos(scan_angle_rad) + y*np.sin(scan_angle_rad)
+    return w,z

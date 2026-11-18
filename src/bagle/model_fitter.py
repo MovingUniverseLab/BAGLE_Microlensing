@@ -1869,10 +1869,11 @@ class MicrolensSolver(Solver):
                 for i in range(self.n_ast_sets):
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
                                                             self.data['xpos' + str(i+1)],
-                                                            self.data['ypos' + str(i+1)],
+                                                            self.data.get('ypos' + str(i+1)),
                                                             self.data['xpos_err' + str(i+1)],
-                                                            self.data['ypos_err' + str(i+1)],
-                                                            filt_idx = i)
+                                                            self.data.get('ypos_err' + str(i+1)),
+                                                            filt_idx = i,
+                                                            scan_angle = self.data.get('scan_angle' + str(i+1)))
                     lnL_ast += lnL_ast_i.sum()
 
             # If photometry
@@ -1880,10 +1881,11 @@ class MicrolensSolver(Solver):
                 for i in range(self.n_ast_sets):
                     lnL_ast_i = model.log_likely_astrometry(self.data['t_ast' + str(i+1)],
                                                             self.data['xpos' + str(i+1)],
-                                                            self.data['ypos' + str(i+1)],
+                                                            self.data.get('ypos' + str(i+1)),
                                                             self.data['xpos_err' + str(i+1)],
-                                                            self.data['ypos_err' + str(i+1)],
-                                                            filt_idx = self.map_phot_idx_to_ast_idx[i])
+                                                            self.data.get('ypos_err' + str(i+1)),
+                                                            filt_idx = self.map_phot_idx_to_ast_idx[i],
+                                                            scan_angle = self.data.get('scan_angle' + str(i+1)))
                     lnL_ast += lnL_ast_i.sum()
         else:
             lnL_ast = 0
@@ -3685,9 +3687,10 @@ class MicrolensSolverWeighted(MicrolensSolver):
             for i in range(self.n_ast_sets):
                 t_ast = self.data['t_ast' + str(i + 1)]
                 xpos = self.data['xpos' + str(i + 1)]
-                ypos = self.data['ypos' + str(i + 1)]
+                ypos = self.data.get('ypos' + str(i + 1))
                 xpos_err = self.data['xpos_err' + str(i + 1)]
-                ypos_err = self.data['ypos_err' + str(i + 1)]
+                ypos_err = self.data.get('ypos_err' + str(i + 1))
+                scan_angle = self.data.get('scan_angle' + str(i + 1))
 
                 weight = self.weights[self.n_phot_sets + i]
 
@@ -3698,7 +3701,8 @@ class MicrolensSolverWeighted(MicrolensSolver):
                     filt_idx = self.map_phot_idx_to_ast_idx[i]
 
                 lnL_ast_unwgt = model.log_likely_astrometry(
-                    t_ast, xpos, ypos, xpos_err, ypos_err, filt_idx=filt_idx
+                    t_ast, xpos, ypos, xpos_err, ypos_err, filt_idx=filt_idx,
+                    scan_angle = scan_angle
                 )
                 lnL_ast_i = lnL_ast_unwgt * weight
                 lnL_ast += lnL_ast_i
@@ -4039,16 +4043,20 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 
                 t_ast = self.data['t_ast' + str(i+1)]
                 x_obs = self.data['xpos' + str(i+1)]
-                y_obs = self.data['ypos' + str(i+1)]
+                y_obs = self.data.get('ypos' + str(i+1))
                 x_err_obs = self.data['xpos_err' + str(i+1)]
-                y_err_obs = self.data['ypos_err' + str(i+1)]
+                y_err_obs = self.data.get('ypos_err' + str(i+1))
+                scan_angle = self.data.get('scan_angle' + str(i+1))
+                
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs,
+                                    filt_idx=filt_idx, scan_angle=scan_angle)
 
-                nk = len(x_obs) + len(y_obs)
+                nk = len(x_obs)
+                lnL_const_standard = model.get_lnL_constant(x_err_obs)
+                if y_obs is not None:
+                    nk += len(y_obs)
+                    lnL_const_standard += model.get_lnL_constant(y_err_obs)
                 nk21 = (nk / 2.0) + 1.0
-                    
-                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
-
-                lnL_const_standard = model.get_lnL_constant(x_err_obs) + model.get_lnL_constant(y_err_obs)
                 lnL_const_hobson = scipy.special.gammaln( nk21 ) + (nk21 * np.log(2))
                 
                 # Equation 35 from Hobson
@@ -4167,14 +4175,18 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
 
                 t_ast = self.data['t_ast' + str(i+1)]
                 x_obs = self.data['xpos' + str(i+1)]
-                y_obs = self.data['ypos' + str(i+1)]
+                y_obs = self.data.get('ypos' + str(i+1))
                 x_err_obs = self.data['xpos_err' + str(i+1)]
-                y_err_obs = self.data['ypos_err' + str(i+1)]
+                y_err_obs = self.data.get('ypos_err' + str(i+1))
+                scan_angle = self.data.get('scan_angle' + str(i+1))
 
-                nk = len(x_obs) + len(y_obs)
+                nk = len(x_obs)
+                if y_obs is not None:
+                    nk += len(y_obs)
                     
-                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
-
+                chi2_xy = model.get_chi2_astrometry(t_ast, x_obs, y_obs, x_err_obs, y_err_obs,
+                                    filt_idx=filt_idx, scan_angle=scan_angle)
+                                    
                 ak_eff = nk / chi2_xy.sum()
 
                 eff_weights = np.append(eff_weights, ak_eff)

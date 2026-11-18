@@ -1081,7 +1081,8 @@ class PSPL(ABC):
         return chi2
 
 
-    def get_chi2_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
+    def get_chi2_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs,
+                filt_idx=0, scan_angle=None):
         """
         Get the chi^2 value for this model given input astrometry data and
         uncertainties for the specified astrometric data set.
@@ -1104,6 +1105,8 @@ class PSPL(ABC):
             Length must match t.
         filt_idx : int, optional
             The index of the astrometric filter or data set.
+        scan_angle : array_like, optional
+            Angle that determines transformation between RA, Dec and 1-d astrometry.
 
         Returns
         -------
@@ -1112,9 +1115,19 @@ class PSPL(ABC):
 
         """
         pos_model = self.get_astrometry(t, filt_idx=filt_idx)
-        chi2_x = ((x_obs - pos_model[:, 0]) / x_err_obs) ** 2
-        chi2_y = ((y_obs - pos_model[:, 1]) / y_err_obs) ** 2
-
+        
+        if scan_angle is None:
+            chi2_x = ((x_obs - pos_model[:, 0]) / x_err_obs) ** 2
+            chi2_y = ((y_obs - pos_model[:, 1]) / y_err_obs) ** 2
+        else:
+            x_mod_scan, y_mod_scan = fc.convert_astrometry_to_scan_frame(
+                    pos_model[:,0], pos_model[:,1],
+                    scan_angle)
+            chi2_x = ((x_obs - x_mod_scan) / x_err_obs) ** 2
+            chi2_y = np.zeros_like(chi2_x)
+            if y_obs is not None:
+                chi2_y = ((y_obs - y_mod_scan) / y_err_obs) ** 2
+            
         chi2 = chi2_x + chi2_y
 
         return chi2
@@ -1206,7 +1219,8 @@ class PSPL(ABC):
         return lnL.sum()
 
 
-    def log_likely_astrometry_each(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
+    def log_likely_astrometry_each(self, t, x_obs, y_obs, x_err_obs, y_err_obs,
+            filt_idx=0, scan_angle=None):
         """
         Get the natural log of the likelihood for the input astrometric data in the
         specified filter or data sets. Note, this function eturns a list and it
@@ -1230,6 +1244,8 @@ class PSPL(ABC):
             Length must match t.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        scan_angle : array_like, optional
+            Angle that determines transformation between RA, Dec and 1-d astrometry.
 
         Returns
         -------
@@ -1237,17 +1253,22 @@ class PSPL(ABC):
             List of ln(likelihood) for each astrometric measurement.
 
         """
-        chi2_xy = self.get_chi2_astrometry(t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=filt_idx)
+        chi2_xy = self.get_chi2_astrometry(t, x_obs, y_obs, x_err_obs, y_err_obs,
+                                    filt_idx=filt_idx, scan_angle=scan_angle)
 
         lnL_const_x = self.get_lnL_constant(x_err_obs)
-        lnL_const_y = self.get_lnL_constant(y_err_obs)
+        if y_obs is not None:
+            lnL_const_y = self.get_lnL_constant(y_err_obs)
+        else:
+            lnL_const_y = 0
 
         lnL = (-0.5 * chi2_xy) + lnL_const_x + lnL_const_y
 
         return lnL
 
 
-    def log_likely_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs, filt_idx=0):
+    def log_likely_astrometry(self, t, x_obs, y_obs, x_err_obs, y_err_obs,
+            filt_idx=0, scan_angle=None):
         """
         Get the natural log of the likelihood for the input astrometric data in the
         specified filter or data sets. Note, this function eturns a list and it
@@ -1271,6 +1292,8 @@ class PSPL(ABC):
             Length must match t.
         filt_idx : int, optional
             Index of the astrometric filter or data set.
+        scan_angle : array_like, optional
+            Angle that determines transformation between RA, Dec and 1-d astrometry.
 
         Returns
         -------
@@ -1279,7 +1302,8 @@ class PSPL(ABC):
 
         """
         lnL = self.log_likely_astrometry_each(t, x_obs, y_obs, x_err_obs, y_err_obs,
-                                              filt_idx=filt_idx)
+                                              filt_idx=filt_idx,
+                                              scan_angle=scan_angle)
 
         return lnL.sum()
 
