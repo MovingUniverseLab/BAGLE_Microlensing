@@ -25,6 +25,8 @@ CANONICAL: dict[str, Any] = {
     "piE_E_geotr": 0.01,
     "piE_N_geotr": 0.02,
     "log_piE": math.log10(0.022360679775),
+    # Param7 samples log10(|piE|). Same amplitude as (piE_E, piE_N).
+    "log10_piE": math.log10(math.hypot(0.01, 0.02)),
     "phi_muRel": 45.0,
     "piEN_piEE": 0.02,
     "b_sff": 0.8,
@@ -42,6 +44,11 @@ CANONICAL: dict[str, Any] = {
     "dL_dS": 0.5,
     "xS0_E": 0.0,
     "xS0_N": 0.0,
+    "xS0_com_E": 0.0,
+    "xS0_com_N": 0.0,
+    "xS0_p_E": 0.0,
+    "xS0_p_N": 0.0,
+    "qS": 0.5,
     "muS_E": 0.0,
     "muS_N": 0.0,
     "muL_E": 1.0,
@@ -49,6 +56,8 @@ CANONICAL: dict[str, Any] = {
     "log10_thetaE": math.log10(0.8),
     "thetaE": 0.8,
     "piS": 0.15,
+    # Reference-frame parallax (mas), one entry per filter.
+    "pi_ref_frame": [0.05],
     "q": 0.3,
     "sep": 1.2,
     "phi": 45.0,
@@ -65,6 +74,7 @@ CANONICAL: dict[str, Any] = {
     "r_s": 0.5,
     "a_s": 1.0,
     "dmag_Lp_Ls": [0.0],
+    "dmag_Lp_Lt": [-20.0],
     "mLp": 10.0,
     "mLs": 3.0,
     "sepL": 3.0,
@@ -87,9 +97,13 @@ CANONICAL: dict[str, Any] = {
     "accSsec_E": 1e-4,
     "accSsec_N": -1e-4,
     "omega_pri": 90.0,
+    # Secondary argument of periastron: primary + 180 deg.
+    "omega_sec": 270.0,
     "omegaL_pri": 90.0,
     "omegaS_pri": 90.0,
     "big_omega_sec": 0.0,
+    # Tertiary ascending node for PSTL hierarchical orbits (deg).
+    "big_omega_ter": 20.0,
     "big_omegaL_sec": 0.0,
     "big_omegaS_sec": 0.0,
     "iL": 45.0,
@@ -108,16 +122,42 @@ CANONICAL: dict[str, Any] = {
     "e": 0.1,
     "tp": 40.0,
     "a": 1.0,
+    # PSTL hierarchical (primary-secondary and secondary-tertiary) orbits.
+    "i_12": 45.0,
+    "e_12": 0.1,
+    "tp_12": 40.0,
+    "a_12": 1.0,
+    "i_23": 30.0,
+    "e_23": 0.1,
+    "tp_23": 40.0,
+    "a_23": 1.0,
     "log_a": math.log10(1.0),
-    "mass_source_p": 1.0,
-    "mass_source_s": 1.0,
+    "mSp": 1.0,
+    "mSs": 1.0,
     "fratio_bin": [1.0],
     "radiusS": 1e-3,
+    "gamma": [0.5],
+    "gamma_pri": [0.5],
+    "gamma_sec": [0.5],
     "radiusS_pri": 1e-3,
     "radiusS_sec": 1e-3,
     "n_outline": 20,
     "n_outline_pri": 20,
     "n_outline_sec": 20,
+    "q_12": 0.5,
+    "q_13": 0.2,
+    "sep12": 0.8,
+    "sep13": 0.6,
+    "phi12": 40.0,
+    "phi13": 80.0,
+    "alpha12": 90.0,
+    "alpha13": 45.0,
+    "sep_SL": 0.4,
+    "sep_S": 0.25,
+    "phi_S": 30.0,
+    "sep_L": 0.8,
+    "phi_L": 50.0,
+    "mLt": 2.0,
     "gp_log_sigma": [-1.0],
     "gp_log_rho": [0.5],
     "gp_rho": [math.exp(0.5)],
@@ -215,7 +255,9 @@ def build_init_args(cls: type, model_module) -> tuple[list[Any], dict[str, Any]]
             kwargs[pname] = val
         else:
             args.append(val)
-    if "_Par_" in cls.__name__:
+    # Sky position for parallax and reference-frame parallax.
+    # ``RefPar`` does not contain the substring ``_Par_``.
+    if "_Par_" in cls.__name__ or "RefPar" in cls.__name__:
         kwargs.update(PARALLAX_KW)
     return args, kwargs
 
@@ -1456,7 +1498,9 @@ def _fsbl_grad_pair_ok(class_name: str, method_name: str) -> bool:
     if method_name == "get_u" and "PhotAstrom" in class_name:
         return False
     if method_name in _FSBL_GRAD_ZERO_AST:
-        for tag in ("_Param4", "_Param5", "_Param7", "_Param8"):
+        # CoM/origin lens track is insensitive to sep/alpha on reduced Param2+
+        # layouts, so host/jax-eval FD norms vanish.
+        for tag in ("_Param2", "_Param4", "_Param5", "_Param7", "_Param8"):
             if tag in class_name:
                 return False
         if "AccOrbs" in class_name and "_Param6" in class_name:
@@ -1585,8 +1629,16 @@ def fsbl_photastrom_orbit_param1_grad_pairs() -> list[tuple[str, str]]:
 
 
 def fsbl_photastrom_param2_grad_pairs() -> list[tuple[str, str]]:
-    """FSBL PhotAstrom Param2 phot + core astrometry grad (jax-eval FD)."""
-    return _filter_fsbl_grad_pairs(fsbl_photastrom_param2_pairs())
+    """FSBL PhotAstrom Param2 phot + core astrometry grad (jax-eval FD).
+
+    Drops ``get_astrometry``: each host/jax-eval contour forward is ~1–2 s, so
+    full central FD over ~18 params is impractical for smoke. Centroid +
+    phot/amp + unlensed still exercise the wired Param2 layout.
+    """
+    skip_ast = frozenset({"get_astrometry"})
+    return _filter_fsbl_grad_pairs(
+        [(c, m) for c, m in fsbl_photastrom_param2_pairs() if m not in skip_ast]
+    )
 
 
 def fsbl_photastrom_param12_resolved_grad_pairs() -> list[tuple[str, str]]:
@@ -1845,8 +1897,18 @@ def bfspl_photastrom_param1_pairs() -> list[tuple[str, str]]:
 
 
 def bsbl_phot_param1_pairs() -> list[tuple[str, str]]:
-    """BSBL phot-only Param1 — no ``BSBL_Phot_*`` ModelClassABC in model_jax."""
-    return []
+    """BSBL phot-only Param1 (noPar + Par)."""
+    import bagle.model_jax as model_jax
+    from bagle.jax.migration_tasks import applicable_task_pairs
+
+    applicable = set(applicable_task_pairs(model_jax))
+    classes = ("BSBL_Phot_noPar_Param1", "BSBL_Phot_Par_Param1")
+    return sorted(
+        (c, m)
+        for c in classes
+        for m in PSBL_PHOT_METHODS
+        if (c, m) in applicable
+    )
 
 
 def bspl_phot_param2_pairs() -> list[tuple[str, str]]:
@@ -3285,9 +3347,14 @@ def call_method(
 
 
 INIT_PARAM_SKIP = frozenset({"self", "raL", "decL", "obsLocation"})
-# Host/JAX-eval FD skips ``root_tol``: perturbing it breaks binary-lens root
-# finding and yields NaN photometry / astrometry at the fixture point.
-GRAD_FD_SKIP_PARAMS = frozenset({"root_tol"})
+# Host/JAX-eval FD skips:
+# - ``root_tol``: perturbing it breaks binary-lens root finding (NaN forwards).
+# - ``n_outline*``: integer outline counts; ``scatter_init_vector`` rounds
+#   eps-scale perturbations back to the same int, so FD is always zero and
+#   each skipped name saves two expensive contour forwards.
+GRAD_FD_SKIP_PARAMS = frozenset(
+    {"root_tol", "n_outline", "n_outline_pri", "n_outline_sec"}
+)
 _BSBL_PARAM1_PHOT_AST_LIKELIHOOD_GRAD_METHODS = frozenset(
     (
         "get_photometry",
@@ -3314,6 +3381,9 @@ LIST_INIT_PARAMS = frozenset(
         "mag_src_pri",
         "mag_src_sec",
         "dmag_Lp_Ls",
+        "gamma",
+        "gamma_pri",
+        "gamma_sec",
         "gp_log_sigma",
         "gp_log_rho",
         "gp_rho",
@@ -3351,6 +3421,99 @@ def pack_init_vector(instance) -> tuple[np.ndarray, tuple[str, ...]]:
 
 
 _DAYS_PER_YEAR = 365.25
+
+
+def _assign_xL0_en(instance) -> None:
+    """Set ``xL0_E`` / ``xL0_N`` from ``xL0`` for scalar or per-filter shapes.
+
+    Parameters
+    ----------
+    instance
+        Model instance with ``xL0`` of shape ``(2,)`` or ``(n_filters, 2)``.
+    """
+    xL0 = np.asarray(instance.xL0, dtype=np.float64)
+
+    # Scalar EN pair vs one EN pair per filter.
+    if xL0.ndim == 1:
+        instance.xL0_E = float(xL0[0])
+        instance.xL0_N = float(xL0[1])
+    else:
+        instance.xL0_E = xL0[..., 0]
+        instance.xL0_N = xL0[..., 1]
+
+    return None
+
+
+def _sync_bsbl_alpha_aliases(instance) -> None:
+    """Map BSBL lens names (``alphaL``, ``sepL``) onto PSBL ``alpha`` / ``sep``.
+
+    Parameters
+    ----------
+    instance
+        Model instance that may use BSBL lens-angle / separation names.
+    """
+    if hasattr(instance, "alphaL"):
+        instance.alpha = float(instance.alphaL)
+        instance.alpha_rad = float(instance.alphaL) * np.pi / 180.0
+        if hasattr(instance, "alphaL_rad"):
+            instance.alphaL_rad = instance.alpha_rad
+    elif hasattr(instance, "alphaL_rad"):
+        instance.alpha_rad = float(instance.alphaL_rad)
+        instance.alpha = float(np.rad2deg(instance.alpha_rad))
+    elif hasattr(instance, "alpha"):
+        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+
+    # Lens binary separation: static ``sepL`` or Keplerian ``aL``.
+    if hasattr(instance, "sepL"):
+        instance.sep = float(instance.sepL)
+    elif hasattr(instance, "aL"):
+        instance.sep = float(instance.aL)
+        if not hasattr(instance, "a"):
+            instance.a = float(instance.aL)
+
+    return None
+
+
+def _refresh_psbl_reduced_mass_distance(instance) -> None:
+    """Update ``mL`` / ``mLp`` / ``mLs`` / distances from ``thetaE`` and ``piE``.
+
+    Used before Keplerian alpha refresh when ``log10_thetaE`` (or ``thetaE_amp``)
+    was just scattered on Param8-style reduced layouts.
+
+    Parameters
+    ----------
+    instance
+        PSBL/FSBL instance with ``piE``, ``piS``, ``q``, and ``thetaE_amp``
+        (or ``log10_thetaE``).
+    """
+    import astropy.constants as const
+    import astropy.units as units
+
+    if hasattr(instance, "log10_thetaE"):
+        instance.thetaE_amp = 10.0 ** float(instance.log10_thetaE)
+
+    instance.piE_amp = float(np.linalg.norm(instance.piE))
+    instance.piRel = instance.piE_amp * float(instance.thetaE_amp)
+    instance.piL = instance.piRel + float(instance.piS)
+
+    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+    kappa = kappa_tmp.to(
+        units.mas / units.Msun, equivalencies=units.dimensionless_angles()
+    ).value
+    instance.mL = instance.thetaE_amp ** 2 / (instance.piRel * kappa)
+    instance.mLp = instance.mL / (1.0 + float(instance.q))
+    instance.mLs = instance.mLp * float(instance.q)
+
+    dL = (instance.piL * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    dS = (float(instance.piS) * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    instance.dL = dL.to("pc").value
+    instance.dS = dS.to("pc").value
+
+    return None
 
 
 def _refresh_psbl_physical_base(instance) -> None:
@@ -3457,8 +3620,8 @@ def _refresh_psbl_com_u0_geometry(instance) -> None:
     orbit_flag = getattr(instance, "orbitFlag", False)
     if orbit_flag == "Keplerian" and hasattr(instance, "a"):
         _refresh_psbl_keplerian_orbit_alpha(instance)
-    elif hasattr(instance, "alpha"):
-        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+    else:
+        _sync_bsbl_alpha_aliases(instance)
 
     instance.phi_rad = instance.alpha_rad - np.arctan2(
         instance.piE[0], instance.piE[1]
@@ -3488,10 +3651,14 @@ def _refresh_psbl_com_u0_geometry(instance) -> None:
     instance.t0 = t0_out
     instance.beta = instance.u0_amp * instance.thetaE_amp
     instance.thetaS0 = instance.u0 * instance.thetaE_amp
-    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
-    instance.xL0_E, instance.xL0_N = instance.xL0
+    instance.xL0 = np.asarray(instance.xS0, dtype=np.float64) - (
+        instance.thetaS0 * 1e-3
+    )
+    _assign_xL0_en(instance)
     thetaS0_com = instance.u0_com * instance.thetaE_amp
-    instance.xL0_com = instance.xS0 - (thetaS0_com * 1e-3)
+    instance.xL0_com = np.asarray(instance.xS0, dtype=np.float64) - (
+        thetaS0_com * 1e-3
+    )
 
 
 def _refresh_psbl_prim_u0_geometry(instance) -> None:
@@ -3508,8 +3675,7 @@ def _refresh_psbl_prim_u0_geometry(instance) -> None:
         instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
         instance.phi_rad = instance.alpha_rad - instance.phi_piE_rad
     else:
-        if hasattr(instance, "alpha"):
-            instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+        _sync_bsbl_alpha_aliases(instance)
         instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
         instance.phi_rad = instance.alpha_rad - instance.phi_piE_rad
 
@@ -3580,9 +3746,11 @@ def _refresh_psbl_photastrom_param3_geometry(instance) -> None:
         instance.thetaE_amp = 10.0 ** float(instance.log10_thetaE)
         instance.thetaE = instance.thetaE_amp
 
-    instance.mag_src = np.asarray(instance.mag_base, dtype=np.float64) - 2.5 * np.log10(
-        np.asarray(instance.b_sff, dtype=np.float64)
-    )
+    # Param3 uses mag_base; Param8 reduced layouts keep mag_src as a fitter.
+    if hasattr(instance, "mag_base"):
+        instance.mag_src = np.asarray(
+            instance.mag_base, dtype=np.float64
+        ) - 2.5 * np.log10(np.asarray(instance.b_sff, dtype=np.float64))
 
     instance.beta = float(instance.u0_amp) * float(instance.thetaE_amp)
     instance.piE_amp = np.linalg.norm(instance.piE)
@@ -3717,11 +3885,95 @@ def _refresh_psbl_param4_heliocentric_geometry(instance) -> None:
 
 def _refresh_psbl_photastrom_physical(instance) -> None:
     """Full derived-geometry refresh for PSBL/FSBL PhotAstrom physical layouts."""
+    _sync_bsbl_alpha_aliases(instance)
     _refresh_psbl_physical_base(instance)
     if hasattr(instance, "t0_com") and hasattr(instance, "beta_com"):
         _refresh_psbl_com_u0_geometry(instance)
     elif hasattr(instance, "t0_p") and hasattr(instance, "beta_p"):
         _refresh_psbl_prim_u0_geometry(instance)
+
+
+def _refresh_bspl_photastrom_param3(instance) -> None:
+    """Re-derive BSPL PhotAstrom Param3 reduced geometry after scatter.
+
+    Mirrors ``BSPL_PhotAstromParam3.__init__`` (``log10_thetaE``, ``fratio_bin``,
+    no lens mass ratio ``q``).
+
+    Parameters
+    ----------
+    instance
+        BSPL PhotAstrom instance whose reduced fitter fields were just updated.
+    """
+    import astropy.constants as const
+    import astropy.units as units
+
+    from bagle.model import u0_hat_from_thetaE_hat
+
+    if hasattr(instance, "log10_thetaE"):
+        instance.thetaE_amp = 10.0 ** float(instance.log10_thetaE)
+
+    # Source magnitudes from base + binary flux ratio.
+    mag_base = np.asarray(instance.mag_base, dtype=np.float64)
+    b_sff = np.asarray(instance.b_sff, dtype=np.float64)
+    fratio = np.asarray(instance.fratio_bin, dtype=np.float64)
+    instance.mag_src_pri = (
+        mag_base - 2.5 * np.log10(b_sff) + 2.5 * np.log10(1.0 + fratio)
+    )
+    instance.mag_src_sec = (
+        mag_base
+        - 2.5 * np.log10(b_sff)
+        + 2.5 * np.log10(1.0 + (1.0 / fratio))
+    )
+
+    instance.beta = float(instance.u0_amp) * float(instance.thetaE_amp)
+    instance.piE_amp = float(np.linalg.norm(instance.piE))
+    instance.piRel = instance.piE_amp * float(instance.thetaE_amp)
+    instance.muRel_amp = instance.thetaE_amp / (float(instance.tE) / _DAYS_PER_YEAR)
+    instance.piL = instance.piRel + float(instance.piS)
+
+    kappa_tmp = 4.0 * const.G / (const.c ** 2 * units.AU)
+    kappa = kappa_tmp.to(
+        units.mas / units.Msun, equivalencies=units.dimensionless_angles()
+    ).value
+    instance.mL = instance.thetaE_amp ** 2 / (instance.piRel * kappa)
+
+    dL = (instance.piL * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    dS = (float(instance.piS) * units.mas).to(
+        units.parsec, equivalencies=units.parallax()
+    )
+    instance.dL = dL.to("pc").value
+    instance.dS = dS.to("pc").value
+
+    instance.thetaE_hat = instance.piE / instance.piE_amp
+    instance.muRel_hat = instance.thetaE_hat
+    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
+    instance.muRel = instance.muRel_amp * instance.thetaE_hat
+    instance.muRel_E, instance.muRel_N = instance.muRel
+    instance.muL = np.asarray(instance.muS, dtype=np.float64) - instance.muRel
+    instance.muL_E, instance.muL_N = instance.muL
+
+    instance.u0_hat = u0_hat_from_thetaE_hat(instance.thetaE_hat, instance.beta)
+    instance.u0 = np.abs(float(instance.u0_amp)) * instance.u0_hat
+    instance.thetaS0 = instance.u0 * instance.thetaE_amp
+    instance.xL0 = np.asarray(instance.xS0, dtype=np.float64) - (
+        instance.thetaS0 * 1e-3
+    )
+
+    # Binary-source secondary position from sep / alpha.
+    instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+    instance.t0_pri = float(instance.t0)
+    instance.xS0_pri = np.asarray(instance.xS0, dtype=np.float64)
+    instance.u0_amp_pri = float(instance.u0_amp)
+    instance.u0_pri = instance.u0
+    sep_vec = float(instance.sep) * np.array(
+        (np.sin(instance.alpha_rad), np.cos(instance.alpha_rad)),
+        dtype=np.float64,
+    )
+    instance.xS0_sec = instance.xS0_pri + (sep_vec * 1e-3)
+
+    return None
 
 
 def _refresh_bspl_phot_static(instance) -> None:
@@ -3810,52 +4062,50 @@ def _refresh_bspl_photastrom_param1(instance) -> None:
     instance.xS0_sec = instance.xS0_pri + (sep_vec * 1e-3)
 
 
-def _refresh_fspl_photastrom_param1(instance) -> None:
-    """Refresh FSPL PhotAstrom Param1 physical derived geometry."""
-    import astropy.constants as const
-    import astropy.units as units
-    from bagle.model import u0_hat_from_thetaE_hat
+def _refresh_fspl_by_reinit(instance) -> None:
+    """Rebuild an FSPL instance by re-running its constructor in place.
 
-    if hasattr(instance, "dL_dS"):
-        instance.dS = float(instance.dL) / float(instance.dL_dS)
-    inv_dist_diff = (1.0 / (float(instance.dL) * units.pc)) - (
-        1.0 / (float(instance.dS) * units.pc)
-    )
-    piRel = units.rad * units.au * inv_dist_diff
-    instance.piRel = piRel.to("mas").value
-    piS = (1.0 / float(instance.dS)) * (units.rad * units.au / units.pc)
-    piL = (1.0 / float(instance.dL)) * (units.rad * units.au / units.pc)
-    instance.piS = piS.to("mas").value
-    instance.piL = piL.to("mas").value
+    FSPL Param mixins derive different fields per layout (static phot,
+    physical Param1, reduced Param2), and Param2 also stores derived ``mL``
+    and ``beta``, so a hand-written refresh can pick the wrong derivation.
+    Re-running ``__init__`` with the scattered init values rebuilds every
+    derived field exactly as the constructor does.
 
-    instance.muRel = np.asarray(instance.muS, dtype=np.float64) - np.asarray(
-        instance.muL, dtype=np.float64
-    )
-    instance.muRel_E, instance.muRel_N = instance.muRel
-    instance.muRel_amp = float(np.linalg.norm(instance.muRel))
+    Parameters
+    ----
+    instance
+        NumPy or JAX FSPL instance whose init fields were just scattered.
 
-    thetaE = units.rad * np.sqrt(
-        (4.0 * const.G * float(instance.mL) * units.M_sun / const.c ** 2)
-        * inv_dist_diff
-    )
-    instance.thetaE_amp = thetaE.to("mas").value
-    instance.thetaE_hat = instance.muRel / instance.muRel_amp
-    instance.muRel_hat = instance.thetaE_hat
-    instance.thetaE = instance.thetaE_amp * instance.thetaE_hat
-    instance.thetaE_E, instance.thetaE_N = instance.thetaE
+    Returns
+    ----
+    None
+    """
+    import bagle.model as ref_model
+    import bagle.model_jax as jax_model
 
-    instance.u0_hat = u0_hat_from_thetaE_hat(
-        instance.thetaE_hat, float(instance.beta)
-    )
-    instance.u0_amp = float(instance.beta) / instance.thetaE_amp
-    instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
-    instance.thetaS0 = instance.u0 * instance.thetaE_amp
-    instance.xL0 = instance.xS0 - (instance.thetaS0 * 1e-3)
+    # Use the Param mixin signature from the module the instance came from.
+    cls = type(instance)
+    module = jax_model if cls.__module__ == jax_model.__name__ else ref_model
+    mixin = _init_mixin_cls(module, cls.__name__)
+    sig = inspect.signature(mixin.__init__)
 
-    instance.piE_amp = instance.piRel / instance.thetaE_amp
-    instance.piE = instance.piE_amp * instance.thetaE_hat
-    instance.piE_E, instance.piE_N = instance.piE
-    instance.tE = (instance.thetaE_amp / instance.muRel_amp) * _DAYS_PER_YEAR
+    # Current (perturbed) values for every constructor argument.
+    kwargs: dict[str, Any] = {}
+    for pname in sig.parameters:
+        if pname == "self":
+            continue
+        if pname in ("raL", "decL", "obsLocation"):
+            kwargs[pname] = getattr(instance, pname)
+        elif pname in INT_INIT_PARAMS:
+            kwargs[pname] = int(round(_scalar_from_instance(instance, pname)))
+        else:
+            kwargs[pname] = _scalar_from_instance(instance, pname)
+
+    # Re-run the concrete constructor, then restore per-filter layouts.
+    cls.__init__(instance, **kwargs)
+    _post_init(instance)
+
+    return None
 
 
 def _refresh_derived_geometry(instance) -> None:
@@ -3881,15 +4131,45 @@ def _refresh_derived_geometry(instance) -> None:
             piE_N = float(getattr(instance, "piE_N", instance.piE[1]))
         instance.piE = np.array([piE_E, piE_N], dtype=np.float64)
 
-    if hasattr(instance, "alpha"):
-        instance.alpha_rad = float(instance.alpha) * np.pi / 180.0
+    # Keplerian PhotAstrom binaries derive their CoM / lazy midpoint frames
+    # in the constructor; rebuild them with it instead of by hand.
+    if (getattr(instance, "orbitFlag", False) == "Keplerian"
+            and getattr(instance, "astrometryFlag", False)):
+        _refresh_fspl_by_reinit(instance)
+        return None
+
+    # Prefer fitter names so derived ``beta_com`` on Param8 CircOrbs does not
+    # skip the Param4/8 heliocentric refresh path.
+    fitter = getattr(instance, "fitter_param_names", ())
+    _sync_bsbl_alpha_aliases(instance)
 
     if (
-        hasattr(instance, "t0_com")
-        and hasattr(instance, "u0_amp_com")
-        and not hasattr(instance, "beta_com")
+        "t0_com" in fitter
+        and "u0_amp_com" in fitter
+        and "beta_com" not in fitter
     ):
+        # Keplerian Param8: masses -> orbit alpha -> COM heliocentric convert.
+        if (
+            getattr(instance, "orbitFlag", False) == "Keplerian"
+            and hasattr(instance, "a")
+        ):
+            _refresh_psbl_reduced_mass_distance(instance)
+            _refresh_psbl_keplerian_orbit_alpha(instance)
         _refresh_psbl_param4_heliocentric_geometry(instance)
+        if hasattr(instance, "u0_amp_com"):
+            instance.beta_com = (
+                float(instance.u0_amp_com) * float(instance.thetaE_amp)
+            )
+            instance.u0_hat_com = u0_hat_from_thetaE_hat(
+                instance.thetaE_hat, instance.beta_com
+            )
+            instance.u0_com = (
+                np.abs(float(instance.u0_amp_com)) * instance.u0_hat_com
+            )
+            thetaS0_com = instance.u0_com * instance.thetaE_amp
+            instance.xL0_com = np.asarray(instance.xS0, dtype=np.float64) - (
+                thetaS0_com * 1e-3
+            )
         return None
 
     if hasattr(instance, "t0_prim") and hasattr(instance, "thetaE_amp"):
@@ -3915,14 +4195,18 @@ def _refresh_derived_geometry(instance) -> None:
         instance.thetaE_hat = instance.piE / instance.piE_amp
         return None
 
-    fitter = getattr(instance, "fitter_param_names", ())
     if (
         "log10_thetaE" in fitter
         and getattr(instance, "paramAstromFlag", False)
         and "mLp" not in fitter
     ):
-        _refresh_psbl_photastrom_param3_geometry(instance)
-        return None
+        # BSPL reduced Param3 uses fratio_bin; PSBL/FSBL uses q.
+        if "fratio_bin" in fitter:
+            _refresh_bspl_photastrom_param3(instance)
+            return None
+        if "q" in fitter:
+            _refresh_psbl_photastrom_param3_geometry(instance)
+            return None
 
     if hasattr(instance, "mLp") and hasattr(instance, "mLs") and hasattr(instance, "dL"):
         _refresh_psbl_photastrom_physical(instance)
@@ -3936,13 +4220,8 @@ def _refresh_derived_geometry(instance) -> None:
         _refresh_bspl_photastrom_param1(instance)
         return None
 
-    if (
-        hasattr(instance, "mL")
-        and hasattr(instance, "beta")
-        and hasattr(instance, "radiusS")
-        and not hasattr(instance, "mLp")
-    ):
-        _refresh_fspl_photastrom_param1(instance)
+    if type(instance).__name__.startswith("FSPL"):
+        _refresh_fspl_by_reinit(instance)
         return None
 
     phot_only = getattr(instance, "photometryFlag", False) and not getattr(
@@ -3955,51 +4234,11 @@ def _refresh_derived_geometry(instance) -> None:
         return None
 
     if orbit is True and hasattr(instance, "get_me_some_orbital_parameters"):
-        if hasattr(instance, "aleph") and hasattr(instance, "aleph_sec"):
-            instance.sep = float(instance.aleph) + float(instance.aleph_sec)
-        ecc, i, o, w, p, tp = instance.get_me_some_orbital_parameters(
-            instance.t0,
-            instance.sep,
-            instance.r_s,
-            instance.a_s,
-            instance.v_para,
-            instance.v_perp,
-            instance.v_rad,
-        )
-        instance.w = w
-        instance.o = o
-        instance.i = i
-        instance.e = ecc
-        instance.tp = tp
-        instance.p = p
-        instance.piE_amp = np.linalg.norm(instance.piE)
-        instance.thetaE_hat = instance.piE / instance.piE_amp
-        instance.muRel_hat = instance.thetaE_hat
-        instance.u0_hat = u0_hat_from_thetaE_hat(
-            instance.thetaE_hat, instance.u0_amp
-        )
-        instance.u0 = np.abs(instance.u0_amp) * instance.u0_hat
-        instance.m1 = 1.0 / (1.0 + instance.q)
-        instance.m2 = instance.q / (1.0 + instance.q)
-        import bagle.orbits as orbits
-
-        orb = orbits.Orbit()
-        orb.w = w
-        orb.o = o
-        orb.i = i
-        orb.e = ecc
-        orb.tp = tp
-        orb.aleph2 = instance.aleph_sec
-        orb.aleph = instance.aleph
-        orb.p = p
-        x, y, x2, y2 = orb.oal2xy(np.array([tp]))
-        instance.alpha_rad = np.arctan2(x - x2, y - y2)[0]
-        instance.alpha = np.rad2deg(instance.alpha_rad)
-        instance.phi_rho1_rad = instance.alpha
-        instance.phi_piE_rad = np.arctan2(instance.piE[0], instance.piE[1])
-        instance.phi_rad = instance.phi_rho1_rad - instance.phi_piE_rad
-        instance.phi = np.rad2deg(instance.phi_rad)
-        return
+        # Phot-only Keplerian orbits derive aleph / aleph_sec, the orbit
+        # elements and the CoM track from (sep, r_s, a_s, v_*): rebuild them
+        # with the constructor.
+        _refresh_fspl_by_reinit(instance)
+        return None
 
     if phot_only and hasattr(instance, "xL1_over_theta") and hasattr(instance, "phi"):
         instance.piE_amp = np.linalg.norm(instance.piE)
@@ -4088,43 +4327,59 @@ def _scalar_from_instance(instance, name: str) -> float:
 
 
 _COMPANION_INIT_ALIASES: dict[str, tuple[str, ...]] = {
-    "t0": ("t0_prim", "t0_p"),
-    "u0_amp": ("u0_amp_prim",),
+    "t0": ("t0_prim", "t0_p", "t0_com"),
+    "t0_com": ("t0", "t0_prim", "t0_p"),
+    "u0_amp": ("u0_amp_prim", "u0_amp_com"),
+    "u0_amp_com": ("u0_amp", "u0_amp_prim"),
     "piE_N": ("piEN_piEE",),
+    "radiusS": ("radiusS_pri",),
+    "alpha": ("alphaL", "alpha12"),
+    "alphaL": ("alpha",),
+    "sep": ("sep12", "sep_12"),
 }
 
 
 def _init_value_for_base_name(v, init_names: tuple[str, ...], base_name: str):
     from bagle.jax.geometry import derive_psbl_param4_heliocentric
 
-    if base_name == "t0" and "t0_com" in init_names:
-        t0, _ = derive_psbl_param4_heliocentric(
-            v[init_names.index("t0_com")],
-            v[init_names.index("u0_amp_com")],
-            v[init_names.index("tE")],
-            v[init_names.index("thetaE")],
-            v[init_names.index("piE_E")],
-            v[init_names.index("piE_N")],
-            v[init_names.index("q")],
-            v[init_names.index("sep")],
-            v[init_names.index("alpha")],
-        )
-        return t0
-    if base_name == "u0_amp" and "u0_amp_com" in init_names:
-        _, u0_amp = derive_psbl_param4_heliocentric(
-            v[init_names.index("t0_com")],
-            v[init_names.index("u0_amp_com")],
-            v[init_names.index("tE")],
-            v[init_names.index("thetaE")],
-            v[init_names.index("piE_E")],
-            v[init_names.index("piE_N")],
-            v[init_names.index("q")],
-            v[init_names.index("sep")],
-            v[init_names.index("alpha")],
-        )
-        return u0_amp
+    # Prefer exact init match before COM heliocentric derivation.
     if base_name in init_names:
         return v[init_names.index(base_name)]
+
+    can_derive_com = (
+        "t0_com" in init_names
+        and "u0_amp_com" in init_names
+        and "tE" in init_names
+        and ("thetaE" in init_names or "log10_thetaE" in init_names)
+        and "piE_E" in init_names
+        and "piE_N" in init_names
+        and "q" in init_names
+        and "sep" in init_names
+        and ("alpha" in init_names or "alphaL" in init_names)
+    )
+    if base_name in ("t0", "u0_amp") and can_derive_com:
+        theta_e = (
+            v[init_names.index("thetaE")]
+            if "thetaE" in init_names
+            else jnp.power(10.0, v[init_names.index("log10_thetaE")])
+        )
+        alpha = (
+            v[init_names.index("alpha")]
+            if "alpha" in init_names
+            else v[init_names.index("alphaL")]
+        )
+        t0, u0_amp = derive_psbl_param4_heliocentric(
+            v[init_names.index("t0_com")],
+            v[init_names.index("u0_amp_com")],
+            v[init_names.index("tE")],
+            theta_e,
+            v[init_names.index("piE_E")],
+            v[init_names.index("piE_N")],
+            v[init_names.index("q")],
+            v[init_names.index("sep")],
+            alpha,
+        )
+        return t0 if base_name == "t0" else u0_amp
     if base_name == "sep" and "aleph" in init_names and "aleph_sec" in init_names:
         return v[init_names.index("aleph")] + v[init_names.index("aleph_sec")]
     if base_name == "piE_N" and "piEN_piEE" in init_names:
@@ -4171,6 +4426,10 @@ _ARRAY_COMPONENT: dict[str, tuple[str, int]] = {
     "piE_N": ("piE", 1),
     "xS0_E": ("xS0", 0),
     "xS0_N": ("xS0", 1),
+    "xS0_com_E": ("xS0_com", 0),
+    "xS0_com_N": ("xS0_com", 1),
+    "xS0_p_E": ("xS0_p", 0),
+    "xS0_p_N": ("xS0_p", 1),
     "muS_E": ("muS", 0),
     "muS_N": ("muS", 1),
     "muL_E": ("muL", 0),
@@ -4451,8 +4710,8 @@ def _bspl_phot_geom_from_base(base, base_names: tuple[str, ...]) -> dict:
     phi_piE = jnp.arctan2(p["piE_E"], p["piE_N"])
     phi_rho1 = phi_piE + phi_rad
     sep_vec = p["sep"] * jnp.stack([jnp.sin(phi_rho1), jnp.cos(phi_rho1)])
-    u0_amp_sec = p["u0_amp"] + jnp.dot(sep_vec, u0_hat)
-    u0_sec = u0_amp_sec * u0_hat
+    # Option A: full static offset at t0 (incl. along-track), shared epoch.
+    u0_sec = u0_pri + sep_vec
     out = (
         "bspl_phot",
         u0_pri,
@@ -4533,8 +4792,33 @@ def _fd_grad_host(
     t: np.ndarray,
     method_name: str,
     eps: float = 1e-5,
+    *,
+    stop_when_nonzero: bool = False,
 ) -> np.ndarray:
-    """Central finite-difference grad w.r.t. init vector via host model forward."""
+    """Central finite-difference grad w.r.t. init vector via host model forward.
+
+    Parameters
+    ----
+    class_name : str
+        Host/JAX model class name used by ``build_paired_instances``.
+    init_names : tuple[str, ...]
+        Packed numeric init parameter names.
+    vec0 : array-like
+        Baseline init vector.
+    t : ndarray
+        Evaluation times.
+    method_name : str
+        Forward method under finite difference.
+    eps : float, optional
+        Central-difference step.
+    stop_when_nonzero : bool, optional
+        If True, stop after the first finite non-zero component (smoke only).
+
+    Returns
+    ----
+    ndarray
+        Gradient w.r.t. ``vec0`` (unprobed entries remain 0 when stopping early).
+    """
     vec0_np = np.asarray(vec0, dtype=np.float64)
     t_np = np.asarray(t, dtype=np.float64)
     fixed_phot = fixed_ast = None
@@ -4567,6 +4851,12 @@ def _fd_grad_host(
         vp[i] += eps
         vm[i] -= eps
         g[i] = (_sum(vp) - _sum(vm)) / (2.0 * eps)
+        if (
+            stop_when_nonzero
+            and np.isfinite(g[i])
+            and abs(g[i]) > 0.0
+        ):
+            break
     return g
 
 
@@ -4577,8 +4867,33 @@ def _fd_grad_jax_eval(
     t: np.ndarray,
     method_name: str,
     eps: float = 1e-5,
+    *,
+    stop_when_nonzero: bool = False,
 ) -> np.ndarray:
-    """Central FD grad via ``jax/evaluate`` dispatch (jax-only FSBL layouts)."""
+    """Central FD grad via ``jax/evaluate`` dispatch (jax-only FSBL layouts).
+
+    Parameters
+    ----
+    class_name : str
+        JAX model class name used by ``build_jax_eval_paired_instances``.
+    init_names : tuple[str, ...]
+        Packed numeric init parameter names.
+    vec0 : array-like
+        Baseline init vector.
+    t : ndarray
+        Evaluation times.
+    method_name : str
+        Forward method under finite difference.
+    eps : float, optional
+        Central-difference step.
+    stop_when_nonzero : bool, optional
+        If True, stop after the first finite non-zero component (smoke only).
+
+    Returns
+    ----
+    ndarray
+        Gradient w.r.t. ``vec0`` (unprobed entries remain 0 when stopping early).
+    """
     vec0_np = np.asarray(vec0, dtype=np.float64)
     t_np = np.asarray(t, dtype=np.float64)
     fixed_phot = fixed_ast = None
@@ -4611,6 +4926,12 @@ def _fd_grad_jax_eval(
         vp[i] += eps
         vm[i] -= eps
         g[i] = (_sum(vp) - _sum(vm)) / (2.0 * eps)
+        if (
+            stop_when_nonzero
+            and np.isfinite(g[i])
+            and abs(g[i]) > 0.0
+        ):
+            break
     return g
 
 
@@ -4643,9 +4964,17 @@ def _unpack_pspl_geom(eval_kind: str, names: tuple[str, ...], v):
         piS,
         piL,
     ) = out
-    t0_idx = names.index("t0")
+
+    # Physical layouts may sample t0_com / t0_p instead of t0.
+    t0_name = next(
+        (n for n in ("t0", "t0_com", "t0_p", "t0_prim") if n in names),
+        None,
+    )
+    if t0_name is None:
+        raise ValueError(f"no t0-like name in geometry params {names!r}")
+
     return {
-        "t0": v[t0_idx],
+        "t0": v[names.index(t0_name)],
         "u0": u0,
         "thetaE_hat": thetaE_hat,
         "tE": tE,
@@ -5497,12 +5826,11 @@ def grad_smoke_jax(
             return g, init_names
         return g
 
+    # FSPL inherits PSPL.get_u, so its u(t) is the pspl_u kernel on
+    # point-lens geometry for every FSPL layout.
     if method_name == "get_u" and (
         ek in set(pspl_phot_kinds) | set(pspl_astrom_kinds)
-        or (
-            ek.startswith(("fsbl_phot", "fsbl_photastrom"))
-            and class_name.startswith("FSPL")
-        )
+        or ek in ("fspl_phot", "fspl_photastrom")
     ):
 
         def forward(v):
@@ -5665,7 +5993,37 @@ def grad_smoke_jax(
         return g
 
     if ek.startswith(("fsbl_phot", "fsbl_photastrom", "bspl_phot")):
-        g = _fd_grad_jax_eval(class_name, init_names, vec0, t, method_name)
+        # FSBL Param2: jax-eval contour FD with early-stop smoke (host
+        # get_amplification is ~10× slower per call; full 18-param central FD
+        # is impractical). Subsample times to keep each forward cheap.
+        if class_name.startswith("FSBL") and "_Param2" in class_name:
+            t_smoke = np.asarray(t, dtype=np.float64)
+            if t_smoke.size > 5:
+                idx = np.linspace(0, t_smoke.size - 1, 5, dtype=int)
+                t_smoke = t_smoke[idx]
+            g = _fd_grad_jax_eval(
+                class_name,
+                init_names,
+                vec0,
+                t_smoke,
+                method_name,
+                stop_when_nonzero=True,
+            )
+        else:
+            g = _fd_grad_jax_eval(class_name, init_names, vec0, t, method_name)
+        if return_names:
+            return g, init_names
+        return g
+
+    # FSPL / BFSPL: host finite-difference through AMG / contour forwards.
+    # Param1 physical layouts may be remapped to ``pspl_photastrom_physical``;
+    # Param2 reduced layouts keep ``fspl_*`` / ``bfspl_*`` eval kinds. Either
+    # way, methods that do not match a PSPL analytic branch fall through here.
+    if (
+        ek.startswith(("fspl_phot", "fspl_photastrom", "bfspl_"))
+        or class_name.startswith(("FSPL", "BFSPL"))
+    ):
+        g = _fd_grad_host(class_name, init_names, vec0, t, method_name)
         if return_names:
             return g, init_names
         return g

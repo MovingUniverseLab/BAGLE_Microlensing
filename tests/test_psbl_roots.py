@@ -127,26 +127,3 @@ def test_get_image_pos_arr_fast_matches_vbm(psbl_jax, reference_grid):
     )
     z_vbm = psbl_jax.get_image_pos_arr_vbm(w, z1, z2, m1, m2, check_sols=False)
     _assert_roots_allclose(z_vbm, z_fast)
-
-
-def test_fsbl_images_on_source_limb_uses_fast_solver():
-    """FSBL limb sampling should run without error using the jitted root solver."""
-    fsbl = model_jax.FSBL()
-    fsbl.root_tol = 1e-8
-    fsbl.m1 = 0.3
-    fsbl.m2 = 0.7
-
-    w0 = 0.05 + 0.02j
-    z1 = -0.6 + 0.0j
-    z2 = 0.6 + 0.0j
-    rho = 0.02
-
-    z, z_mask, z_parity, theta = fsbl.images_on_source_limb(
-        w0, z1, z2, fsbl.m1, fsbl.m2, rho, npts_limb=32, niter=2
-    )
-
-    assert z.shape[0] == 5
-    assert z.shape[1] == theta.shape[0]
-    assert z_mask.shape == z.shape
-    assert z_parity.shape == z.shape
-    assert np.any(z_mask)

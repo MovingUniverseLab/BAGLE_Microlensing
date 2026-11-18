@@ -175,6 +175,58 @@ Declare those names on ``filt_param_names`` with a matching
 More details about each parameterization can be found in the Parameterization
 Class docstring.
 
+.. _binary-reference-frames:
+
+Reference points and the internal frame
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Binary models (PSBL, FSBL, BSPL, BSBL, BFSBL) can describe the closest
+approach about several reference points. A suffix names the pair:
+
+==========  ====================  ========================  ========================
+Suffix      Source point          Lens point                Kind
+==========  ====================  ========================  ========================
+``_com``    source CoM            lens CoM                  true closest approach
+``_p``      primary source        primary lens              instantaneous (below)
+``_mid``    primary source        lens geometric midpoint   instantaneous (below)
+==========  ====================  ========================  ========================
+
+* The suffix applies to the whole input set: ``t0_*``, ``u0_amp_*`` /
+  ``beta_*`` and the source position, ``xS0_com_E`` / ``xS0_com_N`` or
+  ``xS0_p_E`` / ``xS0_p_N`` (unsuffixed ``xS0_E`` / ``xS0_N`` for the
+  midpoint pair). The input ``xS0`` is always the input source point at the
+  input ``t0``. For a single source the source CoM is the source itself.
+* Projected binary-axis angles (``alpha``, ``phi``, ``alphaL``, ``alphaS``)
+  and the companion projected separations (``sep``, ``sepL_t0``,
+  ``sepS_t0``) are defined at that same input ``t0_*``, not at periapse
+  (``tp``). Keplerian elements ``Omega``, ``omega_pri`` / ``omega``, and
+  ``i`` are orbit invariants and are not tied to ``t0``.
+* Every ``u0_amp`` carries the Gould (2004) sign: ``u0_amp > 0`` means the
+  source is East of the lens point.
+* **Internal frame.** The unsuffixed ``t0`` / ``u0_amp`` / ``u0`` /
+  ``beta`` / ``xL0`` are the midpoint pair for static, linear and
+  accelerated models, and the CoM pair for Keplerian models (except the
+  midpoint-input PSBL Param2 / Param3, which keep the midpoint pair).
+  Phot-only Keplerian models (``PSBL_Phot_*Orbs``) are defined by the binary
+  state at the input ``t0`` and keep the midpoint frame.
+* **Instantaneous pairs.** An orbiting midpoint or primary moves on a curve,
+  so its ``(t0, u0)`` is defined at an instant: at ``t0`` the source point
+  minus the lens point (at that instant) is perpendicular to the relative
+  proper motion, and ``u0`` is that offset. Such a ``t0`` is a reference
+  epoch, not a closest-approach time. Only the CoMs move on straight lines.
+* **Lazy attributes.** For Keplerian models, ``t0_mid``, ``u0_amp_mid``,
+  ``beta_mid``, ``xL0_mid`` and (when they are not inputs) ``t0_p``,
+  ``u0_amp_p``, ``beta_p``, ``xS0_p`` are root-solved on first access with
+  :func:`bagle.frame_convert.convert_u0_amp_t0_bsbl_orbit` and cached, so
+  constructing a model or evaluating a likelihood never needs the root
+  solve. For other models the ``_mid`` names alias the internal values.
+* Source masses are ``mS``, ``mSp``, ``mSs`` (Msun) with ``qS = mSs / mSp``,
+  matching the lens ``mL``, ``mLp``, ``mLs`` and ``q = mLs / mLp``.
+* Orbit angles follow :meth:`bagle.orbits.Orbit.oal2xy`: Omega is the
+  ascending node (shared by both components) measured from North through
+  East, and ``omega_pri`` is measured from it to the primary's periastron
+  in the direction of motion; the secondary uses ``omega_pri + 180``.
+
 Making a New Model
 ------------------
 

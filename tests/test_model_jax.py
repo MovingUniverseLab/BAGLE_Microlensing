@@ -1741,7 +1741,8 @@ def plot_PSBL(psbl, t_obs):
         # Find the points closest to t0
         t0idx = np.argmin(np.abs(t_obs - psbl.t0))
 
-        xL1, xL2 = psbl.get_resolved_lens_astrometry(t_obs)
+        _xL = psbl.get_resolved_lens_astrometry(t_obs)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         xL1 *= 1e3
         xL2 *= 1e3
         xS_unlens = psbl.get_astrometry_unlensed(t_obs) * 1e3
@@ -1833,10 +1834,12 @@ def plot_PSBL_compare(psbl1, label1, psbl2, label2, t_obs):
         t0idx1 = np.argmin(np.abs(t_obs - psbl1.t0))
         t0idx2 = np.argmin(np.abs(t_obs - psbl2.t0))
 
-        xL1_1, xL2_1 = psbl1.get_resolved_lens_astrometry(t_obs)
+        _xL = psbl1.get_resolved_lens_astrometry(t_obs)
+        xL1_1, xL2_1 = _xL[:, 0], _xL[:, 1]
         xL1_1 *= 1e3
         xL2_1 *= 1e3
-        xL1_2, xL2_2 = psbl2.get_resolved_lens_astrometry(t_obs)
+        _xL = psbl2.get_resolved_lens_astrometry(t_obs)
+        xL1_2, xL2_2 = _xL[:, 0], _xL[:, 1]
         xL1_2 *= 1e3
         xL2_2 *= 1e3
 
@@ -2112,7 +2115,8 @@ def test_PSBL_PhotAstrom_noPar_Param2(plot=False):
             [8.63000294925506117e-03, 9.61763832782568974e-03],
         ]
     )
-    xL1, xL2 = psbl.get_resolved_lens_astrometry(t_check)
+    _xL = psbl.get_resolved_lens_astrometry(t_check)
+    xL1, xL2 = _xL[:, 0], _xL[:, 1]
     xS_unlensed = psbl.get_astrometry_unlensed(t_check)
     images, amps = psbl.get_all_arrays(t_check)
     xS_lensed = psbl.get_astrometry(t_check, image_arr=images, amp_arr=amps)
@@ -3117,7 +3121,7 @@ def test_PSBL_get_photometry_nans():
 
     # Check that we have both NaNs and valid values
     # in our amplifications for testing.
-    idx_nan = np.where(np.isnan(amp).sum(axis=1) == 5)[0]
+    idx_nan = np.where(np.isnan(amp).sum(axis=(1, 2)) == 5)[0]
     # print(amp.shape)
     if len(idx_nan) > 0:
         assert len(idx_nan) != amp.shape[0]
@@ -3548,11 +3552,12 @@ def test_FSPL_PhotAstrom_source_astrometry(plot=False):
                      ls='None', marker='o', color=colors[tt], ms=5, label=lab_src_lensed)
 
             # lensed image, resolved plus
-            plt.plot(fspl_xyS_lensed_res[tt, 0, 0], fspl_xyS_lensed_res[tt, 0, 1],
+            # lensed image, resolved plus (shape is [N_t, N_sources, N_images, 2])
+            plt.plot(fspl_xyS_lensed_res[tt, 0, 0, 0], fspl_xyS_lensed_res[tt, 0, 0, 1],
                      ls='None', marker='x', color=colors[tt], ms=5, label=lab_src_p)
 
             # lensed image, resolved minus
-            plt.plot(fspl_xyS_lensed_res[tt, 1, 0], fspl_xyS_lensed_res[tt, 1, 1],
+            plt.plot(fspl_xyS_lensed_res[tt, 0, 1, 0], fspl_xyS_lensed_res[tt, 0, 1, 1],
                      ls='None', marker='+', color=colors[tt], ms=5, label=lab_src_m)
 
 
@@ -3709,6 +3714,139 @@ def test_FSPL_boundary(plot=False):
     return
     
     
+
+
+def test_FSPL_host_amg_mixed_u_dispatch():
+    """
+    Mixed-|u| host dispatch: far epochs use CI, close epochs use AMG.
+
+    Plan rows A-04 / A-05 (host self-consistency). The
+    ``tests/data/jax_dex_finite_source/`` fixtures from ``e1bc6ec`` are not
+    in this tree yet, so compare the mixed path to pure AMG / pure CI on
+    the same epochs instead of an external light-curve fixture.
+    """
+    mL = 10.0
+    t0 = 57000.0
+    beta = 0.5
+    dL = 4000.0
+    dS = 8000.0
+    xS0_E = 0.0
+    xS0_N = 0.0
+    muL_E = 0.0
+    muL_N = 0.0
+    muS_E = 3.0
+    muS_N = 0.0
+    radiusS = 0.0004  # arcsec
+    b_sff = 1.0
+    mag_src = 18.0
+    n_outline = 100
+    raL = 259.0
+    decL = -29.0
+
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL / dS,
+        xS0_E, xS0_N, muL_E, muL_N, muS_E, muS_N,
+        radiusS, b_sff, mag_src, n_outline, raL=raL, decL=decL,
+    )
+
+    # Span well outside and inside 2*rho around peak.
+    t = np.linspace(t0 - 2.0 * fspl.tE, t0 + 2.0 * fspl.tE, 81)
+    u_amp = np.linalg.norm(fspl.get_u(t), axis=1)
+    rho = fspl.source_radius_thetaE_units()
+    close = u_amp < (2.0 * rho)
+    far = ~close
+    assert np.any(close) and np.any(far)
+
+    images, amps = fspl.get_all_arrays(t)
+    assert images.shape == (len(t), 1, 2)
+    assert amps.shape == (len(t), 1, 2)
+
+    # Drop the source axis; the CI / AMG helpers return real [E, N] images.
+    images = images[:, 0]
+    amps = amps[:, 0]
+
+    # Far epochs match uniform CI; close epochs match AMG.
+    img_ci, amp_ci = fspl.get_all_arrays_CI(t[far])
+    img_amg, amp_amg = fspl.get_all_arrays_amg(t[close])
+    img_ci = img_ci[..., 0] + 1j * img_ci[..., 1]
+    img_amg = img_amg[..., 0] + 1j * img_amg[..., 1]
+    np.testing.assert_allclose(images[far], img_ci, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(amps[far], amp_ci, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(images[close], img_amg, rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(amps[close], amp_amg, rtol=1e-10, atol=1e-12)
+
+    # Total magnification stays physical.
+    amp_tot = np.sum(amps, axis=1)
+    assert np.min(amp_tot) >= 0.99
+
+    return None
+
+
+def test_FSPL_host_amg_vectorized_matches_boundary():
+    """
+    Vectorized AMG keeps amplifications >= 1 when the limb crosses the lens.
+
+    Complements ``test_FSPL_boundary`` with an explicit
+    ``get_all_arrays_amg`` call (plan A-04 host path).
+    """
+    mL = 10.0
+    t0 = 57755.0
+    dL = 8000.0
+    dL_dS = 0.1
+    radiusS = 0.0004
+    b_sff = np.array([1.0])
+    mag_src = np.array([18.0])
+    n_outline = 200
+    beta = 0.38
+
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL_dS,
+        0.0, 0.0, 0.0, 0.0, 2.0, 0.0,
+        radiusS, b_sff, mag_src, n_outline, raL=259.0, decL=30.0,
+    )
+    t = np.arange(fspl.t0 - fspl.tE, fspl.t0 + fspl.tE)
+    images, amps = fspl.get_all_arrays_amg(t)
+    amp_tot = np.sum(amps, axis=1)
+    np.testing.assert_equal(np.min(amp_tot) >= 1.0, True)
+    assert images.shape[0] == len(t)
+    return None
+
+
+def test_FSPL_host_amg_speedup_smoke():
+    """
+    Record host AMG wall time on a PhotAstrom setup (plan S-05).
+
+    Does not fail on wall time; prints a one-line timing note.
+    """
+    mL = 10.0
+    t0 = 57000.0
+    beta = 0.2
+    dL = 4000.0
+    dS = 8000.0
+    radiusS = 0.0002
+    n_outline = 100
+    fspl = model.FSPL_PhotAstrom_noPar_Param1(
+        mL, t0, beta, dL, dL / dS,
+        0.0, 0.0, 0.0, 0.0, 3.0, 0.0,
+        radiusS, 1.0, 18.0, n_outline, raL=259.0, decL=-29.0,
+    )
+    t = np.linspace(t0 - fspl.tE, t0 + fspl.tE, 200)
+
+    t0_wall = time.time()
+    _ = fspl.get_all_arrays_amg(t)
+    dt_amg = time.time() - t0_wall
+
+    t0_wall = time.time()
+    _ = fspl.get_all_arrays(t)
+    dt_dispatch = time.time() - t0_wall
+
+    print(
+        f"FSPL host AMG: {dt_amg:.4f}s; mixed dispatch: {dt_dispatch:.4f}s "
+        f"(n_t={len(t)}, n_outline={n_outline})"
+    )
+    assert dt_amg > 0.0 and dt_dispatch > 0.0
+    return None
+
 
 
 def test_FSPL_PhotAstrom_lens_astrometry(plot=False):
@@ -4150,7 +4288,14 @@ def test_ABC_MRO():
     # All data classes should be hard-coded into this test.
     # But we will test such that new ones won't make this test fail. 
     data_classes_good = ['BSPL', 'BSPL_Phot', 'BSPL_PhotAstrom',
-                         'FSPL', 'FSPL_Limb', 'FSPL_Phot', 'FSPL_PhotAstrom',
+                         'BFSBL', 'BFSBL_Limb', 'BFSBL_Limb_Phot',
+                         'BFSBL_Limb_PhotAstrom', 'BFSBL_Phot', 'BFSBL_PhotAstrom',
+                         'BFSPL', 'BFSPL_Limb', 'BFSPL_Limb_PhotAstrom',
+                         'BFSPL_PhotAstrom',
+                         'FSBL', 'FSBL_Limb', 'FSBL_Limb_Phot',
+                         'FSBL_Limb_PhotAstrom', 'FSBL_Phot', 'FSBL_PhotAstrom',
+                         'FSPL', 'FSPL_Limb', 'FSPL_Limb_Phot',
+                         'FSPL_Limb_PhotAstrom', 'FSPL_Phot', 'FSPL_PhotAstrom',
                          'PSBL', 'PSBL_Phot', 'PSBL_PhotAstrom', 'PSPL',
                          'PSPL_Astrom', 'PSPL_Phot', 'PSPL_PhotAstrom']
     for dcls in data_classes_good:
@@ -4158,7 +4303,14 @@ def test_ABC_MRO():
 
     assert gp_classes[0] == 'PSPL_GP'
 
-    parallax_classes_good = ['BSPL_Parallax', 'BSPL_noParallax', 'FSPL_Limb_Parallax',
+    parallax_classes_good = ['BFSBL_Limb_Parallax', 'BFSBL_Limb_noParallax',
+                             'BFSBL_Parallax', 'BFSBL_noParallax',
+                             'BFSPL_Limb_Parallax', 'BFSPL_Limb_noParallax',
+                             'BFSPL_Parallax', 'BFSPL_noParallax',
+                             'BSPL_Parallax', 'BSPL_noParallax',
+                             'FSBL_Limb_Parallax', 'FSBL_Limb_noParallax',
+                             'FSBL_Parallax', 'FSBL_noParallax',
+                             'FSPL_Limb_Parallax',
                              'FSPL_Limb_noParallax', 'FSPL_Parallax', 'FSPL_noParallax',
                              'PSBL_Parallax', 'PSBL_noParallax', 'PSPL_Parallax',
                              'PSPL_noParallax']
@@ -4198,7 +4350,8 @@ def plot_BSBL(bsbl, t_obs):
         t0idx = np.argmin(np.abs(t_obs - bsbl.t0))
 
         # Resolved astrometry - unlensed
-        xL1, xL2 = bsbl.get_resolved_lens_astrometry(t_obs)
+        _xL = bsbl.get_resolved_lens_astrometry(t_obs)
+        xL1, xL2 = _xL[:, 0], _xL[:, 1]
         xL1 *= 1e3
         xL2 *= 1e3
         xS_res_unlens = bsbl.get_resolved_source_astrometry_unlensed(t_obs) * 1e3
@@ -4570,7 +4723,8 @@ def test_psbl_noparallax(plot=False):
         time_setting = 1600
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = psbl.get_all_arrays(t)
-        lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+        _xL = psbl.get_resolved_lens_astrometry(t)
+        lens1, lens2 = _xL[:, 0], _xL[:, 1]
         source_unlensed = psbl.get_astrometry_unlensed(t)
         source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
 
@@ -4645,7 +4799,7 @@ def test_psbl_noparallax(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
@@ -4736,7 +4890,8 @@ def test_psbl_parallax(plot=False):
         time_setting = 1600
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = psbl.get_all_arrays(t)
-        lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+        _xL = psbl.get_resolved_lens_astrometry(t)
+        lens1, lens2 = _xL[:, 0], _xL[:, 1]
         source_unlensed = psbl.get_astrometry_unlensed(t)
         source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
 
@@ -4812,7 +4967,7 @@ def test_psbl_parallax(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
@@ -4904,7 +5059,8 @@ def test_psbl_nopropermotion(plot=False):
         time_setting = 1600
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = psbl.get_all_arrays(t)
-        lens1, lens2 = psbl.get_resolved_lens_astrometry(t)
+        _xL = psbl.get_resolved_lens_astrometry(t)
+        lens1, lens2 = _xL[:, 0], _xL[:, 1]
         source_unlensed = psbl.get_astrometry_unlensed(t)
         source_resolved = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
 
@@ -4980,7 +5136,7 @@ def test_psbl_nopropermotion(plot=False):
                         label = 'Image Position'
                     else:
                         label = ''
-                        ax[k][j].plot(source_resolved[:, ii, 0], source_resolved[:, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
+                        ax[k][j].plot(source_resolved[:, 0, ii, 0], source_resolved[:, 0, ii, 1], '.', linewidth = 4, alpha=0.5, color='hotpink', label=label)
                 ax[k][j].set_xlabel(r'$\Delta$ RA (arcsec)')
                 ax[k][j].set_ylabel(r'$\Delta$ Dec (arcsec)')
                 ax[k][j].set_title(f'Elliptical Orbits Source Motions with eccentricity {e} ')
@@ -5033,7 +5189,8 @@ def magnification_maps():
             cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#21B1FF", "aqua","cyan","#FFD800", "#FF218C", "fuchsia"]) 
         m1 = psbl.m1
         m2 = psbl.m2
-        xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(np.array([t_obs]))
+        _xL = psbl.get_resolved_lens_astrometry(np.array([t_obs]))
+        xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
         print(xL1_0)
         z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
         z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -5180,7 +5337,8 @@ def test_bsbl_noparallax(plot=False):
         time_setting = 2400
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = bsbl.get_all_arrays(t)
-        lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+        _xL = bsbl.get_resolved_lens_astrometry(t)
+        lens1, lens2 = _xL[:, 0], _xL[:, 1]
         source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t)
         source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
 
@@ -5439,7 +5597,8 @@ def test_bsbl_parallax(plot=False):
         time_setting = 2400
         t = np.arange(t0_com-time_setting, t0_com+time_setting, 1) 
         img, amp = bsbl.get_all_arrays(t)
-        lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+        _xL = bsbl.get_resolved_lens_astrometry(t)
+        lens1, lens2 = _xL[:, 0], _xL[:, 1]
         source_unlensed = bsbl.get_resolved_source_astrometry_unlensed(t)
         source_resolved = bsbl.get_resolved_astrometry(t, image_arr=img)
 
@@ -5657,7 +5816,8 @@ def magnification_maps():
         def helper(t_obs, grid_size, plot_radius):
             m1 = bsbl.m1
             m2 = bsbl.m2
-            xL1_0, xL2_0 = bsbl.get_resolved_lens_astrometry(np.array([t_obs]))
+            _xL = bsbl.get_resolved_lens_astrometry(np.array([t_obs]))
+            xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
             print(xL1_0)
             z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
             z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
@@ -6732,8 +6892,10 @@ def test_psbl_luminous_lens(plot=False):
         xS2 = psbl2.get_source_astrometry_unlensed(t)
         pos_out1 = psbl1.get_astrometry(t)     # lensed centroid
         pos_out2 = psbl2.get_astrometry(t)
-        xL1p, xL1s = psbl1.get_resolved_lens_astrometry(t) # lens position
-        xL2p, xL2s = psbl2.get_resolved_lens_astrometry(t)
+        _xL = psbl1.get_resolved_lens_astrometry(t)  # (N, 2, 2)
+        xL1p, xL1s = _xL[:, 0], _xL[:, 1]
+        _xL = psbl2.get_resolved_lens_astrometry(t)
+        xL2p, xL2s = _xL[:, 0], _xL[:, 1]
 
         shift1 = psbl1.get_centroid_shift(t)
         shift2 = psbl2.get_centroid_shift(t)
@@ -7170,3 +7332,158 @@ def test_fspl_photparam1_numpy_matches_jax(class_name, monkeypatch):
         np.testing.assert_allclose(out, ref, rtol=1e-10, atol=1e-12)
     return None
 
+
+def _pstl_noPar_param1_args(mLt=2.0):
+    """Shared constructor kwargs for PSTL_PhotAstrom_noPar_Param1 tests."""
+    return dict(
+        mLp=10.0,
+        mLs=5.0,
+        mLt=mLt,
+        t0=57000.0,
+        xS0_E=np.array([0.0]),
+        xS0_N=np.array([0.01]),
+        beta=0.4,
+        muL_E=0.0,
+        muL_N=0.0,
+        sep12=3.0,
+        sep13=2.0,
+        muS_E=4.0,
+        muS_N=-3.0,
+        dL=2000.0,
+        dS=4000.0,
+        alpha12=90.0,
+        alpha13=45.0,
+        b_sff=np.array([1.0]),
+        mag_src=np.array([18.0]),
+        dmag_Lp_Ls=np.array([20.0]),
+        root_tol=1e-4,
+    )
+
+
+def test_PSTL_PhotAstrom_noPar_Param1():
+    """A-22: construct PSTL Param1; photometry and three-lens astrometry."""
+    args = _pstl_noPar_param1_args()
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+
+    assert pstl.xS0.shape == (1, 2)
+    assert pstl.mLt == args['mLt']
+    assert pstl.m3 > 0
+
+    t = np.array([56000.0, 57000.0, 57500.0, 58000.0])
+    phot = np.asarray(pstl.get_photometry(t), dtype=float)
+    assert phot.shape == (len(t),)
+    assert np.all(np.isfinite(phot))
+
+    # Three resolved lenses: shape [N_times, 3, 2].
+    xL = np.asarray(pstl.get_resolved_lens_astrometry(t), dtype=float)
+    assert xL.shape == (len(t), 3, 2)
+    assert np.all(np.isfinite(xL))
+
+    # Primary/secondary sit at +/- sep12/2 along alpha12 about the origin.
+    offset12 = 0.5 * args['sep12'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha12'])),
+         np.cos(np.deg2rad(args['alpha12']))])
+    xL_origin = 0.5 * (xL[:, 0] + xL[:, 1])
+    np.testing.assert_allclose(
+        xL[:, 0] - xL_origin, np.broadcast_to(offset12, xL[:, 0].shape),
+        rtol=0, atol=1e-12)
+    np.testing.assert_allclose(
+        xL[:, 1] - xL_origin, np.broadcast_to(-offset12, xL[:, 1].shape),
+        rtol=0, atol=1e-12)
+
+    # Tertiary is sep13 from the primary along alpha13.
+    offset13 = args['sep13'] * 1e-3 * np.array(
+        [np.sin(np.deg2rad(args['alpha13'])),
+         np.cos(np.deg2rad(args['alpha13']))])
+    np.testing.assert_allclose(
+        xL[:, 2] - xL[:, 0], np.broadcast_to(offset13, xL[:, 2].shape),
+        rtol=0, atol=1e-12)
+
+    images, amps = pstl.get_all_arrays(t)
+    images = np.asarray(images)
+    amps = np.asarray(amps)
+    assert images.shape[0] == len(t)
+    assert amps.shape == images.shape
+    assert np.isfinite(amps).sum() >= len(t)
+
+    xS = np.asarray(pstl.get_astrometry(t, image_arr=images, amp_arr=amps))
+    assert xS.shape == (len(t), 2)
+    assert np.all(np.isfinite(xS))
+
+    return None
+
+
+def test_PSTL_mLt_zero_recovers_PSBL():
+    """A-24: mLt -> 0 recovers PSBL_PhotAstrom_noPar_Param1 photometry."""
+    args = _pstl_noPar_param1_args(mLt=0.0)
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+
+    psbl = model.PSBL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['muS_E'], args['muS_N'],
+        args['dL'], args['dS'], args['sep12'], args['alpha12'],
+        args['b_sff'], args['mag_src'], args['dmag_Lp_Ls'],
+        root_tol=args['root_tol'])
+
+    # Avoid epochs near caustics where root masking can differ.
+    t = np.array([56000.0, 56500.0, 57500.0, 58000.0])
+    phot_t = np.asarray(pstl.get_photometry(t), dtype=float)
+    phot_b = np.asarray(psbl.get_photometry(t), dtype=float)
+    np.testing.assert_allclose(phot_t, phot_b, rtol=1e-6, atol=1e-6)
+
+    return None
+
+
+def test_PSTL_PhotAstrom_dmag_Lp_Lt_luminous_tertiary():
+    """Luminous tertiary shifts the unlensed lens centroid toward xL3."""
+    args = _pstl_noPar_param1_args()
+    args['b_sff'] = np.array([0.5])
+    args['dmag_Lp_Ls'] = np.array([-20.0])
+    args['dmag_Lp_Lt'] = np.array([0.0])
+    pstl = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], dmag_Lp_Lt=args['dmag_Lp_Lt'],
+        root_tol=args['root_tol'])
+
+    t = np.array([57000.0])
+    xL = np.asarray(pstl.get_resolved_lens_astrometry(t), dtype=float)
+    xL_cent = np.asarray(pstl.get_lens_astrometry(t), dtype=float)
+
+    # Equal primary and tertiary; secondary is dark.
+    expected = 0.5 * (xL[:, 0] + xL[:, 2])
+    np.testing.assert_allclose(xL_cent, expected, rtol=0, atol=1e-10)
+
+    mags = np.asarray(pstl.get_resolved_lens_photometry(), dtype=float)
+    assert mags.shape == (3,)
+    np.testing.assert_allclose(mags[0], mags[2], rtol=0, atol=1e-8)
+    assert mags[1] > mags[0] + 10.0
+
+    # Default dmag_Lp_Lt=-20 keeps the tertiary dark (primary-only centroid).
+    pstl_dark = model.PSTL_PhotAstrom_noPar_Param1(
+        args['mLp'], args['mLs'], args['mLt'], args['t0'],
+        args['xS0_E'], args['xS0_N'], args['beta'],
+        args['muL_E'], args['muL_N'], args['sep12'], args['sep13'],
+        args['muS_E'], args['muS_N'], args['dL'], args['dS'],
+        args['alpha12'], args['alpha13'], args['b_sff'], args['mag_src'],
+        args['dmag_Lp_Ls'], root_tol=args['root_tol'])
+    xL_dark = np.asarray(pstl_dark.get_lens_astrometry(t), dtype=float)
+    np.testing.assert_allclose(xL_dark, xL[:, 0], rtol=0, atol=1e-8)
+    assert 'dmag_Lp_Lt' in pstl_dark.fitter_param_names
+    return None

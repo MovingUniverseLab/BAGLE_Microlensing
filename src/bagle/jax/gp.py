@@ -88,10 +88,53 @@ def build_gp_kernel(model, filt_idx: int, mag_err_obs):
     omega0 = jnp.exp(jnp.asarray(log_omega0, dtype=jnp.float64))
     jitter = jnp.asarray(_gp_jitter_sigma(model, mag_err_obs, filt_idx), dtype=jnp.float64)
 
+    # celerite SHOTerm variance is S0 * omega0 * Q; tinygp SHO(sigma=)
+    # takes the process standard deviation, so sigma = sqrt(S0*omega0*Q).
+    sho_sigma = jnp.sqrt(S0 * omega0 * _GP_QUALITY)
     kernel = qk.Matern32(scale=rho, sigma=sigma) + qk.SHO(
-        omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
+        omega=omega0, quality=_GP_QUALITY, sigma=sho_sigma
     )
     return kernel, jitter
+
+
+def _log_S0_from_gp_params(gp_params: dict):
+    """
+    Resolve ``log_S0`` from whichever GP S0 parameterization is present.
+
+    Parameters
+    ----------
+    gp_params : dict
+        Packed GP parameters from the fitter. May contain ``gp_log_S0``,
+        ``gp_log_omega04_S0`` (= log(S0 * omega0^4)), or ``gp_log_omega0_S0``
+        (= log(S0 * omega0)), plus ``gp_log_omega0``.
+
+    Returns
+    -------
+    log_S0 : jnp.ndarray, float, shape = ()
+        Natural log of the SHO S0 amplitude used by celerite / tinygp.
+    """
+    log_omega0 = jnp.asarray(gp_params["gp_log_omega0"], dtype=jnp.float64)
+
+    # Prefer the direct name when present.
+    if "gp_log_S0" in gp_params:
+        return jnp.asarray(gp_params["gp_log_S0"], dtype=jnp.float64)
+
+    # Match model_jax GP __init__ conversions.
+    if "gp_log_omega04_S0" in gp_params:
+        log_omega04_S0 = jnp.asarray(
+            gp_params["gp_log_omega04_S0"], dtype=jnp.float64
+        )
+        return log_omega04_S0 - 4.0 * log_omega0
+
+    if "gp_log_omega0_S0" in gp_params:
+        log_omega0_S0 = jnp.asarray(
+            gp_params["gp_log_omega0_S0"], dtype=jnp.float64
+        )
+        return log_omega0_S0 - log_omega0
+
+    raise KeyError(
+        "GP params need gp_log_S0, gp_log_omega04_S0, or gp_log_omega0_S0"
+    )
 
 
 def build_gp_kernel_from_params(gp_params: dict, mag_err_obs, fixed_jitter: bool = True):
@@ -103,7 +146,8 @@ def build_gp_kernel_from_params(gp_params: dict, mag_err_obs, fixed_jitter: bool
         rho = jnp.exp(jnp.asarray(gp_params["gp_log_rho"], dtype=jnp.float64))
     else:
         rho = jnp.asarray(gp_params["gp_rho"], dtype=jnp.float64)
-    S0 = jnp.exp(jnp.asarray(gp_params["gp_log_S0"], dtype=jnp.float64))
+    log_S0 = _log_S0_from_gp_params(gp_params)
+    S0 = jnp.exp(log_S0)
     omega0 = jnp.exp(jnp.asarray(gp_params["gp_log_omega0"], dtype=jnp.float64))
     if "gp_log_jit_sigma" in gp_params:
         jitter = jnp.exp(jnp.asarray(gp_params["gp_log_jit_sigma"], dtype=jnp.float64))
@@ -114,8 +158,11 @@ def build_gp_kernel_from_params(gp_params: dict, mag_err_obs, fixed_jitter: bool
     else:
         jitter = jnp.asarray(0.0, dtype=jnp.float64)
 
+    # celerite SHOTerm variance is S0 * omega0 * Q; tinygp SHO(sigma=)
+    # takes the process standard deviation, so sigma = sqrt(S0*omega0*Q).
+    sho_sigma = jnp.sqrt(S0 * omega0 * _GP_QUALITY)
     kernel = qk.Matern32(scale=rho, sigma=sigma) + qk.SHO(
-        omega=omega0, quality=_GP_QUALITY, sigma=jnp.sqrt(S0)
+        omega=omega0, quality=_GP_QUALITY, sigma=sho_sigma
     )
     return kernel, jitter
 

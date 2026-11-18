@@ -2,6 +2,11 @@
 Parameterization Class Family
 ------------------------------
 
+
+.. note::
+   Input reference points (``_com`` / ``_p`` / midpoint), the internal frame and
+   the lazy ``_mid`` / ``_p`` attributes are described in :ref:`binary-reference-frames`.
+
 .. autoclass:: model.PSBL_PhotAstromParam1
     :members:
     :inherited-members:

@@ -12,7 +12,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "tests"))
 
-STATUS_JSON = REPO / "docs" / "jax_migration_status.json"
+STATUS_JSON = REPO / "docs" / "dev" / "jax_migration_status.json"
 
 
 def main() -> int:

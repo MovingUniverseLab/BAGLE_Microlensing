@@ -69,8 +69,10 @@ muS_scale_factor = 100.0
 
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                     'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
-                     'xS0_E', 'xS0_N', 'pi_ref_frame',
+                     'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'dmag_Lp_Lt',
+                     'xS0_E', 'xS0_N', 'xS0_com_E', 'xS0_com_N',
+                     'xS0_p_E', 'xS0_p_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
@@ -78,6 +80,32 @@ multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
 
 # Fixed value written into a filter slot that is not fitted.
 FIXED_VALUE = 0.0
+
+# Floor for a non-finite JAX log-likelihood (G-06).
+_LN_L_FLOOR = -1.0e300
+
+# Minimum independent JAXNS live points in parameter-estimation mode.
+_JAXNS_MIN_INDEPENDENT_LIVE = 5
+
+
+def _floor_nonfinite_lnL(value):
+    """Replace a non-finite host log-likelihood with ``_LN_L_FLOOR``.
+
+    Parameters
+    ----------
+    value : float
+        Scalar log-likelihood, possibly NaN or Inf.
+
+    Returns
+    -------
+    lnL_safe : float
+        ``value`` when finite, otherwise ``_LN_L_FLOOR``.
+    """
+    value = float(value)
+    if np.isfinite(value):
+        return value
+    return _LN_L_FLOOR
+
 
 # One warning per legacy column name in this process.
 _LEGACY_COLUMN_WARNED = set()
@@ -221,10 +249,13 @@ def build_explicit_jax_loglik_fn(fitter):
 
     Notes
     -----
-    Returns (None, None) in cases where the configuration is unsupported
-    (e.g., model requires add_err/mult_err, missing likelihood methods).
-    This function also uses caching to avoid redundant compilation.
+    Raises ``NotImplementedError`` when the model class is not in
+    :data:`bagle.model_jax.JAX_LIKELIHOOD_CLASSES`, when the fitted
+    names include ``add_err`` / ``mult_err``, or when a required
+    ``jax_log_likely_*`` method is missing. Uses caching to avoid
+    redundant compilation.
     """
+    from bagle import model_jax as _model_jax
 
     names = tuple(fitter.fitter_param_names)
     tied = dict(getattr(fitter, 'tied_params', {}) or {})
@@ -248,6 +279,8 @@ def build_explicit_jax_loglik_fn(fitter):
         has_ast,
         float(fitter.data['raL']) if 'raL' in fitter.data else None,
         float(fitter.data['decL']) if 'decL' in fitter.data else None,
+        float(fitter.data['t0par']) if 't0par' in fitter.data else None,
+        int(fitter.data['n_outline']) if 'n_outline' in fitter.data else 50,
         tuple(id(fitter.data.get(f't_phot{i + 1}')) for i in range(n_phot)),
         tuple(id(fitter.data.get(f't_ast{i + 1}')) for i in range(n_ast)),
     )
@@ -256,11 +289,26 @@ def build_explicit_jax_loglik_fn(fitter):
     if cached is not None and cached_key == cache_key:
         return cached
 
-    # Models with additive/multiplicative error parameters are not supported
-    if any(('add_err' in name or 'mult_err' in name) for name in names):
-        return None, None
-
     model_class = fitter.model_class
+    class_name = model_class.__name__
+
+    # Only verified concrete classes may use the traced JAX path.
+    if class_name not in _model_jax.JAX_LIKELIHOOD_CLASSES:
+        raise NotImplementedError(
+            f"{class_name} has no JAX likelihood. "
+            "Use MicrolensSolver (host likelihood) or add a JAX likelihood "
+            "(see docs/dev/jax_swap_plan.md, Step 7)."
+        )
+
+    # Additive / multiplicative photometric error params are unsupported.
+    bad_err = [n for n in names if 'add_err' in n or 'mult_err' in n]
+    if bad_err:
+        raise NotImplementedError(
+            f"{class_name} JAX likelihood does not support fitted error "
+            f"parameters {bad_err}. Fix those parameters or use "
+            "MicrolensSolver (host likelihood)."
+        )
+
     phot_method = getattr(model_class, 'jax_log_likely_photometry', None)
     ast_method = getattr(model_class, 'jax_log_likely_astrometry', None)
     need_phot = bool(
@@ -272,9 +320,15 @@ def build_explicit_jax_loglik_fn(fitter):
         and fitter.n_ast_sets
     )
 
-    # Ensure required methods exist for photometry/astrometry
-    if (need_phot and phot_method is None) or (need_ast and ast_method is None):
-        return None, None
+    # Required methods must exist for the datasets on this fitter.
+    if need_phot and phot_method is None:
+        raise NotImplementedError(
+            f"{class_name} is missing jax_log_likely_photometry."
+        )
+    if need_ast and ast_method is None:
+        raise NotImplementedError(
+            f"{class_name} is missing jax_log_likely_astrometry."
+        )
 
     base_names = tuple(model_class.fitter_param_names)
     filt_names = set(getattr(model_class, 'filt_param_names', ()) or ())
@@ -284,9 +338,14 @@ def build_explicit_jax_loglik_fn(fitter):
     try:
         for name in base_names:
             if name not in filt_names and name not in names:
-                return None, None
-    except TypeError:
-        return None, None
+                raise NotImplementedError(
+                    f"{class_name} JAX likelihood needs shared parameter "
+                    f"{name!r} in the fitted cube."
+                )
+    except TypeError as exc:
+        raise NotImplementedError(
+            f"{class_name} JAX likelihood cannot read fitter_param_names."
+        ) from exc
 
     # Check if parallax info is needed and available
     use_parallax = bool(getattr(model_class, 'parallaxFlag', False))
@@ -298,6 +357,9 @@ def build_explicit_jax_loglik_fn(fitter):
 
     weights = getattr(fitter, 'weights', None)
     is_gp = 'GP' in model_class.__name__
+
+    # Finite-source limb count for FSPL / BFSPL traced methods.
+    n_out = int(fitter.data['n_outline']) if 'n_outline' in fitter.data else 50
 
     # If GP model, verify tinygp is importable
     if is_gp:
@@ -352,8 +414,8 @@ def build_explicit_jax_loglik_fn(fitter):
         gp_indices = {}
         if is_gp:
             for key in ('gp_log_sigma', 'gp_log_rho', 'gp_rho',
-                        'gp_log_S0', 'gp_log_omega0',
-                        'gp_log_jit_sigma'):
+                        'gp_log_S0', 'gp_log_omega04_S0', 'gp_log_omega0_S0',
+                        'gp_log_omega0', 'gp_log_jit_sigma'):
                 gp_idx = _jax_param_index(names, key, filt_idx)
                 if gp_idx is None:
                     continue
@@ -397,6 +459,7 @@ def build_explicit_jax_loglik_fn(fitter):
         idx_b = _jax_param_index(names, 'b_sff', phot_idx)
         idx_mag_src = None
         idx_dmag = None
+        idx_dmag_lt = None
         phot_names = tuple(getattr(model_class, 'phot_param_names', ()))
         if 'mag_src' in phot_names:
             idx_mag_src = _jax_param_index(names, 'mag_src', phot_idx)
@@ -404,6 +467,8 @@ def build_explicit_jax_loglik_fn(fitter):
             idx_mag_src = _jax_param_index(names, 'mag_base', phot_idx)
         if 'dmag_Lp_Ls' in phot_names:
             idx_dmag = _jax_param_index(names, 'dmag_Lp_Ls', phot_idx)
+        if 'dmag_Lp_Lt' in phot_names:
+            idx_dmag_lt = _jax_param_index(names, 'dmag_Lp_Lt', phot_idx)
 
         try:
             slots = _class_vector_slots(
@@ -424,7 +489,7 @@ def build_explicit_jax_loglik_fn(fitter):
             np.asarray(fitter.data[f'ypos{ast_idx + 1}']),
             np.asarray(fitter.data[f'xpos_err{ast_idx + 1}']),
             np.asarray(fitter.data[f'ypos_err{ast_idx + 1}']),
-            pvec, idx_b, idx_mag_src, idx_dmag, weight, slots
+            pvec, idx_b, idx_mag_src, idx_dmag, idx_dmag_lt, weight, slots
         ))
 
     def log_likely(param_vec):
@@ -469,27 +534,52 @@ def build_explicit_jax_loglik_fn(fitter):
                 if gp_indices else None
             )
 
+            # Optional kwargs accepted by some Param mixins (geoproj, etc.).
+            phot_kwargs = dict(
+                parallax_vectors=pvec, gp_params=gp_params,
+                fixed_jitter='GPnoJitter' not in model_class.__name__,
+            )
+            phot_sig = inspect.signature(phot_method)
+            if 'raL' in phot_sig.parameters and 'raL' in fitter.data:
+                phot_kwargs['raL'] = fitter.data['raL']
+            if 'decL' in phot_sig.parameters and 'decL' in fitter.data:
+                phot_kwargs['decL'] = fitter.data['decL']
+            if 't0par' in phot_sig.parameters and 't0par' in fitter.data:
+                phot_kwargs['t0par'] = fitter.data['t0par']
+            # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
+            if 'n_outline' in phot_sig.parameters:
+                n_outline_default = phot_sig.parameters['n_outline'].default
+                if n_outline_default is not None:
+                    phot_kwargs['n_outline'] = n_out
+
             # Add weighted likelihood for this photometric dataset
-            lnL += weight * phot_method(base_vec, t, mag_obs, mag_err, b_sff, mag_param,
-                                        parallax_vectors=pvec, gp_params=gp_params,
-                                        fixed_jitter='GPnoJitter' not in model_class.__name__)
+            lnL += weight * phot_method(
+                base_vec, t, mag_obs, mag_err, b_sff, mag_param, **phot_kwargs
+            )
 
         # Compute sum of log-likelihood contributions from each astrometric dataset
-        # Only forward mag_src / dmag to methods that accept them (PSBL).
+        # Only forward mag_src / dmag to methods that accept them (PSBL/PSTL).
         ast_accepts_mag = False
         ast_accepts_dmag = False
+        ast_accepts_dmag_lt = False
         if ast_method is not None:
             ast_sig = inspect.signature(ast_method)
             ast_accepts_mag = 'mag_src' in ast_sig.parameters
             ast_accepts_dmag = 'dmag_Lp_Ls' in ast_sig.parameters
+            ast_accepts_dmag_lt = 'dmag_Lp_Lt' in ast_sig.parameters
 
         for (t, x_obs, y_obs, x_err, y_err, pvec, idx_b, idx_mag_src,
-             idx_dmag, weight, slots) in ast_blocks:
+             idx_dmag, idx_dmag_lt, weight, slots) in ast_blocks:
             assert ast_method is not None
             base_vec = _assemble_class_vector(param_vec, slots)
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
+            if 'n_outline' in ast_sig.parameters:
+                n_outline_default = ast_sig.parameters['n_outline'].default
+                if n_outline_default is not None:
+                    kwargs['n_outline'] = n_out
             if ast_accepts_mag:
                 if idx_mag_src is None:
                     mag_value = jnp.asarray(0.0, dtype=jnp.float64)
@@ -506,6 +596,8 @@ def build_explicit_jax_loglik_fn(fitter):
                 kwargs['mag_src'] = mag_value
             if ast_accepts_dmag and idx_dmag is not None:
                 kwargs['dmag_Lp_Ls'] = param_vec[idx_dmag]
+            if ast_accepts_dmag_lt and idx_dmag_lt is not None:
+                kwargs['dmag_Lp_Lt'] = param_vec[idx_dmag_lt]
             lnL += weight * ast_method(
                 base_vec, t, x_obs, y_obs, x_err, y_err, **kwargs
             )
@@ -571,7 +663,7 @@ class MicrolensSolver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        1.  PSPL, PSBL, PSTL, BSPL, BSBL, FSPL, FSBL, BFSPL, or BFSBL;
         2.  photometric data only, photometric and astrometric data, or
             astrometric data only;
         3.  parallax or no parallax; and
@@ -620,15 +712,23 @@ class MicrolensSolver(Solver):
         'mL': ('make_gen', 0, 100),
         'mLp': ('make_gen', 0, 100),
         'mLs': ('make_gen', 0, 100),
+        'mSp': ('make_gen', 0, 100),
+        'mSs': ('make_gen', 0, 100),
+        'mLt': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_geotr': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
         't0_p': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
         'xS0_N': ('make_xS0_gen', None, None),
+        'xS0_com_E': ('make_xS0_gen', None, None),
+        'xS0_com_N': ('make_xS0_gen', None, None),
+        'xS0_p_E': ('make_xS0_gen', None, None),
+        'xS0_p_N': ('make_xS0_gen', None, None),
         'u0_amp': ('make_gen', -1, 1),
         'u0_amp_prim': ('make_gen', -1, 1),
         'beta': ('make_gen', -2, 2),
+        'beta_com': ('make_gen', -2, 2),
         'beta_p': ('make_gen', -2, 2),
         'muL_E': ('make_gen', -20, 20),
         'muL_N': ('make_gen', -20, 20),
@@ -644,6 +744,7 @@ class MicrolensSolver(Solver):
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
         'dmag_Lp_Ls': ('make_gen', -20, 20),
+        'dmag_Lp_Lt': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'log_tE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'piE_E': ('make_gen', -1, 1),
@@ -654,14 +755,28 @@ class MicrolensSolver(Solver):
         'log_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
+        'q_12': ('make_gen', 0.001, 1),
+        'q_13': ('make_gen', 0.001, 1),
         'alpha': ('make_gen', 0, 360),
+        'alpha12': ('make_gen', 0, 360),
+        'alpha13': ('make_gen', 0, 360),
         'phi': ('make_gen', 0, 360),
         'phi_muRel': ('make_gen', 0, 360),
         'sep': ('make_gen', 1e-4, 2e-2),
+        'sep12': ('make_gen', 1e-4, 2e-2),
+        'sep13': ('make_gen', 1e-4, 2e-2),
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
+        # Phot-only FSPL: Einstein radii. Phot+astrom (arcsec) uses a
+        # tighter range in ``make_default_priors`` when ``paramAstromFlag``.
         'radiusS': ('make_gen', 1E-4, 1E-2),
+        'radiusS_pri': ('make_gen', 1E-4, 1E-2),
+        'radiusS_sec': ('make_gen', 1E-4, 1E-2),
+        # Linear limb darkening (Gamma convention), one per filter.
+        'gamma': ('make_gen', 0.0, 1.0),
+        'gamma_pri': ('make_gen', 0.0, 1.0),
+        'gamma_sec': ('make_gen', 0.0, 1.0),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         # TODO: I don't think the above comment is accurate any more
@@ -680,8 +795,7 @@ class MicrolensSolver(Solver):
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
-        'xS0_system_E': ('make_gen', -10, 10),
-        'xS0_system_N': ('make_gen', -10, 10),
+        'qS': ('make_gen', 0, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
         'accS_E': ('make_gen', -10, 10),
@@ -695,17 +809,27 @@ class MicrolensSolver(Solver):
         'omega': ('make_gen', -180, 180),
         'big_omega': ('make_gen', -180, 180),
         'omega_pri': ('make_gen', -180, 180),
+        'omega_sec': ('make_gen', -180, 180),
         'big_omega_sec': ('make_gen', -180, 180),
+        'big_omega_ter': ('make_gen', -180, 180),
         'i':('make_gen', -90, 90),
+        'i_12':('make_gen', -90, 90),
+        'i_23':('make_gen', -90, 90),
         'e':('make_gen', 0, 0.9),
+        'e_12':('make_gen', 0, 0.9),
+        'e_23':('make_gen', 0, 0.9),
         'p': ('make_gen', 0, 10000),
         'tp': ('make_gen', 0, 10000),
+        'tp_12': ('make_gen', 0, 10000),
+        'tp_23': ('make_gen', 0, 10000),
         'aleph': ('make_gen', 1, 10),
         'aleph_sec':('make_gen', 1, 10),
         'alphaL': ('make_gen', 0, 360),
         'sepS': ('make_gen', 1e-4, 2e-2),
         'sepL': ('make_gen', 1e-4, 2e-2),
         'a': ('make_gen', 1e-4, 2e-2),
+        'a_12': ('make_gen', 1e-4, 2e-2),
+        'a_23': ('make_gen', 1e-4, 2e-2),
         'aL': ('make_gen', 1e-4, 2e-2),
         'alphaS': ('make_gen', 0, 360),
         'omegaL': ('make_gen', -180, 180),
@@ -1378,7 +1502,8 @@ class MicrolensSolver(Solver):
         # columns means there is nothing to check.
         phot_bases = (
             'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
-            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'dmag_Lp_Lt', 'gamma',
+            'gamma_pri', 'gamma_sec',
         )
         largest = 0
         for col in table.colnames:
@@ -1955,6 +2080,12 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
+                # Phot+astrom radii are arcsec; phot-only are Einstein radii.
+                if (
+                    priors_name in ('radiusS', 'radiusS_pri', 'radiusS_sec')
+                    and getattr(self.model_class, 'paramAstromFlag', False)
+                ):
+                    prior_min, prior_max = 1e-7, 1e-4
                 self.priors[param_name] = make_gen(
                     param_name, prior_min, prior_max, stats_pkg=stats_pkg
                 )
@@ -2014,9 +2145,10 @@ class MicrolensSolver(Solver):
                         'xS0 prior for a filter with no astrometry: '
                         + param_name
                     )
-                if priors_name == 'xS0_E':
+                # xS0_E, xS0_com_E and xS0_p_E all read the East positions.
+                if priors_name.endswith('_E'):
                     pos = self.data['xpos' + str(int(series) + 1)]
-                elif priors_name == 'xS0_N':
+                elif priors_name.endswith('_N'):
                     pos = self.data['ypos' + str(int(series) + 1)]
                 else:
                     raise ValueError(param_name)
@@ -2437,34 +2569,25 @@ class MicrolensSolver(Solver):
         -------
         loglike : float or ndarray, shape (n_points,)
             Log-likelihood. A scalar is returned for one point. For a
-            batch, non-finite values are replaced by ``-1e300``.
+            batch, non-finite values are replaced by ``_LN_L_FLOOR``.
 
         Notes
         -----
         The batch path compiles ``jax.vmap`` of the cached likelihood
         once and stores it on ``_explicit_jax_loglik_vmap_cache``.
-        When the JAX likelihood is unavailable, each point is passed
-        to :meth:`log_likely`.
+        Unsupported classes raise from
+        :func:`build_explicit_jax_loglik_fn` (no host fallback).
         """
         fn, _ = build_explicit_jax_loglik_fn(self)
         batch = (getattr(cube, 'ndim', None) == 2
                  and not isinstance(cube, (dict, Row)))
-
-        # No explicit JAX likelihood: host log_likely, including batches.
-        if fn is None:
-            if not batch:
-                return float(self.log_likely(cube))
-            values = np.array([self.log_likely(row)
-                               for row in np.asarray(cube, dtype=np.float64)])
-            # Same finite floor as the JAX batch path.
-            return np.where(np.isfinite(values), values, -1.0e300)
 
         if batch:
             return self._loglik_jax_batch(fn, cube)
 
         # Fitted values as the float vector the JAX likelihood takes.
         vec = self.to_param_vector(self.to_param_dict(cube))
-        return float(fn(vec))
+        return _floor_nonfinite_lnL(fn(vec))
 
     def _loglik_jax_batch(self, fn, theta):
         """Evaluate a cached, jitted vmap of the JAX log-likelihood.
@@ -2480,7 +2603,7 @@ class MicrolensSolver(Solver):
         Returns
         -------
         loglike : ndarray, shape (n_points,)
-            Log-likelihood. Non-finite entries are ``-1e300``.
+            Log-likelihood. Non-finite entries are ``_LN_L_FLOOR``.
         """
         theta = np.asarray(theta, dtype=np.float64)
         cached = getattr(self, '_explicit_jax_loglik_vmap_cache', None)
@@ -2493,7 +2616,7 @@ class MicrolensSolver(Solver):
             vmapped = cached[1]
 
         values = np.asarray(vmapped(jnp.asarray(theta)), dtype=np.float64)
-        values = np.where(np.isfinite(values), values, -1.0e300)
+        values = np.where(np.isfinite(values), values, _LN_L_FLOOR)
         return values
 
     def grad_loglik_jax(self, cube):
@@ -2518,10 +2641,6 @@ class MicrolensSolver(Solver):
             No JAX log-likelihood is registered for this fitter.
         """
         fn, _ = build_explicit_jax_loglik_fn(self)
-        if fn is None:
-            raise NotImplementedError(
-                "No JAX log-likelihood for this fitter configuration."
-            )
         # Fitted values as the float vector the JAX likelihood takes.
         vec = self.to_param_vector(self.to_param_dict(cube))
         return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
@@ -3985,14 +4104,13 @@ class MicrolensSolverJaxLike(MicrolensSolver):
         lnL : float
             Joint photometry + astrometry log-likelihood (always finite).
         """
-        try:
-            # Reject unphysical dL/dS before the expensive JAX call.
-            if self._unphysical_distances(cube):
-                return self._LN_L_FLOOR
-
-            lnL = float(self.evaluate_loglik_jax(cube))
-        except Exception:
+        # Reject unphysical dL/dS before the expensive JAX call.
+        # Programming errors (KeyError, missing likelihood, etc.) must
+        # propagate; only non-finite numerical lnL is floored below.
+        if self._unphysical_distances(cube):
             return self._LN_L_FLOOR
+
+        lnL = float(self.evaluate_loglik_jax(cube))
 
         if not np.isfinite(lnL):
             return self._LN_L_FLOOR
@@ -4537,9 +4655,11 @@ def scipy_to_pymc(prior, name, wrapped=False):
 class LogLikelihoodOp(Op):
     """PyTensor Op wrapping MicrolensSolver.log_likely().
 
-    When ``use_jax_grad=True`` and the model Param mixin provides explicit JAX
-    likelihood methods, evaluation and differentiation use a jitted closure.
-    Unsupported configurations fall back to black-box ``log_likely``.
+    When ``use_jax_grad=True`` and the model is in
+    :data:`bagle.model_jax.JAX_LIKELIHOOD_CLASSES`, evaluation and
+    differentiation use a jitted closure. Unsupported configurations raise
+    from :func:`build_explicit_jax_loglik_fn`, or use black-box
+    ``log_likely`` when ``use_jax_grad=False``.
     """
 
     __props__ = ('fitter', 'param_names', 'use_jax_grad')
@@ -5562,7 +5682,11 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         random_seed : int, optional
             PRNG seed.
         n_live_points : int, optional
-            JAXNS live points, or SMC-NUTS particle count.
+            JAXNS live points, or SMC-NUTS particle count. JAXNS runs in
+            parameter-estimation mode, which splits the live points into
+            ``n_live_points / (n_params + 1)`` independent points; the count
+            is raised (with a warning) to keep at least
+            ``_JAXNS_MIN_INDEPENDENT_LIVE`` of them.
         max_samples : int, optional
             JAXNS maximum nested samples.
         dlogz : float, optional
@@ -5948,9 +6072,22 @@ class MicrolensSolverNumPyro(MicrolensSolver):
         # Same NumPyro model / factors as the NUTS path.
         model_builder = MicrolensNumPyroModel(self)
 
+        # Parameter-estimation mode keeps k = n_params phantom samples per
+        # live point, so only n_live / (k + 1) live points are independent.
+        # Too few (c <~ 3) breaks jaxns' live-point count and gives NaN logZ.
+        n_phantom = len(self.fitter_param_names)
+        n_live = max(self.n_live_points,
+                     _JAXNS_MIN_INDEPENDENT_LIVE * (n_phantom + 1))
+        if n_live > self.n_live_points:
+            warnings.warn(
+                f'JAXNS: raising n_live_points from {self.n_live_points} to '
+                f'{n_live} so parameter-estimation mode keeps at least '
+                f'{_JAXNS_MIN_INDEPENDENT_LIVE} independent live points for '
+                f'{n_phantom} parameters.')
+
         # Forward BAGLE knobs into jaxns DefaultNestedSampler.
         constructor_kwargs = dict(
-            num_live_points=self.n_live_points,
+            num_live_points=n_live,
             max_samples=self.max_samples,
             devices=jax.devices('cpu')[:1],
             difficult_model=True,
@@ -8614,7 +8751,8 @@ def generate_params_dict(params, fitter_param_names):
 
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
-    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls']
+    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                  'dmag_Lp_Lt', 'gamma', 'gamma_pri', 'gamma_sec']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
@@ -8677,10 +8815,19 @@ def generate_fixed_params_dict(data, fixed_param_names):
     Notes
     -----
     A missing ``obsLocation`` is skipped so the model default (Earth)
-    applies.
+    applies. A missing ``n_outline`` is skipped so the FSPL / BFSPL
+    constructor default (50) applies.
     """
-    return {name: data[name] for name in (fixed_param_names or [])
-            if name != 'obsLocation' or 'obsLocation' in data}
+    param_dict = {}
+    for name in (fixed_param_names or []):
+        # Optional fixed keys: use the constructor default when absent.
+        if name == 'obsLocation' and 'obsLocation' not in data:
+            continue
+        if name == 'n_outline' and 'n_outline' not in data:
+            continue
+        param_dict[name] = data[name]
+
+    return param_dict
 
 ########################################
 ### GENERAL USE AND SHARED FUNCTIONS ###

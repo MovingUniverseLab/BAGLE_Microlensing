@@ -18,8 +18,46 @@ def oal2xy(t, w, o, i, e, p, tp, aleph, aleph2, accel=False, ax=0.0, ay=0.0):
     """
     Port of :meth:`bagle.orbits.Orbit.oal2xy` for primary/secondary positions.
 
-    Positions are in the same units as ``aleph`` / ``aleph2`` (arcsec for
-    PhotAstrom, Einstein-radius units for PSBL phot-only orbit models).
+    Parameters
+    ----------
+    t : array_like
+        Epochs, in the units of ``p`` and ``tp`` (days in the models).
+    w : float
+        Argument of periastron of the primary (deg).
+    o : float
+        Longitude of the ascending node, Omega (deg).
+    i : float
+        Inclination (deg).
+    e : float
+        Eccentricity.
+    p, tp : float
+        Period and time of periastron.
+    aleph, aleph2 : float
+        Semi-major axes of the primary and secondary about the CoM.
+    accel : bool, optional
+        Add a constant acceleration ``(ax, ay)`` to the secondary.
+    ax, ay : float, optional
+        Secondary acceleration (``aleph`` units per yr^2).
+
+    Returns
+    -------
+    x, y, x2, y2 : jax arrays, shape = [len(t)]
+        East / North offsets of the primary and secondary from the CoM, in
+        the units of ``aleph`` / ``aleph2`` (arcsec for PhotAstrom,
+        Einstein-radius units for PSBL phot-only orbit models).
+
+    Notes
+    -----
+    Same angle conventions as :meth:`bagle.orbits.Orbit.oal2xy`:
+
+    * Omega is the position angle of the ascending node, from North through
+      East, shared by both components (crossing toward +Z, away from the
+      observer).
+    * ``w`` is measured in the orbital plane from the ascending node to the
+      primary's periastron, in the direction of motion.
+    * The secondary uses ``w + 180``.
+    * i = 0 is face-on with motion from North through East; i > 90 is
+      retrograde.
     """
     t = jnp.asarray(t, dtype=jnp.float64)
     mean_motion = 2.0 * jnp.pi / p

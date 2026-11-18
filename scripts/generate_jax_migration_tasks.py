@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate docs/jax_migration_tasks.md from concrete model classes.
+"""Generate docs/dev/jax_migration_tasks.md from concrete model classes.
 
 Method inventory and per-class applicability come from
 ``bagle.jax.migration_tasks`` (``ALL_FORWARD_METHODS``, ``applicable_methods``).
@@ -19,7 +19,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 from bagle.jax.migration_tasks import MigrationTask, generate_tasks  # noqa: E402
 from jax_migration_status_utils import grad_complete, grad_pass_done, summarize_tasks  # noqa: E402
 
-DOCS = REPO / "docs"
+DOCS = REPO / "docs" / "dev"
 TASKS_MD = DOCS / "jax_migration_tasks.md"
 STATUS_JSON = DOCS / "jax_migration_status.json"
 

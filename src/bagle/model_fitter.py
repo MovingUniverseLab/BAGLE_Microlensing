@@ -23,7 +23,6 @@ import bagle.model as mmodel
 import bagle.frame_convert as fconv
 from astropy.table import Table
 from astropy.table import Row
-from astropy import units
 from astropy.stats import sigma_clipped_stats
 import json
 from string import digits
@@ -32,7 +31,6 @@ import pdb
 from datetime import date
 import yaml
 from scipy.stats import norm
-import matplotlib.patches as mpatches
 import pickle
 
 import logging
@@ -40,18 +38,12 @@ import types
 from matplotlib.ticker import MaxNLocator, NullLocator
 from matplotlib.colors import LinearSegmentedColormap, colorConverter
 from matplotlib.ticker import ScalarFormatter
-from scipy import spatial
 from scipy.ndimage import gaussian_filter as norm_kde
 from scipy.stats import gaussian_kde
 import warnings
 from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
-import re
 from itertools import groupby
-
-from bagle import jax_physics
-import jax
-import jax.numpy as jnp
 
 from matplotlib import logging
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -69,8 +61,10 @@ muS_scale_factor = 100.0
 
 # Global variable to define all array-style parameters (i.e. multiple filters).
 multi_filt_params = ['b_sff', 'mag_src', 'mag_base', 'add_err', 'mult_err',
-                     'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
-                     'xS0_E', 'xS0_N', 'pi_ref_frame',
+                     'gamma', 'gamma_pri', 'gamma_sec', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                     'dmag_Lp_Lt',
+                     'xS0_E', 'xS0_N', 'xS0_com_E', 'xS0_com_N',
+                     'xS0_p_E', 'xS0_p_N', 'pi_ref_frame',
                      'gp_log_sigma', 'gp_log_rho', 'gp_log_S0', 'gp_log_omega0', 'gp_rho',
                      'gp_log_omega0_S0', 'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma',
                      'add_err', 'mult_err']
@@ -138,7 +132,7 @@ class MicrolensSolver(Solver):
         along with extensive documentation as to their content and
         construction in the file's docstring. The model can support either
 
-        1.  PSPL, PSBL, BSPL, BSBL, or FSPL (FSPL implementation in-progress);
+        1.  PSPL, PSBL, PSTL, BSPL, BSBL, FSPL, FSBL, BFSPL, or BFSBL;
         2.  photometric data only, photometric and astrometric data, or
             astrometric data only;
         3.  parallax or no parallax; and
@@ -187,14 +181,22 @@ class MicrolensSolver(Solver):
         'mL': ('make_gen', 0, 100),
         'mLp': ('make_gen', 0, 100),
         'mLs': ('make_gen', 0, 100),
+        'mSp': ('make_gen', 0, 100),
+        'mSs': ('make_gen', 0, 100),
+        'mLt': ('make_gen', 0, 100),
         't0': ('make_t0_gen', None, None),
         't0_prim': ('make_t0_gen', None, None),
         't0_p': ('make_t0_gen', None, None),
         'xS0_E': ('make_xS0_gen', None, None),
         'xS0_N': ('make_xS0_gen', None, None),
+        'xS0_com_E': ('make_xS0_gen', None, None),
+        'xS0_com_N': ('make_xS0_gen', None, None),
+        'xS0_p_E': ('make_xS0_gen', None, None),
+        'xS0_p_N': ('make_xS0_gen', None, None),
         'u0_amp': ('make_gen', -1, 1),
         'u0_amp_prim': ('make_gen', -1, 1),
         'beta': ('make_gen', -2, 2),
+        'beta_com': ('make_gen', -2, 2),
         'beta_p': ('make_gen', -2, 2),
         'muL_E': ('make_gen', -20, 20),
         'muL_N': ('make_gen', -20, 20),
@@ -210,6 +212,7 @@ class MicrolensSolver(Solver):
         'mag_src_sec': ('make_mag_src_gen', None, None),
         'mag_base': ('make_mag_base_gen', None, None),
         'dmag_Lp_Ls': ('make_gen', -20, 20),
+        'dmag_Lp_Lt': ('make_gen', -20, 20),
         'tE': ('make_gen', 1, 400),
         'log_tE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'piE_E': ('make_gen', -1, 1),
@@ -221,14 +224,28 @@ class MicrolensSolver(Solver):
         'log10_piE': ('make_truncnorm_gen', -0.2, 0.3, -4, 4),
         'pi_ref_frame': ('make_norm_gen', 0.0, 1.0),
         'q': ('make_gen', 0.001, 1),
+        'q_12': ('make_gen', 0.001, 1),
+        'q_13': ('make_gen', 0.001, 1),
         'alpha': ('make_gen', 0, 360),
+        'alpha12': ('make_gen', 0, 360),
+        'alpha13': ('make_gen', 0, 360),
         'phi': ('make_gen', 0, 360),
         'phi_muRel': ('make_gen', 0, 360),
         'sep': ('make_gen', 1e-4, 2e-2),
+        'sep12': ('make_gen', 1e-4, 2e-2),
+        'sep13': ('make_gen', 1e-4, 2e-2),
         'piS': ('make_piS', None, None),
         'add_err': ('make_gen', 0, 0.3),
         'mult_err': ('make_gen', 1.0, 3.0),
+        # Phot-only FSPL: Einstein radii. Phot+astrom (arcsec) uses a
+        # tighter range in ``make_default_priors`` when ``paramAstromFlag``.
         'radiusS': ('make_gen', 1E-4, 1E-2),
+        'radiusS_pri': ('make_gen', 1E-4, 1E-2),
+        'radiusS_sec': ('make_gen', 1E-4, 1E-2),
+        # Linear limb darkening (Gamma convention), one per filter.
+        'gamma': ('make_gen', 0.0, 1.0),
+        'gamma_pri': ('make_gen', 0.0, 1.0),
+        'gamma_sec': ('make_gen', 0.0, 1.0),
         'fratio_bin': ('make_gen', 0, 1),
         # We really need to make some normal distributions. All these are junk right now.
         # TODO: I don't think the above comment is accurate any more
@@ -247,8 +264,7 @@ class MicrolensSolver(Solver):
         't0_com': ('make_t0_gen', None, None),
         'u0_amp_com': ('make_gen', -1, 1),
         'thetaE_amp': ('make_lognorm_gen', 0, 1),
-        'xS0_system_E': ('make_gen', -10, 10),
-        'xS0_system_N': ('make_gen', -10, 10),
+        'qS': ('make_gen', 0, 10),
         'muS_system_E': ('make_gen', -10, 10),
         'muS_system_N': ('make_gen', -10, 10),
         'accS_E': ('make_gen', -10, 10),
@@ -262,17 +278,27 @@ class MicrolensSolver(Solver):
         'omega': ('make_gen', -180, 180),
         'big_omega': ('make_gen', -180, 180),
         'omega_pri': ('make_gen', -180, 180),
+        'omega_sec': ('make_gen', -180, 180),
         'big_omega_sec': ('make_gen', -180, 180),
+        'big_omega_ter': ('make_gen', -180, 180),
         'i':('make_gen', -90, 90),
+        'i_12':('make_gen', -90, 90),
+        'i_23':('make_gen', -90, 90),
         'e':('make_gen', 0, 0.9),
+        'e_12':('make_gen', 0, 0.9),
+        'e_23':('make_gen', 0, 0.9),
         'p': ('make_gen', 0, 10000),
         'tp': ('make_gen', 0, 10000),
+        'tp_12': ('make_gen', 0, 10000),
+        'tp_23': ('make_gen', 0, 10000),
         'aleph': ('make_gen', 1, 10),
         'aleph_sec':('make_gen', 1, 10),
         'alphaL': ('make_gen', 0, 360),
         'sepS': ('make_gen', 1e-4, 2e-2),
         'sepL': ('make_gen', 1e-4, 2e-2),
         'a': ('make_gen', 1e-4, 2e-2),
+        'a_12': ('make_gen', 1e-4, 2e-2),
+        'a_23': ('make_gen', 1e-4, 2e-2),
         'aL': ('make_gen', 1e-4, 2e-2),
         'alphaS': ('make_gen', 0, 360),
         'omegaL': ('make_gen', -180, 180),
@@ -837,14 +863,12 @@ class MicrolensSolver(Solver):
 
 
 
-
     def warn_unmatched_suffixed_priors(self):
         """Warn when a suffixed prior in ``self.priors`` is not fitted.
 
         Compares the keys of ``self.priors`` (including ones the user
-        assigned after the defaults) with ``self.fitter_param_names``
-        (the names MultiNest, PyMC, and NumPyro actually sample).
-
+        assigned after the defaults) with ``self.fitter_param_names``.
+        
         Returns
         -------
         None
@@ -943,7 +967,8 @@ class MicrolensSolver(Solver):
         # columns means there is nothing to check.
         phot_bases = (
             'b_sff', 'mag_src', 'mag_base', 'mag_src_pri',
-            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+            'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls', 'dmag_Lp_Lt', 'gamma',
+            'gamma_pri', 'gamma_sec',
         )
         largest = 0
         for col in table.colnames:
@@ -1513,6 +1538,12 @@ class MicrolensSolver(Solver):
             if prior_type == 'make_gen':
                 prior_min = foo[1]
                 prior_max = foo[2]
+                # Phot+astrom radii are arcsec; phot-only are Einstein radii.
+                if (
+                    priors_name in ('radiusS', 'radiusS_pri', 'radiusS_sec')
+                    and getattr(self.model_class, 'paramAstromFlag', False)
+                ):
+                    prior_min, prior_max = 1e-7, 1e-4
                 self.priors[param_name] = make_gen(prior_min, prior_max)
 
             if prior_type == 'make_norm_gen':
@@ -1561,9 +1592,10 @@ class MicrolensSolver(Solver):
                         'xS0 prior for a filter with no astrometry: '
                         + param_name
                     )
-                if priors_name == 'xS0_E':
+                # xS0_E, xS0_com_E and xS0_p_E all read the East positions.
+                if priors_name.endswith('_E'):
                     pos = self.data['xpos' + str(int(series) + 1)]
-                elif priors_name == 'xS0_N':
+                elif priors_name.endswith('_N'):
                     pos = self.data['ypos' + str(int(series) + 1)]
                 else:
                     raise ValueError(param_name)
@@ -1976,59 +2008,6 @@ class MicrolensSolver(Solver):
         for name, value in [*zip(self.all_param_names, values), *lnL_terms.items()]:
             print(f'{name:13s} = {value:f}')
         return None
-
-    def evaluate_loglik_jax(self, cube):
-        """Evaluate log-likelihood via the JAX registry.
-
-        Parameters
-        ----------
-        cube : array_like or mapping
-            Fitted values in ``fitter_param_names`` order, or a mapping
-            keyed by those names. ``xS0_E`` and ``xS0_N`` are arrays
-            with one entry per filter.
-
-        Returns
-        -------
-        lnL : float
-            Log-likelihood. The NumPy likelihood is used when no JAX
-            function is registered.
-        """
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
-        if fn is None:
-            return float(self.log_likely(cube))
-        # Fitted values as the float vector the JAX likelihood takes.
-        vec = self.to_param_vector(self.to_param_dict(cube))
-        return float(fn(vec))
-
-    def grad_loglik_jax(self, cube):
-        """Gradient of the log-likelihood with respect to fitter parameters.
-
-        Parameters
-        ----------
-        cube : array_like or mapping
-            Fitted values in ``fitter_param_names`` order, or a mapping
-            keyed by those names. ``xS0_E`` and ``xS0_N`` are arrays
-            with one entry per filter.
-
-        Returns
-        -------
-        grad : ndarray
-            Gradient of the log-likelihood. Shape is
-            ``(len(fitter_param_names),)``.
-
-        Raises
-        ------
-        NotImplementedError
-            No JAX log-likelihood is registered for this fitter.
-        """
-        fn, _ = jax_physics.build_jax_loglik_fn(self)
-        if fn is None:
-            raise NotImplementedError(
-                "No JAX log-likelihood for this fitter configuration."
-            )
-        # Fitted values as the float vector the JAX likelihood takes.
-        vec = self.to_param_vector(self.to_param_dict(cube))
-        return np.asarray(jax.grad(fn)(vec), dtype=np.float64)
 
     def callback_plotter(self, nSamples, nlive, nPar,
                  physLive, posterior, stats, maxLogLike, logZ, logZerr, foo):
@@ -4195,392 +4174,6 @@ class MicrolensSolverHobsonWeighted(MicrolensSolver):
         
 
 #########################
-### PyMC Solver       ###
-#########################
-import pymc as pm
-import pytensor.tensor as pt
-from pytensor.gradient import DisconnectedType
-from pytensor.graph.op import Op
-from pytensor.graph.basic import Apply
-from pytensor.link.jax.ops import JAXOp
-from pytensor.tensor.type import TensorType
-
-def _prior_period(prior):
-    """Infer period for wrapped angle parameters from prior support."""
-    dist_name = prior.dist.name
-    if dist_name == 'uniform':
-        loc = prior.kwds.get('loc', 0.0)
-        scale = prior.kwds.get('scale', 1.0)
-        return scale, loc
-    return 360.0, 0.0
-
-
-def _apply_wrapped_transform(rv, prior, name):
-    """Map a prior RV onto a periodic domain for angle parameters."""
-    period, origin = _prior_period(prior)
-    if period <= 0:
-        return rv
-    return pm.Deterministic(
-        name,
-        pm.math.mod(rv - origin, period) + origin,
-    )
-
-
-def scipy_to_pymc(prior, name, wrapped=False):
-    """Convert a scipy.stats frozen distribution to a PyMC random variable."""
-    dist_name = prior.dist.name
-
-    if dist_name == 'uniform':
-        loc = prior.kwds.get('loc', 0.0)
-        scale = prior.kwds.get('scale', 1.0)
-        rv = pm.Uniform(name, lower=loc, upper=loc + scale)
-
-    elif dist_name == 'norm':
-        loc = prior.kwds['loc']
-        scale = prior.kwds['scale']
-        rv = pm.Normal(name, mu=loc, sigma=scale)
-
-    elif dist_name == 'lognorm':
-        sigma = prior.kwds['s']
-        mu = np.log(prior.kwds['scale'])
-        rv = pm.LogNormal(name, mu=mu, sigma=sigma)
-
-    elif dist_name == 'truncnorm':
-        a, b = prior.args
-        loc = prior.kwds['loc']
-        scale = prior.kwds['scale']
-        rv = pm.TruncatedNormal(
-            name,
-            mu=loc,
-            sigma=scale,
-            lower=loc + a * scale,
-            upper=loc + b * scale,
-        )
-
-    elif dist_name == 'invgamma':
-        alpha = prior.args[0]
-        beta = prior.kwds['scale']
-        rv = pm.InverseGamma(name, alpha=alpha, beta=beta)
-
-    else:
-        raise TypeError(
-            f"Unsupported prior type '{dist_name}' for parameter '{name}'"
-        )
-
-    if wrapped:
-        rv = _apply_wrapped_transform(rv, prior, name)
-
-    return rv
-
-
-class LogLikelihoodOp(Op):
-    """PyTensor Op wrapping MicrolensSolver.log_likely().
-
-    When ``use_jax_grad=True`` and the fitter layout is supported by
-    :mod:`bagle.jax_physics`, evaluates (and differentiates) a jitted Gaussian
-    photometry likelihood.  GP and astrometry configurations fall back to the
-    black-box ``log_likely`` without gradients.
-    """
-
-    __props__ = ('fitter', 'param_names', 'use_jax_grad')
-
-    def __init__(self, fitter, param_names, use_jax_grad=True):
-        self.fitter = fitter
-        self.param_names = tuple(param_names)
-        self.use_jax_grad = bool(use_jax_grad)
-        self._jax_loglik = None
-        self._jax_ctx = None
-        if self.use_jax_grad:
-            self._jax_loglik, self._jax_ctx = jax_physics.build_jax_loglik_fn(fitter)
-
-        return
-
-    def make_node(self, param_vec):
-        param_vec = pt.as_tensor_variable(param_vec)
-        outputs = [pt.dscalar()]
-        return Apply(self, [param_vec], outputs)
-
-    def perform(self, node, inputs, output_storage):
-        param_vec = np.asarray(inputs[0], dtype=np.float64)
-        if self._jax_loglik is not None:
-            logp = float(self._jax_loglik(param_vec))
-        else:
-            logp = self.fitter.log_likely(dict(zip(self.param_names, param_vec)))
-        output_storage[0][0] = np.array(logp, dtype=np.float64)
-
-        return
-
-    def pullback(self, inputs, outputs, output_gradients):
-        if self._jax_loglik is None:
-            raise NotImplementedError(
-                'No JAX gradient for this likelihood configuration '
-                '(layout not registered or blocked parameters). '
-                'Use use_jax_grad=False or a Phot/PhotAstrom/Astrom layout '
-                'supported by bagle.jax.'
-            )
-        if isinstance(output_gradients[0].type, DisconnectedType):
-            return [DisconnectedType()()]
-
-        n = len(self.param_names)
-        input_type = TensorType('float64', shape=(n,))
-        output_type = TensorType('float64', shape=())
-        jax_loglik = self._jax_loglik
-
-        def vjp_fn(param_vec, cotangent):
-            def restricted(param_vec):
-                return (jax_loglik(param_vec).astype('float64'),)
-
-            _, vjp = jax.vjp(restricted, param_vec)
-            return vjp((cotangent.astype('float64'),))
-
-        vjp_op = JAXOp(
-            [input_type, output_type],
-            [input_type],
-            vjp_fn,
-            name='vjp_microlens_loglik',
-        )
-        return vjp_op(
-            inputs[0],
-            output_gradients[0],
-            return_list=True,
-        )
-
-
-class MicrolensPyMCModel:
-    """Build a PyMC model from a MicrolensSolver configuration.
-
-    Parameters
-    ----------
-    fitter : MicrolensSolver
-        Configured solver with priors and parameter names.
-    use_jax_grad : bool, optional
-        When ``True``, use :mod:`bagle.jax_physics` for phot-only models that
-        support autodiff.  GP and astrometry fits use the black-box likelihood.
-    """
-
-    def __init__(self, fitter, use_jax_grad=True):
-        """Store the MicrolensSolver used to build the PyMC model.
-
-        Parameters
-        ----------
-        fitter : MicrolensSolver
-            Solver instance with ``priors`` and ``fitter_param_names``.
-        use_jax_grad : bool, optional
-            Enable JAX gradients in :class:`LogLikelihoodOp` when supported.
-        """
-        self.fitter = fitter
-        self.use_jax_grad = use_jax_grad
-        return None
-
-    def build(self):
-        """Construct a PyMC model with priors and likelihood.
-
-        Returns
-        -------
-        pm.Model
-            PyMC model with parameter priors and ``likelihood`` potential.
-        """
-        fitter = self.fitter
-        names = fitter.fitter_param_names
-
-        with pm.Model() as model:
-            param_vars = {}
-            for i, name in enumerate(names):
-                wrapped = False
-                if fitter.wrapped_params is not None:
-                    wrapped = bool(fitter.wrapped_params[i])
-                param_vars[name] = scipy_to_pymc(fitter.priors[name], name, wrapped=wrapped)
-
-            param_vec = pt.stack([param_vars[n] for n in names])
-            logp = LogLikelihoodOp(
-                fitter, names, use_jax_grad=self.use_jax_grad
-            )(param_vec)
-            pm.Potential('likelihood', logp)
-
-        return model
-
-
-class MicrolensSolverPyMC(MicrolensSolver):
-    """MicrolensSolver that uses PyMC instead of MultiNest."""
-
-    def __init__(
-        self,
-        data,
-        model_class,
-        custom_additional_param_names=None,
-        add_error_on_photometry=False,
-        multiply_error_on_photometry=False,
-        use_phot_optional_params=True,
-        use_ast_optional_params=True,
-        wrapped_params=None,
-        outputfiles_basename='chains/pymc-',
-        verbose=False,
-        draws=1000,
-        tune=500,
-        chains=2,
-        cores=1,
-        pymc_random_seed=0,
-        sampler='metropolis',
-        use_jax_grad=True,
-        **kwargs,
-    ):
-        super().__init__(
-            data,
-            model_class,
-            custom_additional_param_names=custom_additional_param_names,
-            add_error_on_photometry=add_error_on_photometry,
-            multiply_error_on_photometry=multiply_error_on_photometry,
-            use_phot_optional_params=use_phot_optional_params,
-            use_ast_optional_params=use_ast_optional_params,
-            wrapped_params=wrapped_params,
-            outputfiles_basename=outputfiles_basename,
-            verbose=verbose,
-            dump_callback=None,
-            **kwargs,
-        )
-        self.draws = draws
-        self.tune = tune
-        self.chains = chains
-        self.cores = cores
-        self.pymc_random_seed = pymc_random_seed
-        self.sampler = sampler
-        self.use_jax_grad = use_jax_grad
-        self.idata = None
-        self.pymc_model = None
-        self._results_table = None
-        self._summary_table = None
-
-    def solve(self):
-        """Run PyMC sampling to find optimal parameters and posteriors."""
-        # Phot+astrom datasets cannot draw b_sff above 1.
-        self._check_b_sff_upper_bound()
-
-        self.write_params_yaml()
-
-        print('*************************************************')
-        print('*** Using PyMC (Metropolis) for sampling.     ***')
-        print('*************************************************')
-
-        self.pymc_model = MicrolensPyMCModel(
-            self, use_jax_grad=self.use_jax_grad
-        ).build()
-
-        initvals = {
-            name: float(self.priors[name].ppf(0.5))
-            for name in self.fitter_param_names
-        }
-
-        with self.pymc_model:
-            step = pm.Metropolis()
-            self.idata = pm.sample(
-                draws=self.draws,
-                tune=self.tune,
-                chains=self.chains,
-                cores=self.cores,
-                step=step,
-                initvals=initvals,
-                random_seed=self.pymc_random_seed,
-                progressbar=self.verbose,
-                return_inferencedata=True,
-            )
-
-        self._results_table = None
-        self._summary_table = None
-        self._write_pymc_results()
-        self.load_pymc_results(remake_fits=True)
-        self.load_pymc_summary(remake_fits=True)
-        return
-
-    def _samples_from_idata(self):
-        stacked = []
-        for name in self.fitter_param_names:
-            stacked.append(self.idata.posterior[name].values.reshape(-1))
-        return np.column_stack(stacked)
-
-    def _build_results_table(self):
-        if self.idata is None:
-            raise RuntimeError('No PyMC results. Run solve() first.')
-
-        samples = self._samples_from_idata()
-        n_samples = samples.shape[0]
-        weights = np.ones(n_samples, dtype=float) / n_samples
-
-        # One model per sample gives both lnL and the derived parameters.
-        loglikes = np.zeros(n_samples, dtype=float)
-        derived = np.zeros((n_samples, len(self.additional_param_names)))
-        for ii in range(n_samples):
-            model = self.get_model(samples[ii])
-            loglikes[ii] = self.log_likely(samples[ii], model=model)
-            derived[ii] = self.get_derived_param_values(model)
-
-        tab = Table()
-        tab['weights'] = weights
-        tab['logLike'] = loglikes
-
-        for jj, name in enumerate(self.fitter_param_names):
-            tab[name] = samples[:, jj]
-
-        for jj, name in enumerate(self.additional_param_names):
-            tab[name] = derived[:, jj]
-
-        return tab
-
-    def _write_pymc_results(self):
-        tab = self._build_results_table()
-        outroot = self.outputfiles_basename
-
-        with open(outroot + '.txt', 'w') as f:
-            for row in tab:
-                line = [row['weights'], -2.0 * row['logLike']]
-                for name in self.all_param_names:
-                    line.append(row[name])
-                f.write(' '.join(f'{val:.12e}' for val in line) + '\n')
-
-        tab.write(outroot + '.fits', overwrite=True)
-        self._results_table = tab
-        return
-
-    def load_pymc_results(self, remake_fits=False):
-        if not remake_fits and self._results_table is not None:
-            return self._results_table
-        if self.idata is not None:
-            self._results_table = self._build_results_table()
-            return self._results_table
-
-        outroot = self.outputfiles_basename
-        if os.path.exists(outroot + '.fits'):
-            self._results_table = Table.read(outroot + '.fits')
-            self._results_table = self.adapt_legacy_filter_columns(
-                self._results_table
-            )
-            return self._results_table
-
-        raise RuntimeError('No PyMC results found.')
-
-    def load_pymc_summary(self, remake_fits=False):
-        if not remake_fits and self._summary_table is not None:
-            return self._summary_table
-
-        tab = self.load_pymc_results(remake_fits=remake_fits)
-        row = {'logZ': np.nan, 'maxlogL': float(np.max(tab['logLike']))}
-
-        best_idx = int(np.argmax(tab['logLike']))
-        for name in self.all_param_names:
-            vals = tab[name]
-            row['Mean_' + name] = float(np.mean(vals))
-            row['StDev_' + name] = float(np.std(vals))
-            row['MaxLike_' + name] = float(vals[best_idx])
-            row['MAP_' + name] = float(vals[best_idx])
-
-        self._summary_table = Table([row])
-        return self._summary_table
-
-    def load_mnest_results(self, remake_fits=False):
-        return self.load_pymc_results(remake_fits=remake_fits)
-
-    def load_mnest_summary(self, remake_fits=False):
-        return self.load_pymc_summary(remake_fits=remake_fits)
-#########################
 ### For backwards compatibility
 #########################
 class PSPL_Solver(MicrolensSolver):
@@ -5124,7 +4717,8 @@ def generate_params_dict(params, fitter_param_names):
 
     """
     skip_list = ['weights', 'logLike', 'add_err', 'mult_err']
-    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls']
+    multi_list = ['mag_src', 'mag_base', 'b_sff', 'mag_src_pri', 'mag_src_sec', 'fratio_bin', 'dmag_Lp_Ls',
+                  'dmag_Lp_Lt', 'gamma', 'gamma_pri', 'gamma_sec']
     multi_dict = ['gp_log_rho', 'gp_log_S0', 'gp_log_sigma', 'gp_rho', 'gp_log_omega0_S0',
                   'gp_log_omega04_S0', 'gp_log_omega0', 'gp_log_jit_sigma']
     
@@ -5370,8 +4964,22 @@ def plot_params(model):
     
 def save_params(model, file):
     """
-    Alternative to plot_params that saves a text file
-    instead of a png.
+    Write model parameters to a text file.
+
+    Filter-indexed names in ``fitter_param_names`` (``b_sff``,
+    ``xS0_E``, ...) are written one line per filter. A length-1
+    sequence is printed as a scalar, matching :func:`plot_params`.
+
+    Parameters
+    ----------
+    model : object
+        Instantiated BAGLE model.
+    file : file-like
+        Open text file (or other writeable stream).
+
+    Returns
+    -------
+    None
     """
     
     def get_param_value(pname):
@@ -5395,19 +5003,31 @@ def save_params(model, file):
 
         return pvalue
         
-    for ff in range(len(model.fitter_param_names)):
-        pname = model.fitter_param_names[ff]
-        pvalu = get_param_value(pname)
-
+    # Filter-indexed names now live in fitter_param_names, so b_sff
+    # and xS0_E are sequences. One line per filter; a length-1
+    # sequence is still printed as a scalar.
+    filt_names = set(getattr(model, 'filt_param_names', []) or [])
+    for pname in model.fitter_param_names:
         fmt_str = '{0:s} = {1:.2f}'
         if pname.startswith('x'):
             fmt_str = '{0:s} = {1:.4f}'
 
         if pname == 'thetaE':
-            fmt_str = '{0:s}'
+            pvalu = get_param_value(pname)
             print(f'thetaE = {np.around(pvalu, 2)}', file=file)
+            continue
+
+        if pname in filt_names:
+            values = np.asarray(getattr(model, pname), dtype=float).reshape(-1)
         else:
-            print(fmt_str.format(pname, pvalu), file=file)
+            values = np.asarray(get_param_value(pname), dtype=float).reshape(-1)
+
+        if values.size == 1:
+            print(fmt_str.format(pname, float(values[0])), file=file)
+            continue
+
+        for rr, value in enumerate(values):
+            print(fmt_str.format(f'{pname}{rr + 1}', float(value)), file=file)
 
     for ff in range(len(model.phot_param_names)):
         pname = model.phot_param_names[ff]

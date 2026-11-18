@@ -7,40 +7,96 @@ import matplotlib.pyplot as plt
 import pdb
 
     
-def get_source_pos(z, m1, m2, z1, z2):
+def get_source_pos(z, m1, m2, z1, z2, m3=0.0, z3=0.0):
     """
-    Get the source position.
-    This can be physical or angular, but you have to
-    be consistent with the inputs.
-    However, it must be using complex coordinates, 
-    not vectors!
+    Inverse-ray-shoot source position for a 2- or 3-lens system.
+
+    Units must be consistent (Einstein radii, or arcsec with
+    masses in ``arcsec^2``). Positions are complex.
 
     Parameters
     ----------
-    z : arr or float
-        Image positions 
+    z : array_like
+        Image-plane positions.
+    m1, m2 : float
+        Lens masses (same units as ``z^2``).
+    z1, z2 : complex
+        Lens positions.
+    m3, z3 : float or complex, optional
+        Tertiary mass and position. Ignored when ``m3 == 0``.
 
-    m1 : arr or float
-        Mass 1
-    
-    m2 : arr or float
-        Mass 2
-
-    z1 : arr or float
-        Lens 1 position
-
-    z2 : arr or float
-        Lens 2 position
-
-    Return
-    ------
-    w : arr or float
-        Source position
-
+    Returns
+    -------
+    w : ndarray, complex
+        Source-plane positions.
     """
-    w = z - m1/np.conj(z - z1) - m2/np.conj(z - z2)
-
+    w = z - m1 / np.conj(z - z1) - m2 / np.conj(z - z2)
+    if m3 != 0:
+        w = w - m3 / np.conj(z - z3)
     return w
+
+
+def _model_is_photastrom(mmodel):
+    """True when the model stores sky positions in arcsec.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+
+    Returns
+    -------
+    flag : bool
+    """
+    return bool(getattr(mmodel, 'astrometryFlag', False))
+
+
+def _model_thetaE_plot(mmodel):
+    """``thetaE_amp`` for mas-scaled caustic plots, else ``None``.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+
+    Returns
+    -------
+    thetaE_amp : float or None
+    """
+    if _model_is_photastrom(mmodel) and hasattr(mmodel, 'thetaE_amp'):
+        return mmodel.thetaE_amp
+    return None
+
+
+def _resolved_lens_complex(mmodel, t):
+    """Complex lens positions in the model's native units.
+
+    Parameters
+    ----------
+    mmodel
+        BAGLE model instance.
+    t : array_like
+        Times (MJD).
+
+    Returns
+    -------
+    zs : list of complex
+        One position per lens at the first epoch.
+    masses : list of float
+        Native masses (``m1``, ``m2``, optional ``m3``).
+    """
+    t = np.atleast_1d(np.asarray(t, dtype=float))
+    xL = np.asarray(mmodel.get_resolved_lens_astrometry(t), dtype=float)
+    # Phot-only / PhotAstrom lenses are (N, nL, 2); a single lens is (N, 2).
+    if xL.ndim == 2:
+        xL = xL[:, None, :]
+    zs = [xL[0, i, 0] + 1j * xL[0, i, 1] for i in range(xL.shape[1])]
+    masses = [float(np.asarray(mmodel.m1).reshape(-1)[0])]
+    if hasattr(mmodel, 'm2'):
+        masses.append(float(np.asarray(mmodel.m2).reshape(-1)[0]))
+    if hasattr(mmodel, 'm3') and len(zs) >= 3:
+        masses.append(float(np.asarray(mmodel.m3).reshape(-1)[0]))
+    return zs, masses
 
 def get_magnification_map_old(psbl, duration=0.05, time_steps=300):
     """
@@ -64,7 +120,8 @@ def get_magnification_map_old(psbl, duration=0.05, time_steps=300):
     # Get lenses info
     m1 = psbl.m1
     m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=psbl.t0)
+    _xL = psbl.get_resolved_lens_astrometry(t=psbl.t0)
+    xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
     z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
     z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
 
@@ -151,10 +208,12 @@ def animate_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_movie'):
     
     # Position of source
     
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
-    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec to milli-arcsec:
@@ -317,7 +376,8 @@ def animate_PSPL(pspl, duration=10, time_steps=300, outfile='pspl_movie.gif'):
     rL *= 1e3
     rS *= 1e3
     rS_img *= 1e3
-    rS_img_all = [rS_img_all[0] * 1e3, rS_img_all[1] * 1e3]
+    # Split [N_times, 1, [+, -], 2] into the plus and minus image tracks.
+    rS_img_all = [rS_img_all[:, 0, 0] * 1e3, rS_img_all[:, 0, 1] * 1e3]
 
     plt.close(3)
     plt.figure(3, figsize=(12, 4))
@@ -530,10 +590,12 @@ def plot_PSBL(psbl, duration=10, time_steps=300, outfile='psbl_geometry.png'):
     img, amp = psbl.get_all_arrays(t)
     
     # Position of source
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
-    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
+    rS_img_all = psbl.get_resolved_astrometry(t, image_arr=img, amp_arr=amp)[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec to milli-arcsec:
@@ -710,12 +772,14 @@ def plot_PSBL_static(psbl, duration=10, time_steps=300,
     img, amp = psbl.get_all_arrays(t)
 
     # Lens, unlensed source, unresolved lensed source, and images.
-    rL_1, rL_2 = psbl.get_resolved_lens_astrometry(t)
+    _xL = psbl.get_resolved_lens_astrometry(t)
+    rL_1, rL_2 = _xL[:, 0], _xL[:, 1]
     rS = psbl.get_astrometry_unlensed(t)
     rS_img = psbl.get_astrometry(t, image_arr=img, amp_arr=amp)
+    # Drop the single-source axis: [N_times, N_images, 2].
     rS_img_all = psbl.get_resolved_astrometry(
         t, image_arr=img, amp_arr=amp
-    )
+    )[:, 0]
     pS = psbl.get_photometry(t, amp_arr=amp)
 
     # Convert arcsec -> mas for astrometric models.
@@ -937,8 +1001,8 @@ def _bsbl_geometry_arrays(bsbl, duration, time_steps):
 
     # Lenses: some BSBL methods return a stacked (2, N, 2) array.
     rL = np.asarray(bsbl.get_resolved_lens_astrometry(t))
-    rL_1 = np.array(rL[0], copy=True, dtype=float)
-    rL_2 = np.array(rL[1], copy=True, dtype=float)
+    rL_1 = np.array(rL[:, 0], copy=True, dtype=float)
+    rL_2 = np.array(rL[:, 1], copy=True, dtype=float)
 
     # Unlensed source tracks, shape (N_times, 2 sources, 2).
     rS_res = np.array(
@@ -1865,10 +1929,13 @@ def plot_caustics(caustics, thetaE_amp = None, ax = None, show = True):
     return ax
 
 
-def gen_and_plot_caustics_and_critical_curves(mmodel, caustic_time = 't0', show = True, plot_caus = True, plot_cc = True, plot_source_trajectory = True, 
-                                              min_t_trajectory_plot = 'default', max_t_trajectory_plot = 'default'):
+def gen_and_plot_caustics_and_critical_curves(
+        mmodel, caustic_time='t0', show=True, plot_caus=True, plot_cc=True,
+        plot_source_trajectory=True, min_t_trajectory_plot='default',
+        max_t_trajectory_plot='default', N_pts=400, plot_lenses=True):
     """
-    Generates and plots caustics, critical curves, and unlensed source trajectory
+    Generates and plots caustics, critical curves, unlensed source trajectory,
+    and the lens positions at ``caustic_time``.
 
     Parameters
     ----------
@@ -1905,43 +1972,80 @@ def gen_and_plot_caustics_and_critical_curves(mmodel, caustic_time = 't0', show 
         Maximum time for unlensed source trajectory plot.
         When 'default' plots t0 + tE as maximum.
         Default is 'default'.
+    N_pts : int, optional
+        Samples along the critical curve / caustic.
+    plot_lenses : bool, optional
+        Mark each lens at ``caustic_time`` (mas for PhotAstrom, Einstein
+        radii for phot-only). Default is True.
 
     Returns
     -------
     ax : matplotlib Axes object
     """
     
-    if plot_caustics == False and plot_critical_curves == False:
-        raise Exception('Must plot either caustics or critical curves or both with this function')
-        
+    if (not plot_caus) and (not plot_cc):
+        raise Exception(
+            'Must plot either caustics or critical curves or both')
+
     if caustic_time == 't0':
         caustic_time = mmodel.t0
-        
-    critical_curves = mmodel.get_critical_curves(np.array([caustic_time]))
-    caustics = mmodel.get_caustics(np.array([caustic_time]))
 
-    fig, ax = plt.subplots(1,1)
+    t_c = np.atleast_1d(np.asarray(caustic_time, dtype=float))
+    critical_curves = mmodel.get_critical_curves(t_c, N_pts=N_pts)
+    caustics = mmodel.get_caustics(t_c, N_pts=N_pts)
+    thetaE_amp = _model_thetaE_plot(mmodel)
+
+    fig, ax = plt.subplots(1, 1)
 
     if plot_cc:
-        ax_cc = plot_critical_curves(critical_curves, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+        plot_critical_curves(
+            critical_curves, ax=ax, thetaE_amp=thetaE_amp, show=False)
 
     if plot_caus:
-        ax_caus = plot_caustics(caustics, ax = ax, thetaE_amp = mmodel.thetaE_amp, show = False)
+        plot_caustics(caustics, ax=ax, thetaE_amp=thetaE_amp, show=False)
 
     if plot_source_trajectory:
         if min_t_trajectory_plot == 'default':
             min_t_trajectory_plot = mmodel.t0 - mmodel.tE
         if max_t_trajectory_plot == 'default':
             max_t_trajectory_plot = mmodel.t0 + mmodel.tE
-        times = np.arange(min_t_trajectory_plot, max_t_trajectory_plot)
-        xLS_unlensed = mmodel.get_astrometry_unlensed(times)
-        ax.plot(xLS_unlensed[:,0]*1e3, xLS_unlensed[:,1]*1e3, label = 'Unlensed Source Trajectory', color = 'green')
-        
+        times = np.linspace(
+            min_t_trajectory_plot, max_t_trajectory_plot, 200)
+
+        # PhotAstrom: sky arcsec -> mas. Phot-only: Einstein radii.
+        if _model_is_photastrom(mmodel) and hasattr(
+                mmodel, 'get_source_astrometry_unlensed'):
+            xS = np.asarray(
+                mmodel.get_source_astrometry_unlensed(times), dtype=float)
+            ax.plot(xS[:, 0] * 1e3, xS[:, 1] * 1e3, color='green',
+                    label='Unlensed source')
+        else:
+            u = np.asarray(mmodel.get_u(times), dtype=float)
+            if u.ndim == 3:
+                u = u[:, 0, :]
+            ax.plot(u[:, 0], u[:, 1], color='green',
+                    label='Unlensed source')
+
+    if plot_lenses:
+        # Lenses at the caustic epoch, in the same frame as the curves.
+        zs, _masses = _resolved_lens_complex(mmodel, t_c)
+        scale = 1e3 if thetaE_amp is not None else 1.0
+        lens_colors = ['k', '0.45', 'C3']
+        for i, z in enumerate(zs):
+            ax.plot(np.real(z) * scale, np.imag(z) * scale, marker='*',
+                    ls='none', ms=13, mec='w', mew=0.6,
+                    color=lens_colors[i % len(lens_colors)],
+                    label=f'Lens {i + 1}', zorder=5)
+
     ax.invert_xaxis()
-    plt.axis('equal')
-    ax.set_xlabel('RA')
-    ax.set_ylabel('Dec')
-    plt.legend(fontsize=10)
+    ax.set_aspect('equal')
+    if thetaE_amp is not None:
+        ax.set_xlabel(r'$\Delta\alpha^*$ (mas)')
+        ax.set_ylabel(r'$\Delta\delta$ (mas)')
+    else:
+        ax.set_xlabel(r'East ($\theta_E$)')
+        ax.set_ylabel(r'North ($\theta_E$)')
+    ax.legend(fontsize=10)
     if show:
         plt.show()
 
@@ -2014,7 +2118,8 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     img, amp = bsbl.get_all_arrays(t)
 
     
-    lens1, lens2 = bsbl.get_resolved_lens_astrometry(t)
+    _xL = bsbl.get_resolved_lens_astrometry(t)
+    lens1, lens2 = _xL[:, 0], _xL[:, 1]
 
     xS_resolved = bsbl.get_resolved_astrometry(t, image_arr = img)
     print(xS_resolved.shape)
@@ -2096,92 +2201,127 @@ def plot_bsbl(bsbl, zoom, duration = 1000, time_steps=50000, caustic_finder = 'o
     
     return t, img, amp
 
-def get_magnification_map(chosen_model, grid_size = 0.0312, plot_radius = 0.0156, lim = 0.01, bins=6000, cmap='seismic'):
-    """
-    For a given PSBL/BSBL model, plot the source trajectory on top 
-    of the magnification map at time t0.
+def get_magnification_map(chosen_model, grid_size=None, plot_radius=None,
+                          lim=None, bins=400, cmap='seismic', t=None,
+                          overlay_caustics=True, N_pts=400, show=True,
+                          ax=None):
+    """Inverse-ray-shoot magnification map at one epoch.
+
+    Works for PSBL / PSTL (2 or 3 lenses), PhotAstrom (arcsec) and
+    phot-only (Einstein radii). Overlay caustics when the model
+    implements :meth:`get_caustics`.
 
     Parameters
     ----------
     chosen_model : model object
-        The  model to use for plotting.
-
-    grid_size : float
-        Window size in which the magnification map is generated. 
-
-    plot_radius : float
-        Radius within which the magnification map is generated.
-    
-
-    lim : float
-        Limits on x and y axis for plotting purposes
-
+        PSBL or PSTL instance.
+    grid_size, plot_radius, lim : float or None
+        Image-plane half-width, source-plane clip radius, and axis
+        limit. ``None`` picks a scale from the Einstein radius
+        (PhotAstrom, arcsec) or 2 ``thetaE`` (phot-only).
     bins : int
-        For the resolution of the magnification maps
+        Ray-shoot grid and histogram resolution.
+    cmap : str
+        Matplotlib colormap.
+    t : float or None
+        Epoch (MJD). Default is ``t0``.
+    overlay_caustics : bool
+        Draw :meth:`get_caustics` on the map.
+    N_pts : int
+        Caustic samples if overlaying.
+    show : bool
+        Call ``plt.show()``.
+    ax : matplotlib Axes or None
+        Existing axes, or create a new figure.
+
+    Returns
+    -------
+    ax : matplotlib Axes
     """
-    
-    if cmap != 'seismic':
-        cmap = get_cmap(cmap)
+    if t is None:
+        t = chosen_model.t0
+    t_arr = np.atleast_1d(np.asarray(t, dtype=float))
 
-    # An 8000 x 8000 grid takes a few seconds to run.
+    zs, masses = _resolved_lens_complex(chosen_model, t_arr)
+    photastrom = _model_is_photastrom(chosen_model)
 
-    # Get lenses info
-    m1 = chosen_model.m1
-    m2 = chosen_model.m2
-    xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t=np.array([chosen_model.t0]))
+    # Default window: a few Einstein radii around the lenses.
+    if photastrom and hasattr(chosen_model, 'thetaE_amp'):
+        ein_as = float(chosen_model.thetaE_amp) * 1e-3
+    else:
+        ein_as = 1.0
+    if grid_size is None:
+        grid_size = 4.0 * ein_as
+    if plot_radius is None:
+        rclip2 = (6.0 * ein_as) ** 2
+    else:
+        # Linear source-plane clip radius, squared for the cut.
+        rclip2 = float(plot_radius) ** 2
+    if lim is None:
+        lim = 3.0 * ein_as
 
-    z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
-    z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
-
-    # Set up magnification map grid, centered on lens.
-    # zgrid are the image positions, where the shots end.
-    # We want to find where they start (source plane), i.e.
-    # inverse ray shooting
-    grid_center = chosen_model.xL0_com *1e-3
-    grid_size = grid_size # Probably a better way to do this...
-    plot_radius = plot_radius
-
-    xmin = grid_center[0] - grid_size
-    xmax = grid_center[0] + grid_size
-    ymin = grid_center[1] - grid_size
-    ymax = grid_center[1] + grid_size
-
+    center = np.array([np.mean(np.real(zs)), np.mean(np.imag(zs))])
+    xmin, xmax = center[0] - grid_size, center[0] + grid_size
+    ymin, ymax = center[1] - grid_size, center[1] + grid_size
     x = np.linspace(xmin, xmax, bins)
     y = np.linspace(ymin, ymax, bins)
-    xgrid, ygrid = np.meshgrid(x,y)
-    zgrid = xgrid + 1j*ygrid
+    xgrid, ygrid = np.meshgrid(x, y)
+    zgrid = xgrid + 1j * ygrid
 
-    # Get the source positions 
-    w_points = get_source_pos(zgrid, m1, m2, z1, z2) 
+    # Inverse ray shoot; pad missing tertiary with zero mass.
+    m1 = masses[0]
+    m2 = masses[1] if len(masses) > 1 else 0.0
+    z1 = zs[0]
+    z2 = zs[1] if len(zs) > 1 else 0.0
+    m3 = masses[2] if len(masses) > 2 else 0.0
+    z3 = zs[2] if len(zs) > 2 else 0.0
+    w_points = get_source_pos(zgrid, m1, m2, z1, z2, m3=m3, z3=z3)
 
-    # There's a few points that get shot out far away
-    # This trims them out
-    dist2 = (w_points.real**2 + w_points.imag**2)
+    # Clip rays that land far from the lens system.
+    dist2 = (w_points.real - center[0]) ** 2 + (w_points.imag - center[1]) ** 2
+    ok = dist2 < rclip2
+    wreal = w_points[ok].real
+    wimag = w_points[ok].imag
 
-    # Separate into real and imaginary componenest for plotting
-    wreal = w_points[np.where(dist2 < plot_radius)].real
-    wimag = w_points[np.where(dist2 < plot_radius)].imag
-
-    plt.figure(1, figsize=(20,20))
-    plt.clf()
-    # magnification map and lenses
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 6))
     H, xedges, yedges = np.histogram2d(wreal, wimag, bins=bins)
-    val = plt.imshow(H.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.CenteredNorm(), cmap=cmap)
+    val = ax.imshow(
+        H.T, origin='lower',
+        extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
+        cmap=cmap)
+    fig = ax.figure
+    fig.colorbar(val, ax=ax, label='ray density')
 
+    colors = ['k', '0.4', 'C3']
+    for i, zL in enumerate(zs):
+        ax.plot(zL.real, zL.imag, marker='*', ms=10, color=colors[i % 3],
+                linestyle='None', label=f'lens {i + 1}')
 
+    if overlay_caustics and hasattr(chosen_model, 'get_caustics'):
+        caus = np.asarray(chosen_model.get_caustics(t_arr, N_pts=N_pts))
+        thetaE = _model_thetaE_plot(chosen_model)
+        if thetaE is not None:
+            # Caustics are Einstein units; map is native (arcsec).
+            caus = caus * (thetaE * 1e-3)
+        ax.scatter(np.real(caus), np.imag(caus), s=1, c='w', alpha=0.6,
+                   label='caustics')
 
-    plt.plot(z1.real, z1.imag, markersize = 20, color = 'green', marker = '.', label = 'Primary Lens')
-    plt.plot(z2.real, z2.imag, markersize = 20, color = 'darkslategrey', marker = 'H', label = 'Secondary Lens')
+    ax.set_xlim(center[0] + lim, center[0] - lim)
+    ax.set_ylim(center[1] - lim, center[1] + lim)
+    ax.set_aspect('equal')
+    if photastrom:
+        ax.set_xlabel(r'$\Delta\alpha^*$ (arcsec)')
+        ax.set_ylabel(r'$\Delta\delta$ (arcsec)')
+    else:
+        ax.set_xlabel(r'East ($\theta_E$)')
+        ax.set_ylabel(r'North ($\theta_E$)')
+    ax.set_title('Magnification map')
+    ax.legend(fontsize=8, loc='best')
+    if show:
+        plt.show()
 
-    
-    plt.ylabel('Dec')
-    plt.xlabel('RA')
-    plt.title('Magnification Map')
-    plt.xlim(lim, -lim)
-    plt.ylim(-lim, lim)
-    plt.colorbar(val)
-    plt.legend(markerscale = 1)
-    plt.show()
+    return ax
 
 def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1000, grid_size = 0.0312, plot_radius = 0.0156, time_steps=300, cmap = 'seismic', lim = 0.01, bins=6000):
     """
@@ -2217,7 +2357,8 @@ def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1
     def helper(t_obs, grid_size, plot_radius):
         m1 = chosen_model.m1
         m2 = chosen_model.m2
-        xL1_0, xL2_0 = chosen_model.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        _xL = chosen_model.get_resolved_lens_astrometry(t_obs=np.array([t_obs]))
+        xL1_0, xL2_0 = _xL[:, 0], _xL[:, 1]
         z1 = xL1_0[0][0] + 1j*xL1_0[0][1]
         z2 = xL2_0[0][0] + 1j*xL2_0[0][1]
     
@@ -2279,87 +2420,151 @@ def get_magnification_map_timedep(chosen_model, time_skip = 500, time_choice = 1
             fig.colorbar(val)
             time = time + time_skip
 
-def get_centroid_shift_map(model, grid_size=31.2, plot_radius=15.6, lim=8, bins=6000, cmap='seismic'):
+def _images_amps_for_sources(psbl, w):
     """
-    Generate a color map of flux-weighted centroid shifts (in mas) for a uniform
-    grid of sources using inverse ray shooting.
+    Image positions and amplifications for arbitrary source positions.
 
+    Mirrors :meth:`PSBL.get_all_arrays` (rescaled root finding) for a
+    fixed lens configuration at ``t0``.
+
+    Parameters
+    ----------
+    psbl : PSBL model
+        Model supplying the lens positions and masses.
+    w : numpy array, dtype=complex, shape = [N]
+        Source positions in the model's native units (arcsec for
+        PhotAstrom, Einstein radii for phot-only).
+
+    Returns
+    -------
+    images : numpy array, dtype=complex, shape = [N, N_images]
+        Image positions; NaN for missing images.
+    amps : numpy array, shape = [N, N_images]
+        Image amplifications.
     """
+    # Lens positions at t0, repeated for every source position.
+    zs, _masses = _resolved_lens_complex(psbl, np.array([psbl.t0]))
+    zs = np.asarray(zs).ravel()
+    z1 = np.full(w.shape, zs[0], dtype=complex)
+    z2 = np.full(w.shape, zs[1], dtype=complex)
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    
-    arcsec2mas = 1e3
-    mas2arcsec = 1.0 / arcsec2mas
+    # Rescale into a unit box, solve, and undo the rescaling.
+    rw, rz1, rz2, m1, m2, scale, shift = psbl.rescale_complex_pos(
+        w.copy(), z1.copy(), z2.copy())
+    tol = psbl.root_tol
+    psbl.root_tol = tol * scale
+    rimg = psbl.get_image_pos_arr(rw, rz1, rz2, m1, m2)
+    psbl.root_tol = tol
+    images = rimg / scale[:, None] + shift[:, None]
 
-    m1 = psbl.m1
-    m2 = psbl.m2
-    xL1_0, xL2_0 = psbl.get_resolved_lens_astrometry(t=np.array([psbl.t0]))
-    z1_as = xL1_0[0][0] + 1j * xL1_0[0][1]   # arcsec
-    z2_as = xL2_0[0][0] + 1j * xL2_0[0][1]   # arcsec
-    z1_mas = z1_as * arcsec2mas #Lens position in mas
-    z2_mas = z2_as * arcsec2mas#Lens position in mas
-
-    
-    
-    grid_center_mas = (psbl.xL0_com + 1e-3) * arcsec2mas
-    grid_size_mas = grid_size
-    plot_radius_mas = plot_radius 
-    lim_mas = lim
-
-    xmin_mas = grid_center_mas[0] - grid_size_mas
-    xmax_mas = grid_center_mas[0] + grid_size_mas
-    ymin_mas = grid_center_mas[1] - grid_size_mas
-    ymax_mas = grid_center_mas[1] + grid_size_mas
-
-    x = np.linspace(xmin_mas, xmax_mas, bins)
-    y = np.linspace(ymin_mas, ymax_mas, bins)   
-    xgrid, ygrid = np.meshgrid(x, y)
-    zgrid_mas = xgrid + 1j * ygrid   
-    
-    z_flat = zgrid_mas.flatten()
-    dist2_as = z_flat.real**2 + z_flat.imag**2
-    valid_mask = dist2_mas < (plot_radius_mas ** 2) #Cut off faraway points
-    z_flat_valid = z_flat[valid_mask]
-
-    # arrays of lens positions in arcsec
-    z1_arr = np.full_like(z_flat_valid, z1_mas)
-    z2_arr = np.full_like(z_flat_valid, z2_mas)
-    z_arr = psbl.get_image_pos_arr(z_flat_valid, z1_arr, z2_arr, m1, m2)
-    mu_arr = psbl.get_amp_arr(z_arr, z1_arr, z2_arr)
-
-    t_dummy = np.arange(len(z_flat_valid))
-    xCentroid = psbl.get_astrometry(t_dummy, image_arr=z_arr, amp_arr=mu_arr)
-    xCentroid_complex_mas = xCentroid[:, 0] + 1j * xCentroid[:, 1]
-    shift_mas = np.abs(xCentroid_complex_as - z_flat_valid)
+    amps = psbl.get_amp_arr(images, z1, z2)
+    return images, amps
 
 
-    shift_map = np.full(zgrid_mas.shape, np.nan, dtype=float)
-    shift_map_flat = shift_map.flatten()
-    shift_map_flat[valid_mask] = shift_mas
-    shift_map = shift_map_flat.reshape(zgrid_as.shape)
+def get_centroid_shift_map(model, grid_size=6.0, plot_radius=None, lim=6.0,
+                           bins=241, cmap='inferno', savefile='csmap.png',
+                           show=True):
+    """
+    Map the dark-lens flux-weighted image centroid shift on the source plane.
 
-    vmin = 0.0
-    vmax = np.nanpercentile(shift_map, 99.99)
+    For each source on a regular grid, solve for the PSBL images at ``t0``
+    and plot ``|centroid - source|`` in milliarcseconds. This matches the
+    paper-1 ``csmap`` construction (forward ray shooting), not inverse
+    ray shooting.
 
-    plt.figure(figsize=(5, 5))
-    im = plt.imshow(shift_map, origin='lower', extent=[xmin_mas, xmax_mas, ymin_mas, ymax_mas],
-                    cmap=cmap, vmin=vmin, vmax=vmax)
-    cbar = plt.colorbar(im)
+    Parameters
+    ----------
+    model : PSBL PhotAstrom model
+        Binary-lens model with sky positions in arcsec. The map uses the
+        lens geometry at ``model.t0`` and assumes dark lenses (image
+        centroid only; no luminous-lens contamination).
+    grid_size : float, optional
+        Half-width of the source grid about the lens CoM (mas).
+    plot_radius : float or None, optional
+        Unused; kept for backward compatibility with the old signature.
+    lim : float, optional
+        Plot axis limit about the CoM (mas). Default matches ``grid_size``.
+    bins : int, optional
+        Number of source-grid points along each side.
+    cmap : str, optional
+        Matplotlib colormap name.
+    savefile : str, optional
+        Output PNG path.
+    show : bool, optional
+        If True, call ``plt.show()``.
 
-    plt.plot(z1_mas.real, z1_mas.imag, 'black', marker='.', label='Primary Lens', markersize=10)
-    plt.plot(z2_mas.real, z2_mas.imag, 'green', marker='^', label='Secondary Lens', markersize=10)
+    Returns
+    -------
+    shift_map : numpy array, shape = [bins, bins]
+        Centroid shift in mas. Rows are North, columns are East
+        (``imshow`` with ``origin='lower'``).
+    """
+    if not _model_is_photastrom(model):
+        raise ValueError('get_centroid_shift_map expects a PhotAstrom model '
+                         '(sky positions in arcsec).')
 
-    plt.xlabel(r"$\Delta \alpha^*$ (mas)")
-    plt.ylabel(rf"$\Delta \delta$ (mas)")
-    plt.xlim(-lim, lim)   # lim in mas (user-facing)
-    plt.ylim(-lim, lim)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('csmap.png')
-    plt.show()
-    
+    if lim is None:
+        lim = grid_size
+
+    # Lens positions at t0 (arcsec -> mas) and CoM for centering.
+    zs, _masses = _resolved_lens_complex(model, np.array([model.t0]))
+    z1_mas = zs[0] * 1e3
+    z2_mas = zs[1] * 1e3
+    if hasattr(model, 'mLp') and hasattr(model, 'mLs'):
+        w_p = model.mLp / (model.mLp + model.mLs)
+    else:
+        w_p = model.m1 / (model.m1 + model.m2)
+    com_mas = w_p * z1_mas + (1.0 - w_p) * z2_mas
+
+    # Source-plane grid in mas, centered on the lens CoM.
+    x = np.linspace(-grid_size, grid_size, bins) + com_mas.real
+    y = np.linspace(-grid_size, grid_size, bins) + com_mas.imag
+    xx, yy = np.meshgrid(x, y)
+    w_mas = xx + 1j * yy
+    w_as = w_mas.ravel() * 1e-3
+
+    # Forward solve: images and amps for every source.
+    images, amps = _images_amps_for_sources(model, w_as)
+    ok = np.isfinite(images) & np.isfinite(amps)
+    a = np.where(ok, amps, 0.0)
+    a_sum = np.sum(a, axis=1)
+    cen = np.sum(np.where(ok, images, 0.0) * a, axis=1) / a_sum
+
+    # |centroid - source| in mas; invalid solves -> NaN.
+    shift = np.abs(cen - w_as) * 1e3
+    shift[~np.isfinite(shift) | (a_sum <= 0)] = np.nan
+    shift_map = shift.reshape(bins, bins)
+
+    # Relative coordinates for the axes (CoM at the origin).
+    extent = [x[0] - com_mas.real, x[-1] - com_mas.real,
+              y[0] - com_mas.imag, y[-1] - com_mas.imag]
+    vmax = np.nanpercentile(shift_map, 99.9)
+
+    fig, ax = plt.subplots(figsize=(5.5, 5.0))
+    im = ax.imshow(shift_map, origin='lower', extent=extent, cmap=cmap,
+                   vmin=0.0, vmax=vmax)
+    fig.colorbar(im, ax=ax, label=r'$|\vec{\delta}_{c}|$ (mas)')
+
+    ax.plot(z1_mas.real - com_mas.real, z1_mas.imag - com_mas.imag,
+            'k.', ms=10, label='Primary Lens')
+    ax.plot(z2_mas.real - com_mas.real, z2_mas.imag - com_mas.imag,
+            'g^', ms=10, label='Secondary Lens')
+    ax.set_xlim(lim, -lim)
+    ax.set_ylim(-lim, lim)
+    ax.set_xlabel(r'$\Delta\alpha^*$ (mas)')
+    ax.set_ylabel(r'$\Delta\delta$ (mas)')
+    ax.legend(loc='best', fontsize=9)
+    fig.tight_layout()
+    fig.savefig(savefile, dpi=130)
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return shift_map
+
+
 
 def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=None, amp_mulens=None,
                           savefile='compare_model_pkg_phot_amp.png'):
@@ -2371,7 +2576,7 @@ def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=
     amp_bagle = bagle_mod.get_amplification(time_arr)
 
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -2382,13 +2587,13 @@ def compare_model_pkg_phot_amp(bagle_mod, time_arr, amp_pylima=None, amp_vbmicr=
 
     if amp_pylima is not None:
         ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], ls='-', lw=2, ms=3,label='pyLIMA - BAGLE')
     if amp_vbmicr is not None:
         ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], ls=':', lw=2, ms=3, label='VBMicrolensing - BAGLE')
     if amp_mulens is not None:
         ax[0].plot(time_arr, amp_mulens, label='MuLensModel', color=colors[3], ls='-.', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_mulens - amp_bagle, 'x', color=colors[3], lw=2, label='MuLensModel - BAGLE')
+        ax[1].plot(time_arr, amp_mulens - amp_bagle, 'x', color=colors[3], ls='-.', lw=2, ms=3, label='MuLensModel - BAGLE')
 
     ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
 
@@ -2420,7 +2625,7 @@ def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_
     This function supports all BAGLE photometry + astrometry models.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -2431,10 +2636,10 @@ def compare_model_pkg_phot_astrom_amp(time_arr, amp_bagle, amp_pylima=None, amp_
 
     if amp_pylima is not None:
         ax[0].plot(time_arr, amp_pylima, label='pyLIMA', color=colors[1], ls='-', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], lw=2, label='pyLIMA - BAGLE')
+        ax[1].plot(time_arr, amp_pylima - amp_bagle, 'o', color=colors[1], ls='-', lw=2, ms=3, label='pyLIMA - BAGLE')
     if amp_vbmicr is not None:
         ax[0].plot(time_arr, amp_vbmicr, label='VBMicrolensing', color=colors[2], ls=':', lw=2, marker='None')
-        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], lw=2, label='VBMicrolensing - BAGLE')
+        ax[1].plot(time_arr, amp_vbmicr - amp_bagle, '^', color=colors[2], ls=':', lw=2, ms=3, label='VBMicrolensing - BAGLE')
 
     ax[0].plot(time_arr, amp_bagle, label='BAGLE', color=colors[0], ls='-', lw=2, marker='None')
 
@@ -2456,7 +2661,7 @@ def compare_model_pkg_phot_astrom_uamp(time_arr, uamp_bagle, uamp_pylima=None, u
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -2491,7 +2696,7 @@ def compare_model_pkg_phot_astrom_uvec(time_arr, uvec_bagle, uvec_pylima=None, u
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -2559,7 +2764,7 @@ def compare_model_pkg_phot_astrom_xSxL(time_mjd, xS_bagle, xL_bagle,
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
@@ -2671,7 +2876,7 @@ def compare_model_pkg_phot_astrom_cent(time_mjd, ast_lensed_bagle,
     photometry + astrometry models from BAGLE, pyLIMA, and VBM.
     """
     # Use the following color table.
-    cmap = plt.cm.get_cmap('tab10')
+    cmap = plt.colormaps['tab10']
     colors = cmap(np.linspace(0, 1, 10))
 
     ##########
