@@ -174,10 +174,6 @@ KNOWN_JAX_LNL_GAPS = frozenset([
     "FSBL_PhotAstrom_noPar_Param4",
     "FSBL_PhotAstrom_noPar_Param6",
     "FSBL_PhotAstrom_noPar_Param8",
-    "PSTL_PhotAstrom_Par_Param2",
-    "PSTL_PhotAstrom_Par_Param3",
-    "PSTL_PhotAstrom_noPar_Param2",
-    "PSTL_PhotAstrom_noPar_Param3",
 ])
 
 

@@ -812,9 +812,13 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSTL_PhotAstrom_Par_EllOrbs_Param1',
     'PSTL_PhotAstrom_Par_EllOrbs_Param2',
     'PSTL_PhotAstrom_Par_Param1',
+    'PSTL_PhotAstrom_Par_Param2',
+    'PSTL_PhotAstrom_Par_Param3',
     'PSTL_PhotAstrom_noPar_EllOrbs_Param1',
     'PSTL_PhotAstrom_noPar_EllOrbs_Param2',
     'PSTL_PhotAstrom_noPar_Param1',
+    'PSTL_PhotAstrom_noPar_Param2',
+    'PSTL_PhotAstrom_noPar_Param3',
     'PSTL_Phot_Par_Param1',
     'PSTL_Phot_noPar_Param1',
 ])
@@ -46097,4 +46101,15 @@ for _pspl_name, _pspl_cls in list(globals().items()):
         continue
     _pspl_cls.jax_log_likely_photometry = _pspl_phot
     _pspl_cls.jax_log_likely_astrometry = _pspl_ast
+
+
+# Static PSTL Param2 and Param3. Keplerian PSTL already has its own methods.
+from bagle.jax.pstl_reduced import _PSTLReducedLnL
+
+_pstl_phot = _PSTLReducedLnL.__dict__['jax_log_likely_photometry']
+_pstl_ast = _PSTLReducedLnL.__dict__['jax_log_likely_astrometry']
+for _pstl_name in ('PSTL_PhotAstromParam2', 'PSTL_PhotAstromParam3'):
+    _pstl_cls = globals()[_pstl_name]
+    _pstl_cls.jax_log_likely_photometry = _pstl_phot
+    _pstl_cls.jax_log_likely_astrometry = _pstl_ast
 

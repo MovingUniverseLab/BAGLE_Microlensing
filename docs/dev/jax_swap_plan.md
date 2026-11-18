@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Step 7.5 is on `jaxswap/step7-pspl`. Step 7.4 is on `jaxswap/step7-bfsbl`. Step 7.3 is on `jaxswap/step7-bsbl`. Steps 7.1–7.2 are on `fsbl_ld_jax` (`8481295`). `jax_pymc` is still at Step 5 (`e5b62a9`). Item 4.7 is still open. Items 7.6–7.7 are open. Slow limb PhotAstrom likelihoods were not run.
+**Status:** Step 7.6 is on `jaxswap/step7-pstl`. Step 7.5 is on `jaxswap/step7-pspl`. Step 7.4 is on `jaxswap/step7-bfsbl`. Step 7.3 is on `jaxswap/step7-bsbl`. Steps 7.1–7.2 are on `fsbl_ld_jax` (`8481295`). `jax_pymc` is still at Step 5 (`e5b62a9`). Item 4.7 is still open. Item 7.7 is open. Slow limb PhotAstrom likelihoods were not run.
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -177,8 +177,8 @@ Appendix A at the end of this file.
 | BFSBL ±LD Phot | 4 | 4 | 0 | 4 |
 | BFSBL ±LD PhotAstrom | 40 | 20 | 20 | 40 |
 | PSTL Phot | 2 | 1 | 1 | 2 |
-| PSTL PhotAstrom | 10 | 6 | 4 | 6 |
-| **Total** | **378** | **248** | **130** | **305** |
+| PSTL PhotAstrom | 10 | 10 | 0 | 10 |
+| **Total** | **378** | **252** | **126** | **309** |
 
 How to read the columns in Appendix A:
 
@@ -925,7 +925,7 @@ sure `test_likelihood_parity` covers them. Order of work:
 - [x] 7.5 PSPL PhotAstrom `Param4`, `Param5`, `Param6`, `Param4_geoproj`,
       Param7, and PSPL Astrom `Param4`. Phot-only `Param1_geoproj` already had
       a likelihood.
-- [ ] 7.6 PSTL `Param2` and `Param3`.
+- [x] 7.6 PSTL `Param2` and `Param3`.
 - [ ] 7.7 GP families that still lack a likelihood after Step 1.
 
 ---
@@ -977,6 +977,7 @@ keyword:
 
 ## Log
 
+- 2026-11-17: Step 7.6 (`jaxswap/step7-pstl`, commit `COMMIT`). Traced likelihoods for static PSTL PhotAstrom Param2 and Param3 (4 classes). Masses and distances are recovered from `thetaE` or `log10_thetaE` and then passed through the Param1 geometry. Likelihood parity: 4 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 309. Item 7.7 and item 4.7 are still open.
 - 2026-11-17: Step 7.5 (`jaxswap/step7-pspl`, commit `100251e`). Traced likelihoods for PSPL PhotAstrom Param4, Param5, Param6, Param7, Param4 geoproj, and Astrom Param4 (8 classes). Geoproj photometry parameters are converted to the heliocentric frame before the Param2 kernel, and the astrometry call now receives `raL`, `decL`, and `t0par`. Likelihood parity: 8 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 305. `log10_piE` has a test-only prior. Items 7.6–7.7 and 4.7 are still open.
 - 2026-11-17: Step 7.4 (`jaxswap/step7-bfsbl`, commit `18da946`). Traced likelihoods for the 40 BFSBL classes that lacked one: 4 photometry-only and 36 PhotAstrom (linear, accelerated, circular, elliptical, and Param2, with and without limb darkening). Sky tracks are the BSBL tracks; each source is a finite disk. The host contour centroid is placed on the lens-system origin. Non-slow likelihood parity: 24 passed at the existing BFSBL atol of 5e-2 (22 non-limb, including the two static Param1 classes, plus 2 limb photometry-only). The 20 limb PhotAstrom tests are marked slow and were not run. `JAX_LIKELIHOOD_CLASSES` is 297. Items 7.5–7.7 and 4.7 are still open.
 - 2026-11-17: Step 7.3 (`jaxswap/step7-bsbl`, commit `7dfa721`). Traced photometric and astrometric likelihoods for all 22 BSBL classes (static, linear, accelerated, circular, and elliptical). Each source is solved with the point-source binary-lens image solver and flux-weighted. Non-slow likelihood parity: 22 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 257. `sep_SL`, `sep_S`, `sep_L`, `phi_S`, `phi_L`, and `aS` have test-only priors. Items 7.4–7.7 and 4.7 are still open.
@@ -998,9 +999,9 @@ keyword:
 
 ---
 
-## Appendix A. Per-class status after Step 7.5
+## Appendix A. Per-class status after Step 7.6
 
-Step 7.5 gives the remaining PSPL Param4, Param5, Param6, Param7, and Param4 geoproj classes a traced likelihood; those 8 tests passed. Step 7.4 gives every BFSBL class a traced likelihood. Non-limb PhotAstrom and all photometry-only classes passed likelihood parity. Limb PhotAstrom rows stay ❓ because that slow test was not run. Step 7.3 gives every BSBL class a traced likelihood; those 22 likelihood-parity tests passed. Step 7.2 gives every PSBL and FSBL `CircOrbs` / `EllOrbs` class a traced likelihood. Limb PhotAstrom Keplerian rows are ❓ because that slow test was not run. The other class rows are unchanged from Step 7.1. Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 now has a traced likelihood. Item 4.7 is still open.
+Step 7.6 gives static PSTL Param2 and Param3 a traced likelihood; those 4 tests passed. Step 7.5 gives the remaining PSPL Param4, Param5, Param6, Param7, and Param4 geoproj classes a traced likelihood; those 8 tests passed. Step 7.4 gives every BFSBL class a traced likelihood. Non-limb PhotAstrom and all photometry-only classes passed likelihood parity. Limb PhotAstrom rows stay ❓ because that slow test was not run. Step 7.3 gives every BSBL class a traced likelihood; those 22 likelihood-parity tests passed. Step 7.2 gives every PSBL and FSBL `CircOrbs` / `EllOrbs` class a traced likelihood. Limb PhotAstrom Keplerian rows are ❓ because that slow test was not run. The other class rows are unchanged from Step 7.1. Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 now has a traced likelihood. Item 4.7 is still open.
 
 ### PSPL Astrom (2 of 2 good)
 
@@ -1490,20 +1491,20 @@ Step 7.5 gives the remaining PSPL Param4, Param5, Param6, Param7, and Param4 geo
 | `PSTL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | forward xfail: faint-image root mask, item 4.6 |
 | `PSTL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### PSTL PhotAstrom (6 of 10 good)
+### PSTL PhotAstrom (10 of 10 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSTL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSTL_PhotAstrom_Par_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSTL_PhotAstrom_Par_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSTL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSTL_PhotAstrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSTL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSTL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSTL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSTL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ---
 
