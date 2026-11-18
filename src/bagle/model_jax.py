@@ -524,6 +524,28 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'BFSPL_PhotAstrom_noPar_Param1',
     'BFSPL_Phot_Par_Param1',
     'BFSPL_Phot_noPar_Param1',
+    'BSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param2',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param2',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'BSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'BSBL_PhotAstrom_Par_Param1',
+    'BSBL_PhotAstrom_Par_Param2',
+    'BSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_Param1',
+    'BSBL_PhotAstrom_noPar_Param2',
+    'BSBL_Phot_Par_Param1',
+    'BSBL_Phot_noPar_Param1',
     'BSPL_PhotAstrom_Par_AccOrbs_Param1',
     'BSPL_PhotAstrom_Par_AccOrbs_Param2',
     'BSPL_PhotAstrom_Par_AccOrbs_Param3',
@@ -45946,4 +45968,26 @@ for _kep_name, _kep_cls in list(globals().items()):
     _kep_cls.jax_log_likely_photometry = _kep_phot
     if 'dmag_Lp_Ls' in _kep_names:
         _kep_cls.jax_log_likely_astrometry = _kep_ast
+
+
+# BSBL likelihoods, copied the same way so each parameterization is ``cls``.
+from bagle.jax.bsbl import _BSBLLnL
+
+_bsbl_phot = _BSBLLnL.__dict__['jax_log_likely_photometry']
+_bsbl_ast = _BSBLLnL.__dict__['jax_log_likely_astrometry']
+for _bsbl_name, _bsbl_cls in list(globals().items()):
+    if not isinstance(_bsbl_cls, type):
+        continue
+    if not _bsbl_name.startswith('BSBL'):
+        continue
+    _bsbl_names = getattr(_bsbl_cls, 'fitter_param_names', None)
+    if not _bsbl_names:
+        continue
+    # Concrete data classes only. Abstract mixins have no fitter names.
+    if '_Par_' not in _bsbl_name and '_noPar_' not in _bsbl_name:
+        continue
+    _bsbl_cls.jax_log_likely_photometry = _bsbl_phot
+    if 'xS0_E' in _bsbl_names or 'xS0_com_E' in _bsbl_names or (
+            'xS0_p_E' in _bsbl_names):
+        _bsbl_cls.jax_log_likely_astrometry = _bsbl_ast
 
