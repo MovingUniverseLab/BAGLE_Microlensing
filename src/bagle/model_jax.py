@@ -528,6 +528,56 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'BSPL_Phot_Par_Param1',
     'BSPL_Phot_noPar_GP_Param1',
     'BSPL_Phot_noPar_Param1',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param1',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param2',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param3',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param1',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param2',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param3',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param1',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param2',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param3',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param4',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param1',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param2',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param3',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param1',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param2',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param3',
+    'BSPL_PhotAstrom_Par_GP_Param1',
+    'BSPL_PhotAstrom_Par_GP_Param2',
+    'BSPL_PhotAstrom_Par_GP_Param3',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param1',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param2',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param3',
+    'BSPL_PhotAstrom_Par_Param1',
+    'BSPL_PhotAstrom_Par_Param2',
+    'BSPL_PhotAstrom_Par_Param3',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param4',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_GP_Param1',
+    'BSPL_PhotAstrom_noPar_GP_Param2',
+    'BSPL_PhotAstrom_noPar_GP_Param3',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_Param1',
+    'BSPL_PhotAstrom_noPar_Param2',
+    'BSPL_PhotAstrom_noPar_Param3',
     'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1',
     'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1',
     'FSBL_Limb_PhotAstrom_Par_Param1',
@@ -19822,6 +19872,73 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = False
 
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """
+        Photometric log-likelihood for this BSPL PhotAstrom parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Filter-local parameters in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, shape (N_times,)
+            Times (MJD), magnitudes, and uncertainties.
+        b_sff : float
+            Source flux fraction for this filter.
+        mag_src : float or tuple
+            Accepted for the fitter. Magnitudes are read from ``vec``.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+        gp_params : dict or None
+            Gaussian-process hyperparameters.
+        fixed_jitter : bool
+            Use a fixed jitter term when a GP is present.
+
+        Returns
+        -------
+        lnL : float
+        """
+        from bagle.jax.bspl import bspl_photastrom_log_likely_photometry
+
+        lnL = bspl_photastrom_log_likely_photometry(
+            cls.fitter_param_names, vec, t, mag_obs, mag_err, b_sff,
+            parallax_vectors=parallax_vectors, gp_params=gp_params,
+            fixed_jitter=fixed_jitter,
+        )
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """
+        Astrometric log-likelihood for this BSPL PhotAstrom parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Filter-local parameters in ``fitter_param_names`` order.
+        t, x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+            Times (MJD) and East/North positions and uncertainties (arcsec).
+        b_sff : float, optional
+            Source flux fraction.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+
+        Returns
+        -------
+        lnL : float
+        """
+        from bagle.jax.bspl import bspl_photastrom_log_likely_astrometry
+
+        lnL = bspl_photastrom_log_likely_astrometry(
+            cls.fitter_param_names, vec, t, x_obs, y_obs, x_err, y_err,
+            b_sff=b_sff, parallax_vectors=parallax_vectors,
+        )
+        return lnL
+
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
@@ -22838,6 +22955,21 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         return
 
 
+# Param2, Param3, and the Keplerian mixins do not inherit Param1.
+# Share Param1's traced likelihood. ``cls`` is the class the fitter
+# calls, so each mixin still reads its own ``fitter_param_names``.
+_bspl_phot_lnl = BSPL_PhotAstromParam1.__dict__["jax_log_likely_photometry"]
+_bspl_ast_lnl = BSPL_PhotAstromParam1.__dict__["jax_log_likely_astrometry"]
+for _bspl_cls in (
+    BSPL_PhotAstromParam2,
+    BSPL_PhotAstromParam3,
+    BSPL_PhotAstrom_EllOrbs_Param1,
+    BSPL_PhotAstrom_EllOrbs_Param2,
+    BSPL_PhotAstrom_EllOrbs_Param3,
+    BSPL_PhotAstrom_EllOrbs_Param4,
+):
+    _bspl_cls.jax_log_likely_photometry = _bspl_phot_lnl
+    _bspl_cls.jax_log_likely_astrometry = _bspl_ast_lnl
 
 
 class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
