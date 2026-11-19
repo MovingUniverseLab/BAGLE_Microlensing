@@ -1596,7 +1596,11 @@ class MicrolensSolver(Solver):
                 if priors_name.endswith('_E'):
                     pos = self.data['xpos' + str(int(series) + 1)]
                 elif priors_name.endswith('_N'):
-                    pos = self.data['ypos' + str(int(series) + 1)]
+                    if self.data.get('scan_angle' + str(int(series) + 1)) is None:
+                        pos = self.data['ypos' + str(int(series) + 1)]
+                    # For 1-d Gaia data, just use x for both
+                    else:
+                        pos = self.data['xpos' + str(int(series) + 1)]
                 else:
                     raise ValueError(param_name)
                 self.priors[param_name] = make_xS0_gen(pos)
@@ -1607,17 +1611,28 @@ class MicrolensSolver(Solver):
                 series = self.longest_ast_series()
                 if series is None:
                     series = 0
-                if param_name == 'muS_E':
-                    pos = self.data['xpos' + str(int(series) + 1)]
-                elif param_name == 'muS_N':
-                    pos = self.data['ypos' + str(int(series) + 1)]
-                else:
-                    raise ValueError(param_name)
-                self.priors[param_name] = make_muS_EN_gen(
-                    self.data['t_ast' + str(int(series) + 1)],
-                    pos,
-                    scale_factor=muS_scale_factor,
-                )
+                if self.data.get('scan_angle' + str(int(series) + 1)) is None:
+                    if param_name == 'muS_E':
+                        pos = self.data['xpos' + str(int(series) + 1)]
+                    elif param_name == 'muS_N':
+                        pos = self.data['ypos' + str(int(series) + 1)]
+                    else:
+                        raise ValueError(param_name)
+                    self.priors[param_name] = make_muS_EN_gen(
+                        self.data['t_ast' + str(int(series) + 1)],
+                        pos,
+                        scale_factor=muS_scale_factor,
+                    )
+                elif 'pmra_gaia' in self.data:
+                    if param_name == 'muS_E':
+                        pm = self.data['pmra_gaia']
+                    elif param_name == 'muS_N':
+                        pm = self.data['pmdec_gaia']
+                    else:
+                        raise ValueError(param_name+" Cannot set proper motion prior "
+                                    "for Gaia data without pmra_gaia and pmdec_gaia.")
+                    self.priors[param_name] = make_muS_EN_gen_from_pm(pm,
+                                                scale_factor=muS_scale_factor)
             elif prior_type == 'make_piS':
                 self.priors[param_name] = make_piS()
 
@@ -4362,6 +4377,29 @@ def make_muS_EN_gen(t, pos, scale_factor=100.0, verbose = False):
         print('vel_hi : ', vel_hi)
         print('         ')
     return make_gen(vel_lo, vel_hi)
+    
+def make_muS_EN_gen_from_pm(pm, scale_factor=100.0, verbose = False):
+    """Get an approximate muS search range from input proper motions.
+
+    Parameters
+    ----------
+    pm :
+        array of proper motion and proper motion error
+
+    Returns
+    -------
+    gen:
+        uniform generator for velocity in mas/yr
+    """
+    vel, vel_err = pm
+    if verbose:
+        print('make_muS_EN_gen_from_pm')
+        print('vel : ', vel)
+        print('vel_1sigma : ', scale_factor * vel_err)
+        print('         ')
+    return make_norm_gen(vel, scale_factor * vel_err)
+
+
 
 def make_muS_EN_norm_gen(t, pos, n_use=None, scale_factor=10.0):
     """Get an approximate muS search range by looking at the best fit
