@@ -641,6 +641,9 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'BSPL_Phot_noPar_GP_Param1',
     'BSPL_Phot_noPar_Param1',
     'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7',
     'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param1',
     'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param3',
     'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param4',
@@ -652,8 +655,21 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param7',
     'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param8',
     'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7',
     'FSBL_Limb_PhotAstrom_Par_Param1',
+    'FSBL_Limb_PhotAstrom_Par_Param2',
+    'FSBL_Limb_PhotAstrom_Par_Param3',
+    'FSBL_Limb_PhotAstrom_Par_Param4',
+    'FSBL_Limb_PhotAstrom_Par_Param5',
+    'FSBL_Limb_PhotAstrom_Par_Param6',
+    'FSBL_Limb_PhotAstrom_Par_Param7',
+    'FSBL_Limb_PhotAstrom_Par_Param8',
     'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7',
     'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1',
     'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3',
     'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param4',
@@ -665,7 +681,15 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param7',
     'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param8',
     'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7',
     'FSBL_Limb_PhotAstrom_noPar_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_Param2',
+    'FSBL_Limb_PhotAstrom_noPar_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_Param4',
+    'FSBL_Limb_PhotAstrom_noPar_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_Param8',
     'FSBL_Limb_Phot_Par_CircOrbs_Param1',
     'FSBL_Limb_Phot_Par_EllOrbs_Param1',
     'FSBL_Limb_Phot_Par_Param1',
@@ -673,6 +697,9 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSBL_Limb_Phot_noPar_EllOrbs_Param1',
     'FSBL_Limb_Phot_noPar_Param1',
     'FSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param3',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param6',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param7',
     'FSBL_PhotAstrom_Par_CircOrbs_Param1',
     'FSBL_PhotAstrom_Par_CircOrbs_Param3',
     'FSBL_PhotAstrom_Par_CircOrbs_Param4',
@@ -684,8 +711,21 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSBL_PhotAstrom_Par_EllOrbs_Param7',
     'FSBL_PhotAstrom_Par_EllOrbs_Param8',
     'FSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param3',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param6',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param7',
     'FSBL_PhotAstrom_Par_Param1',
+    'FSBL_PhotAstrom_Par_Param2',
+    'FSBL_PhotAstrom_Par_Param3',
+    'FSBL_PhotAstrom_Par_Param4',
+    'FSBL_PhotAstrom_Par_Param5',
+    'FSBL_PhotAstrom_Par_Param6',
+    'FSBL_PhotAstrom_Par_Param7',
+    'FSBL_PhotAstrom_Par_Param8',
     'FSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param6',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param7',
     'FSBL_PhotAstrom_noPar_CircOrbs_Param1',
     'FSBL_PhotAstrom_noPar_CircOrbs_Param3',
     'FSBL_PhotAstrom_noPar_CircOrbs_Param4',
@@ -697,7 +737,15 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSBL_PhotAstrom_noPar_EllOrbs_Param7',
     'FSBL_PhotAstrom_noPar_EllOrbs_Param8',
     'FSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param6',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param7',
     'FSBL_PhotAstrom_noPar_Param1',
+    'FSBL_PhotAstrom_noPar_Param2',
+    'FSBL_PhotAstrom_noPar_Param3',
+    'FSBL_PhotAstrom_noPar_Param4',
+    'FSBL_PhotAstrom_noPar_Param6',
+    'FSBL_PhotAstrom_noPar_Param8',
     'FSBL_Phot_Par_CircOrbs_Param1',
     'FSBL_Phot_Par_EllOrbs_Param1',
     'FSBL_Phot_Par_Param1',
@@ -721,6 +769,8 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSPL_Phot_noPar_Param1',
     'FSPL_Phot_noPar_Param2',
     'PSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'PSBL_PhotAstrom_Par_AccOrbs_Param6',
+    'PSBL_PhotAstrom_Par_AccOrbs_Param7',
     'PSBL_PhotAstrom_Par_CircOrbs_Param1',
     'PSBL_PhotAstrom_Par_CircOrbs_Param2',
     'PSBL_PhotAstrom_Par_CircOrbs_Param3',
@@ -736,8 +786,17 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSBL_PhotAstrom_Par_GP_Param1',
     'PSBL_PhotAstrom_Par_GP_Param2',
     'PSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'PSBL_PhotAstrom_Par_LinOrbs_Param6',
+    'PSBL_PhotAstrom_Par_LinOrbs_Param7',
     'PSBL_PhotAstrom_Par_Param1',
+    'PSBL_PhotAstrom_Par_Param2',
+    'PSBL_PhotAstrom_Par_Param3',
+    'PSBL_PhotAstrom_Par_Param4',
+    'PSBL_PhotAstrom_Par_Param5',
+    'PSBL_PhotAstrom_Par_Param7',
     'PSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_AccOrbs_Param6',
+    'PSBL_PhotAstrom_noPar_AccOrbs_Param7',
     'PSBL_PhotAstrom_noPar_CircOrbs_Param1',
     'PSBL_PhotAstrom_noPar_CircOrbs_Param2',
     'PSBL_PhotAstrom_noPar_CircOrbs_Param3',
@@ -753,7 +812,12 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSBL_PhotAstrom_noPar_GP_Param1',
     'PSBL_PhotAstrom_noPar_GP_Param2',
     'PSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_LinOrbs_Param6',
+    'PSBL_PhotAstrom_noPar_LinOrbs_Param7',
     'PSBL_PhotAstrom_noPar_Param1',
+    'PSBL_PhotAstrom_noPar_Param2',
+    'PSBL_PhotAstrom_noPar_Param3',
+    'PSBL_PhotAstrom_noPar_Param4',
     'PSBL_Phot_Par_CircOrbs_Param1',
     'PSBL_Phot_Par_EllOrbs_Param1',
     'PSBL_Phot_Par_GP_Param1',
@@ -46116,7 +46180,37 @@ for _pstl_name in ('PSTL_PhotAstromParam2', 'PSTL_PhotAstromParam3'):
     _pstl_cls.jax_log_likely_astrometry = _pstl_ast
 
 
-# PSBL GP Param2 only. The other reduced PSBL classes stay unregistered.
+# PSBL and FSBL parameterizations that had no traced likelihood.
+# Keplerian classes and Param1 already define their own methods.
+from bagle.jax.psbl_frames import _PSBLFrameLnL
+
+_frame_phot = _PSBLFrameLnL.__dict__['jax_log_likely_photometry']
+_frame_ast = _PSBLFrameLnL.__dict__['jax_log_likely_astrometry']
+for _frame_name, _frame_cls in list(globals().items()):
+    if not isinstance(_frame_cls, type):
+        continue
+    if not (_frame_name.startswith('PSBL_PhotAstrom')
+            or _frame_name.startswith('FSBL_PhotAstrom')
+            or _frame_name.startswith('FSBL_Limb_PhotAstrom')):
+        continue
+    if '_Par_' not in _frame_name and '_noPar_' not in _frame_name:
+        continue
+    if 'CircOrbs' in _frame_name or 'EllOrbs' in _frame_name:
+        continue
+    if 'GP' in _frame_name:
+        continue
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _frame_cls.__mro__):
+        continue
+    _frame_names = getattr(_frame_cls, 'fitter_param_names', None)
+    if not _frame_names:
+        continue
+    _frame_cls.jax_log_likely_photometry = _frame_phot
+    if 'dmag_Lp_Ls' in _frame_names:
+        _frame_cls.jax_log_likely_astrometry = _frame_ast
+
+
+# PSBL GP Param2 uses the reduced GP kernel, not the frame kernel above.
 from bagle.jax.psbl_reduced import _PSBLReducedLnL
 
 _psbl_gp_phot = _PSBLReducedLnL.__dict__['jax_log_likely_photometry']

@@ -38,7 +38,8 @@ _FORWARD_ATOL = 1e-8
 # Traced versus host log-likelihood. Item 4.3 asks for 1e-6.
 # Two families are wider, from measurements on this grid:
 # GP is tinygp versus celerite (at most ~3e-5; Step 1 accepts 1e-3).
-# FSBL host contour versus the traced kernel is ~4e-5 in lnL.
+# FSBL host contour versus the traced kernel. Photometry-only is
+# ~4e-5. Phot+astrom sums to a few 1e-3 (Param2 measured 2e-3).
 # BFSBL phot+astrom at the canonical source radius is ~2e-2, because
 # the host uses the adaptive contour and the traced kernel does not.
 # FSPL / BFSPL phot+astrom: model_jax host now uses the JAX limb
@@ -106,73 +107,8 @@ _EXPLICIT_PRIORS = {
     "log10_piE": ("make_gen", -3.0, 1.0),
 }
 
-KNOWN_JAX_LNL_GAPS = frozenset([
-    "PSBL_PhotAstrom_Par_AccOrbs_Param6",
-    "PSBL_PhotAstrom_Par_AccOrbs_Param7",
-    "PSBL_PhotAstrom_Par_LinOrbs_Param6",
-    "PSBL_PhotAstrom_Par_LinOrbs_Param7",
-    "PSBL_PhotAstrom_Par_Param2",
-    "PSBL_PhotAstrom_Par_Param3",
-    "PSBL_PhotAstrom_Par_Param4",
-    "PSBL_PhotAstrom_Par_Param5",
-    "PSBL_PhotAstrom_Par_Param7",
-    "PSBL_PhotAstrom_noPar_AccOrbs_Param6",
-    "PSBL_PhotAstrom_noPar_AccOrbs_Param7",
-    "PSBL_PhotAstrom_noPar_LinOrbs_Param6",
-    "PSBL_PhotAstrom_noPar_LinOrbs_Param7",
-    "PSBL_PhotAstrom_noPar_Param2",
-    "PSBL_PhotAstrom_noPar_Param3",
-    "PSBL_PhotAstrom_noPar_Param4",
-    "FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3",
-    "FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6",
-    "FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7",
-    "FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3",
-    "FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6",
-    "FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7",
-    "FSBL_Limb_PhotAstrom_Par_Param2",
-    "FSBL_Limb_PhotAstrom_Par_Param3",
-    "FSBL_Limb_PhotAstrom_Par_Param4",
-    "FSBL_Limb_PhotAstrom_Par_Param5",
-    "FSBL_Limb_PhotAstrom_Par_Param6",
-    "FSBL_Limb_PhotAstrom_Par_Param7",
-    "FSBL_Limb_PhotAstrom_Par_Param8",
-    "FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3",
-    "FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6",
-    "FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7",
-    "FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3",
-    "FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6",
-    "FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7",
-    "FSBL_Limb_PhotAstrom_noPar_Param2",
-    "FSBL_Limb_PhotAstrom_noPar_Param3",
-    "FSBL_Limb_PhotAstrom_noPar_Param4",
-    "FSBL_Limb_PhotAstrom_noPar_Param6",
-    "FSBL_Limb_PhotAstrom_noPar_Param8",
-    "FSBL_PhotAstrom_Par_AccOrbs_Param3",
-    "FSBL_PhotAstrom_Par_AccOrbs_Param6",
-    "FSBL_PhotAstrom_Par_AccOrbs_Param7",
-    "FSBL_PhotAstrom_Par_LinOrbs_Param3",
-    "FSBL_PhotAstrom_Par_LinOrbs_Param6",
-    "FSBL_PhotAstrom_Par_LinOrbs_Param7",
-    "FSBL_PhotAstrom_Par_Param2",
-    "FSBL_PhotAstrom_Par_Param3",
-    "FSBL_PhotAstrom_Par_Param4",
-    "FSBL_PhotAstrom_Par_Param5",
-    "FSBL_PhotAstrom_Par_Param6",
-    "FSBL_PhotAstrom_Par_Param7",
-    "FSBL_PhotAstrom_Par_Param8",
-    "FSBL_PhotAstrom_noPar_AccOrbs_Param3",
-    "FSBL_PhotAstrom_noPar_AccOrbs_Param6",
-    "FSBL_PhotAstrom_noPar_AccOrbs_Param7",
-    "FSBL_PhotAstrom_noPar_LinOrbs_Param3",
-    "FSBL_PhotAstrom_noPar_LinOrbs_Param6",
-    "FSBL_PhotAstrom_noPar_LinOrbs_Param7",
-    "FSBL_PhotAstrom_noPar_Param2",
-    "FSBL_PhotAstrom_noPar_Param3",
-    "FSBL_PhotAstrom_noPar_Param4",
-    "FSBL_PhotAstrom_noPar_Param6",
-    "FSBL_PhotAstrom_noPar_Param8",
-])
-
+# Every concrete class now has a traced likelihood.
+KNOWN_JAX_LNL_GAPS = frozenset()
 
 
 def _concrete_names(module):
@@ -875,19 +811,22 @@ def _lnl_atol(class_name):
     -------
     atol : float
         1e-6 in general. Wider for GP, FSBL, BFSBL, and FSPL phot+astrom.
+        FSBL photometry-only is 1e-4. FSBL phot+astrom is 5e-3.
     """
     if "_GP" in class_name:
         return _LNL_ATOL_GP
     if class_name.startswith("BFSBL"):
         return _LNL_ATOL_BFSBL
-    # Orbiting FSBL: traced and host contours agree in the model
-    # (micro-magnitudes) and the summed lnL residual is a few 1e-3.
-    if class_name.startswith("FSBL") and (
-            "CircOrbs" in class_name or "EllOrbs" in class_name):
+    # Phot+astrom FSBL: the contour residual is a few 1e-3 once the
+    # photometric and astrometric terms are added. Photometry-only
+    # stays at 1e-4.
+    if class_name.startswith("FSBL") and "PhotAstrom" in class_name:
         return 5e-3
     if class_name.startswith("FSBL"):
         return _LNL_ATOL_FSBL
-    if "FSPL_PhotAstrom" in class_name or "BFSPL_PhotAstrom" in class_name:
+    # Limb-darkening names are FSPL_Limb_PhotAstrom, not FSPL_PhotAstrom.
+    if "PhotAstrom" in class_name and (
+            class_name.startswith("FSPL") or class_name.startswith("BFSPL")):
         return _LNL_ATOL_FSPL_AST
 
     return _LNL_ATOL
