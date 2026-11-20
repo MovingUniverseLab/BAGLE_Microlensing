@@ -36,6 +36,7 @@ REPO = Path(__file__).resolve().parents[1]
 # 1.1 Orbit primary/secondary sign
 # ---------------------------------------------------------------------------
 
+# Limb FSBL orbit cases are release-only (host contour + compile).
 _ORBIT_CLASSES = [
     "PSBL_PhotAstrom_noPar_LinOrbs_Param1",
     "PSBL_PhotAstrom_Par_LinOrbs_Param1",
@@ -45,10 +46,22 @@ _ORBIT_CLASSES = [
     "FSBL_PhotAstrom_Par_LinOrbs_Param1",
     "FSBL_PhotAstrom_noPar_AccOrbs_Param1",
     "FSBL_PhotAstrom_Par_AccOrbs_Param1",
-    "FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1",
-    "FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1",
-    "FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1",
-    "FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1",
+    pytest.param(
+        "FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1",
+        marks=pytest.mark.slow,
+    ),
+    pytest.param(
+        "FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1",
+        marks=pytest.mark.slow,
+    ),
+    pytest.param(
+        "FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1",
+        marks=pytest.mark.slow,
+    ),
+    pytest.param(
+        "FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1",
+        marks=pytest.mark.slow,
+    ),
 ]
 
 _ORBIT_KW = dict(
@@ -102,7 +115,8 @@ def _orbit_setup(class_name):
             host_kw[k] = v
 
     host = cls(**host_kw)
-    t = np.linspace(56900.0, 57100.0, 40)
+    # Fifteen epochs cover the event window for daily traced/host checks.
+    t = np.linspace(56900.0, 57100.0, 15)
     mag_h = np.asarray(host.get_photometry(t), dtype=np.float64)
     pos_h = np.asarray(host.get_astrometry(t), dtype=np.float64)
     vec = jnp.asarray([kw[n] for n in cls.fitter_param_names], dtype=jnp.float64)

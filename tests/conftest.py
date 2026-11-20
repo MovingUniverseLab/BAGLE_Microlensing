@@ -5,6 +5,12 @@ import os
 import sys
 from pathlib import Path
 
+# Persistent JAX compile cache for repeat pytest runs. Set before any
+# JAX import so the first import in a test module picks it up.
+_jax_cache = Path.home() / ".cache" / "bagle" / "jax_compile"
+_jax_cache.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("JAX_COMPILATION_CACHE_DIR", str(_jax_cache))
+
 # Local helpers (sampler_agreement, fixtures) live in this directory.
 TESTS = Path(__file__).resolve().parent
 if str(TESTS) not in sys.path:

@@ -507,8 +507,60 @@ def _forward_params():
     return params
 
 
+# Daily likelihood-parity anchors for expensive families. The full
+# grids remain available via ``pytest -o addopts=`` / ``-m slow``.
+_LNL_DAILY_ANCHORS = frozenset({
+    # BFSBL: one static PhotAstrom + one orbit PhotAstrom.
+    "BFSBL_PhotAstrom_noPar_Param1",
+    "BFSBL_PhotAstrom_noPar_CircOrbs_Param1",
+    # Keplerian: one PSBL Circ, one PSBL Ell, one FSBL Circ phot,
+    # one FSBL Ell PhotAstrom.
+    "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
+    "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
+    "FSBL_Phot_noPar_CircOrbs_Param1",
+    "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
+})
+
+
+def _lnl_is_slow(name):
+    """
+    Return True when this likelihood-parity case is release-only.
+
+    Parameters
+    ----------
+    name : str
+        Concrete ``model_jax`` class name.
+
+    Returns
+    -------
+    slow : bool
+    """
+    if name in _LNL_DAILY_ANCHORS:
+        return False
+
+    # Limb phot+astrom compiles are expensive.
+    if "Limb_PhotAstrom" in name:
+        return True
+
+    # FSBL linear / accelerated host contours are expensive.
+    if name.startswith("FSBL") and ("LinOrbs" in name or "AccOrbs" in name):
+        return True
+
+    # BFSBL PhotAstrom (non-anchor) host adaptive contour is expensive.
+    if name.startswith("BFSBL") and "PhotAstrom" in name:
+        return True
+
+    # Remaining Keplerian PhotAstrom grids (non-anchor) are release-only.
+    is_kepler = "CircOrbs" in name or "EllOrbs" in name
+    is_psbl_fsbl = name.startswith("PSBL") or name.startswith("FSBL")
+    if is_kepler and is_psbl_fsbl and "PhotAstrom" in name:
+        return True
+
+    return False
+
+
 def _lnl_params():
-    """Parametrize JAX likelihood classes. Limb phot+astrom is slow.
+    """Parametrize JAX likelihood classes. Expensive families are slow.
 
     Returns
     -------
@@ -516,14 +568,7 @@ def _lnl_params():
     """
     params = []
     for name in _LNL_NAMES:
-        slow = (
-            "Limb_PhotAstrom" in name
-            or (
-                name.startswith("FSBL")
-                and ("LinOrbs" in name or "AccOrbs" in name)
-            )
-        )
-        if slow:
+        if _lnl_is_slow(name):
             params.append(pytest.param(name, marks=pytest.mark.slow))
         else:
             params.append(name)

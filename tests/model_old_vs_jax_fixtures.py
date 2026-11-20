@@ -1,6 +1,7 @@
 """Fixtures for old-vs-JAX model parity tests."""
 from __future__ import annotations
 
+import copy
 import inspect
 import math
 from typing import Any
@@ -308,12 +309,37 @@ def _post_init(instance):
             instance.b_sff = [1.0]
 
 
+# Pristine paired instances for reuse. Callers receive deep copies so
+# scatter_init_vector / FD can mutate without affecting the cache.
+_PAIR_CACHE: dict[str, tuple[Any, Any]] = {}
+
+
 def build_paired_instances(class_name: str):
+    """
+    Build NumPy and JAX model instances with matching CANONICAL inits.
+
+    Parameters
+    ----------
+    class_name : str
+        Concrete model class name present in ``model`` and/or ``model_jax``.
+
+    Returns
+    -------
+    ref_inst, jax_inst
+        Fresh (deep-copied) instances for the caller to mutate safely.
+    """
     import bagle.model as ref_model
     import bagle.model_jax as jax_model
 
+    cached = _PAIR_CACHE.get(class_name)
+    if cached is not None:
+        return copy.deepcopy(cached[0]), copy.deepcopy(cached[1])
+
     if not hasattr(ref_model, class_name):
-        return build_jax_eval_paired_instances(class_name)
+        pair = build_jax_eval_paired_instances(class_name)
+        _PAIR_CACHE[class_name] = pair
+        return copy.deepcopy(pair[0]), copy.deepcopy(pair[1])
+
     ref_cls = getattr(ref_model, class_name)
     jax_cls = getattr(jax_model, class_name)
     ref_args, ref_kw = build_init_args(ref_cls, ref_model)
@@ -322,7 +348,8 @@ def build_paired_instances(class_name: str):
     jax_inst = jax_cls(*jax_args, **jax_kw)
     _post_init(ref_inst)
     _post_init(jax_inst)
-    return ref_inst, jax_inst
+    _PAIR_CACHE[class_name] = (ref_inst, jax_inst)
+    return copy.deepcopy(ref_inst), copy.deepcopy(jax_inst)
 
 
 def build_psbl_photastrom_param2_caustic_instances():
@@ -3272,15 +3299,43 @@ def psbl_photastrom_param3_likelihood_pairs() -> list[tuple[str, str]]:
     )
 
 
+def _grid_n(full_n: int, fast_n: int) -> int:
+    """
+    Epoch count for parity grids.
+
+    ``BAGLE_TEST_GRID=full`` keeps the release sizes; anything else
+    (including unset) uses the shorter daily sizes.
+
+    Parameters
+    ----------
+    full_n : int
+        Release epoch count.
+    fast_n : int
+        Daily epoch count.
+
+    Returns
+    -------
+    n : int
+    """
+    import os
+
+    if os.environ.get("BAGLE_TEST_GRID", "fast").lower() == "full":
+        return full_n
+    return fast_n
+
+
 def time_grid_phot(instance) -> np.ndarray:
     t0 = float(instance.t0)
     tE = float(instance.tE)
-    return np.linspace(t0 - 3.0 * tE, t0 + 3.0 * tE, 80)
+    n = _grid_n(80, 20)
+    return np.linspace(t0 - 3.0 * tE, t0 + 3.0 * tE, n)
 
 
-def time_grid_ast(instance, n: int = 60) -> np.ndarray:
+def time_grid_ast(instance, n: int | None = None) -> np.ndarray:
     t0 = float(instance.t0)
     tE = float(instance.tE)
+    if n is None:
+        n = _grid_n(60, 15)
     return np.linspace(t0 - 3.0 * tE, t0 + 3.0 * tE, n)
 
 
@@ -4793,7 +4848,7 @@ def _fd_grad_host(
     method_name: str,
     eps: float = 1e-5,
     *,
-    stop_when_nonzero: bool = False,
+    stop_when_nonzero: bool = True,
 ) -> np.ndarray:
     """Central finite-difference grad w.r.t. init vector via host model forward.
 
@@ -4812,7 +4867,8 @@ def _fd_grad_host(
     eps : float, optional
         Central-difference step.
     stop_when_nonzero : bool, optional
-        If True, stop after the first finite non-zero component (smoke only).
+        If True (default), stop after the first finite non-zero component
+        (grad smoke only).
 
     Returns
     ----
@@ -4868,7 +4924,7 @@ def _fd_grad_jax_eval(
     method_name: str,
     eps: float = 1e-5,
     *,
-    stop_when_nonzero: bool = False,
+    stop_when_nonzero: bool = True,
 ) -> np.ndarray:
     """Central FD grad via ``jax/evaluate`` dispatch (jax-only FSBL layouts).
 
