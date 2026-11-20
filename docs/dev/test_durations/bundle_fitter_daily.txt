@@ -1,124 +1,22 @@
-...............................F.s..............................         [100%]
-=================================== FAILURES ===================================
-E   AssertionError: assert np.float64(51.79157374004262) < 50
-     +  where np.float64(51.79157374004262) = <ufunc 'absolute'>((np.float64(4955.914142126523) - np.float64(5007.705715866566)))
-     +    where <ufunc 'absolute'> = np.abs
------------------------------ Captured stdout call -----------------------------
-*************************************************
-*** Using Prior for prior function. ***
-*************************************************
- *****************************************************
- MultiNest v3.10
- Copyright Farhan Feroz & Mike Hobson
- Release Jul 2015
-
- no. of live points =  100
- dimensionality =   13
- *****************************************************
- Starting MultiNest
- generating live points
- live points generated, starting sampling
-Acceptance Rate:                        0.892857
-Replacements:                                150
-Total Samples:                               168
-Nested Sampling ln(Z):            **************
-Acceptance Rate:                        0.732601
-Replacements:                                200
-Total Samples:                               273
-Nested Sampling ln(Z):            -745739.110196
-Acceptance Rate:                        0.728863
-Replacements:                                250
-Total Samples:                               343
-Nested Sampling ln(Z):            -303162.681394
-Acceptance Rate:                        0.721154
-Replacements:                                300
-Total Samples:                               416
-Nested Sampling ln(Z):            -129275.502250
-Acceptance Rate:                        0.707071
-Replacements:                                350
-Total Samples:                               495
-Nested Sampling ln(Z):             -36283.195526
-Acceptance Rate:                        0.681431
-Replacements:                                400
-Total Samples:                               587
-Nested Sampling ln(Z):             -15169.831186
-Acceptance Rate:                        0.674663
-Replacements:                                450
-Total Samples:                               667
-Nested Sampling ln(Z):              -2913.454573
-Acceptance Rate:                        0.651042
-Replacements:                                500
-Total Samples:                               768
-Nested Sampling ln(Z):               -106.482289
-Acceptance Rate:                        0.617284
-Replacements:                                550
-Total Samples:                               891
-Nested Sampling ln(Z):               1333.362507
-Acceptance Rate:                        0.583658
-Replacements:                                600
-Total Samples:                              1028
-Nested Sampling ln(Z):               2254.420057
-Acceptance Rate:                        0.571680
-Replacements:                                650
-Total Samples:                              1137
-Nested Sampling ln(Z):               2865.849842
-Acceptance Rate:                        0.550747
-Replacements:                                700
-Total Samples:                              1271
-Nested Sampling ln(Z):               3336.007065
-Acceptance Rate:                        0.524476
-Replacements:                                750
-Total Samples:                              1430
-Nested Sampling ln(Z):               3654.050752
-Acceptance Rate:                        0.512492
-Replacements:                                800
-Total Samples:                              1561
-Nested Sampling ln(Z):               3899.406835
-Acceptance Rate:                        0.491614
-Replacements:                                850
-Total Samples:                              1729
-Nested Sampling ln(Z):               4090.436752
-Acceptance Rate:                        0.453858
-Replacements:                                900
-Total Samples:                              1983
-Nested Sampling ln(Z):               4274.796563
-Acceptance Rate:                        0.443718
-Replacements:                                950
-Total Samples:                              2141
-Nested Sampling ln(Z):               4404.422389
-Acceptance Rate:                        0.428633
-Replacements:                               1000
-Total Samples:                              2333
-Nested Sampling ln(Z):               4492.546862
-Acceptance Rate:                        0.418327
-Replacements:                               1050
-Total Samples:                              2510
-Nested Sampling ln(Z):               4568.048215
-Acceptance Rate:                        0.409226
-Replacements:                               1100
-Total Samples:                              2688
-Nested Sampling ln(Z):               4645.019161
- ln(ev)=   4645.0191609276408      +/-   6.8260162213613844     
- Total Likelihood Evaluations:         2688
- Sampling finished. Exiting MultiNest
-/Users/jlu/code/python/bagle/tests/test_model_fitter_jax.py:223: AssertionError: assert np.float64(51.79157374004262) < 50
+# Daily pytest duration note
+# Generated: 2026-11-19 evening PT (cloud run UTC 2026-11-20)
+# Env: micromamba py314, PYTHONPATH=src, JAX_ENABLE_X64=1
+# Command noted in file body (pytest output below).
+#
+.................................s..............................         [100%]
 =============================== warnings summary ===============================
-<frozen importlib._bootstrap>:491
-  <frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
-    return f(*args, **kwds)
-
-../../../.conda/envs/py314/lib/python3.14/site-packages/erfa/core.py:133
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/erfa/core.py:133: ErfaWarning: ERFA function "dtf2d" yielded 1 of "dubious year (Note 6)"
+.mamba/envs/py314/lib/python3.14/site-packages/erfa/core.py:133
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/erfa/core.py:133: ErfaWarning: ERFA function "dtf2d" yielded 1 of "dubious year (Note 6)"
     warn(f'ERFA function "{func_name}" yielded {wmsg}', ErfaWarning)
 
 tests/test_model_fitter_jax.py::test_pspl_parallax_fit
 tests/test_model_fitter_jax.py::test_PSBL_phot_nopar_fit
 tests/test_model_fitter_jax.py::test_PSBL_phot_nopar_fit
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/astropy/io/fits/connect.py:218: AstropyUserWarning: hdu= was not specified but multiple tables are present, reading in first available table (hdu=1)
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/astropy/io/fits/connect.py:218: AstropyUserWarning: hdu= was not specified but multiple tables are present, reading in first available table (hdu=1)
     warnings.warn(
 
 tests/test_model_fitter_jax.py::test_PSBL_phot_nopar_fit
-  /Users/jlu/code/python/bagle/src/bagle/model_fitter_jax.py:9269: UserWarning: Ignoring specified arguments in this call because figure with num: 1 already exists
+  /workspace/src/bagle/model_fitter_jax.py:9269: UserWarning: Ignoring specified arguments in this call because figure with num: 1 already exists
     fig = plt.figure(1, figsize=(10, 10))
 
 tests/test_model_fitter_jax.py::test_old_data_priors_supported_in_pymc[make_piS]
@@ -126,16 +24,40 @@ tests/test_model_fitter_jax.py::test_old_data_priors_supported_in_pymc[make_mag_
 tests/test_model_fitter_jax.py::test_scipy_to_pymc_priors[make_truncnorm_gen-args4]
 tests/test_model_fitter_jax.py::test_scipy_to_pymc_priors[make_truncnorm_gen_with_bounds-args5]
 tests/test_model_fitter_jax.py::test_scipy_to_pymc_priors[make_piS-args7]
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run truncated_normal_rv{"(),(),(),()->()"}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run truncated_normal_rv{"(),(),(),()->()"}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
     warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ============================= slowest 25 durations =============================
-14.75s call     tests/test_model_fitter_jax.py::test_PSBL_phot_nopar_fit
-10.11s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[FSBL_PhotAstrom_noPar_LinOrbs_Param1]
-8.94s call     tests/test_model_fitter_jax.py::test_pspl_parallax_fit
-
-(22 durations < 2s hidden.)
-=========================== short test summary info ============================
-FAILED tests/test_model_fitter_jax.py::test_pspl_parallax_fit - AssertionErro...
-1 failed, 62 passed, 1 skipped, 36 deselected, 11 warnings in 51.39s
+48.79s call     tests/test_model_fitter_jax.py::test_pspl_parallax_fit
+30.97s call     tests/test_model_fitter_jax.py::test_PSBL_phot_nopar_fit
+10.68s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[FSBL_PhotAstrom_noPar_LinOrbs_Param1]
+3.00s call     tests/test_fsbl_vs_vbm.py::test_fsbl_finite_source_vs_vbm[1.0-0.1-0.01-0.05-caustic_s1_q0.1_rho0.01]
+2.76s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[FSBL_PhotAstrom_Par_LinOrbs_Param1]
+2.51s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[FSBL_PhotAstrom_noPar_AccOrbs_Param1]
+2.44s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[FSBL_PhotAstrom_Par_AccOrbs_Param1]
+2.13s call     tests/test_jax_swap_fixes.py::test_orbit_traced_matches_host[PSBL_PhotAstrom_noPar_LinOrbs_Param1]
+1.54s call     tests/test_jax_swap_fixes.py::test_bfspl_phot_traced_matches_host[BFSPL_Phot_noPar_Param1]
+1.40s call     tests/test_jax_swap_fixes.py::test_gp_kernel_matches_celerite
+1.20s call     tests/test_jax_swap_fixes.py::test_bfspl_phot_traced_matches_host[BFSPL_Limb_Phot_noPar_Param1]
+1.15s call     tests/test_model_fitter_jax.py::test_old_data_priors_supported_in_pymc[make_piS]
+0.93s call     tests/test_jax_swap_fixes.py::test_model_jax_imports_without_tkinter
+0.83s call     tests/test_model_fitter_jax.py::test_microlens_solver_numpyro_grad_finite
+0.77s call     tests/test_jax_swap_fixes.py::test_gp_traced_matches_host[PSBL_Phot_noPar_GP_Param1-False]
+0.61s call     tests/test_fsbl_vs_vbm.py::test_bfspl_matches_two_fspl_sources
+0.60s call     tests/test_jax_swap_fixes.py::test_gp_traced_matches_host[PSPL_Phot_noPar_GP_Param1-False]
+0.57s call     tests/test_jax_swap_fixes.py::test_gp_alt_s0_names_traced_matches_host[PSPL_Phot_Par_GP_Param1_2]
+0.43s call     tests/test_model_fitter_jax.py::test_make_gen_numpyro_priors[make_invgamma_gen-args6]
+0.42s call     tests/test_model_fitter_jax.py::test_scipy_to_numpyro_priors[make_invgamma_gen-args4]
+0.42s call     tests/test_fsbl_vs_vbm.py::test_fsbl_off_caustic_vs_vbm
+0.42s call     tests/test_jax_swap_fixes.py::test_gp_traced_matches_host[PSBL_Phot_Par_GP_Param1-True]
+0.30s call     tests/test_jax_swap_fixes.py::test_gp_traced_matches_host[PSPL_Phot_Par_GP_Param1-True]
+0.29s call     tests/test_jax_swap_fixes.py::test_geoproj_traced_matches_host
+0.26s call     tests/test_model_fitter_jax.py::test_old_data_priors_supported_in_pymc[make_mag_base_gen]
+63 passed, 1 skipped, 36 deselected, 10 warnings in 120.53s (0:02:00)
+Replacements:                               1100
+Total Samples:                              1877
+Nested Sampling ln(Z):               1570.717203
+ ln(ev)=   1570.7172028086682      +/-   3.9754940037365478     
+ Total Likelihood Evaluations:         1877
+ Sampling finished. Exiting MultiNest

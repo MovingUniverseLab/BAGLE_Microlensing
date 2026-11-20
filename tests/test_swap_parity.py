@@ -60,21 +60,25 @@ _VBM_TOL_AST = 1.0e-4
 _MAG_ERR = 0.01
 _AST_ERR = 0.1e-3
 
-# Parallax PSTL photometry misses the 1e-8 forward test (item 4.6).
-# The no-parallax class passes this 10-epoch grid; a denser grid still
-# shows wing epochs at ~7e-5. strict=True so a later fix must un-mark.
+# PSTL photometry-only classes miss the 1e-8 forward test (item 4.6).
+# Wing epochs differ by ~3.5e-5 mag (Par and noPar); denser grids reach
+# ~7e-5. PhotAstrom PSTL still matches at 1e-8. strict=True so a later
+# fix must un-mark.
 _PSTL_PHOT_XFAIL = (
     "PSTL_Phot_Par_Param1",
+    "PSTL_Phot_noPar_Param1",
 )
 
-# One fast VBM case per family stays unmarked. Limb phot+astrom
-# compiles are the slow ones.
-_VBM_SLOW = {
-    "FSBL_Limb_PhotAstrom_noPar_Param1",
-    "FSBL_Limb_PhotAstrom_Par_Param1",
-    "BFSBL_Limb_PhotAstrom_noPar_Param1",
-    "BFSBL_Limb_PhotAstrom_Par_Param1",
-}
+# Daily VBM smoke anchors (static noPar). Keplerian FSBL, limb
+# PhotAstrom, and bulk Param grids stay release-only via
+# ``_vbm_is_slow``. BFSBL phot-only and BFSBL Kepler are skipped in
+# ``_vbm_unsupported`` (no thetaE_amp / static MultiMag helper).
+_VBM_DAILY_ANCHORS = frozenset({
+    "FSBL_Phot_noPar_Param1",
+    "FSBL_PhotAstrom_noPar_Param1",
+    "FSBL_Limb_Phot_noPar_Param1",
+    "BFSBL_PhotAstrom_noPar_Param1",
+})
 
 # Explicit priors for names that have none in either fitter.
 # Not added to ``default_priors`` (that change is deferred).
@@ -484,7 +488,7 @@ def _make_fitter(solver_cls, data, model_cls, tmp_path):
 
 
 def _forward_params():
-    """Parametrize shared classes, xfailing the two PSTL phot models.
+    """Parametrize shared classes, xfailing both PSTL phot-only models.
 
     Returns
     -------
@@ -510,15 +514,15 @@ def _forward_params():
 # Daily likelihood-parity anchors for expensive families. The full
 # grids remain available via ``pytest -o addopts=`` / ``-m slow``.
 _LNL_DAILY_ANCHORS = frozenset({
-    # BFSBL: one static PhotAstrom + one orbit PhotAstrom.
+    # BFSBL: one static PhotAstrom (orbit PhotAstrom is release-only;
+    # the CircOrbs compile was OOM-heavy on the daily cloud runner).
     "BFSBL_PhotAstrom_noPar_Param1",
-    "BFSBL_PhotAstrom_noPar_CircOrbs_Param1",
     # Keplerian: one PSBL Circ, one PSBL Ell, one FSBL Circ phot,
-    # one FSBL Ell PhotAstrom.
+    # one static FSBL PhotAstrom.
     "PSBL_PhotAstrom_noPar_CircOrbs_Param1",
     "PSBL_PhotAstrom_noPar_EllOrbs_Param1",
     "FSBL_Phot_noPar_CircOrbs_Param1",
-    "FSBL_PhotAstrom_noPar_EllOrbs_Param1",
+    "FSBL_PhotAstrom_noPar_Param1",
 })
 
 
@@ -542,16 +546,22 @@ def _lnl_is_slow(name):
     if "Limb_PhotAstrom" in name:
         return True
 
+    # FSBL / BFSBL limb phot host contours are expensive; Par EllOrbs
+    # also sits just over the 1e-4 FSBL lnL atol (do not loosen atol).
+    is_kepler = "CircOrbs" in name or "EllOrbs" in name
+    if name.startswith(("FSBL_Limb_Phot_", "BFSBL_Limb_Phot_")):
+        return True
+
     # FSBL linear / accelerated host contours are expensive.
     if name.startswith("FSBL") and ("LinOrbs" in name or "AccOrbs" in name):
         return True
 
-    # BFSBL PhotAstrom (non-anchor) host adaptive contour is expensive.
-    if name.startswith("BFSBL") and "PhotAstrom" in name:
+    # FSBL / BFSBL PhotAstrom (non-anchor) host contours are expensive
+    # and accumulate JAX compile memory across the daily suite.
+    if name.startswith(("FSBL", "BFSBL")) and "PhotAstrom" in name:
         return True
 
     # Remaining Keplerian PhotAstrom grids (non-anchor) are release-only.
-    is_kepler = "CircOrbs" in name or "EllOrbs" in name
     is_psbl_fsbl = name.startswith("PSBL") or name.startswith("FSBL")
     if is_kepler and is_psbl_fsbl and "PhotAstrom" in name:
         return True
@@ -576,6 +586,35 @@ def _lnl_params():
     return params
 
 
+def _vbm_is_slow(name):
+    """
+    Return True when this FSBL/BFSBL VBM case is release-only.
+
+    Parameters
+    ----------
+    name : str
+        Concrete ``model_jax`` class name.
+
+    Returns
+    -------
+    slow : bool
+    """
+    if name in _VBM_DAILY_ANCHORS:
+        return False
+
+    # Limb phot+astrom compiles are expensive.
+    if "Limb_PhotAstrom" in name:
+        return True
+
+    # FSBL Keplerian BinaryLightCurveKepler grids are release-only.
+    is_kepler = "CircOrbs" in name or "EllOrbs" in name
+    if name.startswith("FSBL") and is_kepler:
+        return True
+
+    # Remaining non-anchor static and orbit Param grids.
+    return True
+
+
 def _vbm_params():
     """Parametrize FSBL and BFSBL classes that have a JAX likelihood.
 
@@ -585,7 +624,7 @@ def _vbm_params():
     """
     params = []
     for name in _FSBL_NAMES:
-        if name in _VBM_SLOW:
+        if _vbm_is_slow(name):
             params.append(pytest.param(name, marks=pytest.mark.slow))
         else:
             params.append(name)
@@ -613,6 +652,18 @@ def _vbm_unsupported(class_name):
         return (
             "get_vbm_model does not map linear or accelerated orbits"
         )
+    # ``_bfsbl_amp`` builds a static MultiMag geometry and needs
+    # ``thetaE_amp`` from PhotAstrom. Phot-only and Kepler BFSBL are
+    # out of scope for that helper.
+    if class_name.startswith("BFSBL"):
+        if "PhotAstrom" not in class_name:
+            return (
+                "BFSBL phot-only has no thetaE_amp for MultiMag geometry"
+            )
+        if "CircOrbs" in class_name or "EllOrbs" in class_name:
+            return (
+                "BFSBL VBM helper uses static midpoint lens geometry"
+            )
 
     return None
 

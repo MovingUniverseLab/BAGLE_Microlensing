@@ -851,7 +851,9 @@ def test_parity_bsbl_photastrom_ellorbs_param1_likelihood(
 
 
 @pytest.mark.parametrize("class_name,method_name", fspl_photastrom_param1_pairs())
+@pytest.mark.slow
 def test_parity_fspl_photastrom_param1(class_name, method_name):
+    """Release-only: model.py AMG vs model_jax clustered limb (item 3.3)."""
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)
@@ -1188,7 +1190,9 @@ def test_parity_bsbl_photastrom_ast_likelihood_gaps(class_name, method_name):
 
 
 @pytest.mark.parametrize("class_name,method_name", bfspl_photastrom_param1_pairs())
+@pytest.mark.slow
 def test_parity_bfspl_photastrom_param1(class_name, method_name):
+    """Release-only: model.py AMG vs model_jax clustered limb (item 3.3)."""
     old_inst, jax_inst = build_paired_instances(class_name)
     t = _time_grid(method_name, old_inst)
     _assert_parity(old_inst, jax_inst, method_name, t)

@@ -1,26 +1,37 @@
+# Daily pytest duration note
+# Generated: 2026-11-19 evening PT (cloud run UTC 2026-11-20)
+# Env: micromamba py314, PYTHONPATH=src, JAX_ENABLE_X64=1
+# Command noted in file body (pytest output below).
+#
 .........................................                                [100%]
 =============================== warnings summary ===============================
-<frozen importlib._bootstrap>:491
-  <frozen importlib._bootstrap>:491: FutureWarning: pybind11-bound class 'celerite.solver.CholeskySolver' is using an old-style placement-new '__setstate__' which has been deprecated. See the upgrade guide in pybind11's docs. This message is only visible when compiled in debug mode.
-    return f(*args, **kwds)
-
 tests/test_jax_likelihood.py::test_loglikelihood_op_jax_grad
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run JAXOp{input_types=(TensorType(float64, shape=(7,)), TensorType(float64, shape=())), output_types=(TensorType(float64, shape=(7,)),), jax_func=<function LogLikelihoodOp.pullback.<locals>.vjp_fn at 0x34a0b38a0>}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run JAXOp{input_types=(TensorType(float64, shape=(7,)), TensorType(float64, shape=())), output_types=(TensorType(float64, shape=(7,)),), jax_func=<function LogLikelihoodOp.pullback.<locals>.vjp_fn at 0x7fe4650c26c0>}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
     warnings.warn(
 
 tests/test_jax_likelihood.py::test_jax_joint_loglik_matches_fitter_pspl_photastrom
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/erfa/core.py:133: ErfaWarning: ERFA function "dtf2d" yielded 1 of "dubious year (Note 6)"
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/erfa/core.py:133: ErfaWarning: ERFA function "dtf2d" yielded 1 of "dubious year (Note 6)"
     warn(f'ERFA function "{func_name}" yielded {wmsg}', ErfaWarning)
 
 tests/test_jax_likelihood.py::test_loglikelihood_op_jax_grad_pspl_photastrom
-  /Users/jlu/.conda/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run JAXOp{input_types=(TensorType(float64, shape=(13,)), TensorType(float64, shape=())), output_types=(TensorType(float64, shape=(13,)),), jax_func=<function LogLikelihoodOp.pullback.<locals>.vjp_fn at 0x3c8902980>}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
+  /workspace/.mamba/envs/py314/lib/python3.14/site-packages/pytensor/link/numba/dispatch/basic.py:234: UserWarning: Numba will use object mode to run JAXOp{input_types=(TensorType(float64, shape=(13,)), TensorType(float64, shape=())), output_types=(TensorType(float64, shape=(13,)),), jax_func=<function LogLikelihoodOp.pullback.<locals>.vjp_fn at 0x7fe424430a90>}'s perform method. Set `pytensor.config.compiler_verbose = True` to see more details.
     warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-============================= slowest 20 durations =============================
-1.46s call     tests/test_jax_likelihood.py::test_G05_fspl_tied_xS0_grad_nonzero
-1.11s call     tests/test_jax_physics.py::test_psbl_photometry_matches_psbl_model
-1.10s call     tests/test_jax_likelihood.py::test_A10_fspl_tied_xS0_two_filters
-
-(17 durations < 1s hidden.)
-41 passed, 2 deselected, 4 warnings in 11.16s
+============================= slowest 15 durations =============================
+6.72s call     tests/test_jax_likelihood.py::test_G05_fspl_tied_xS0_grad_nonzero
+3.67s call     tests/test_jax_likelihood.py::test_A10_fspl_tied_xS0_two_filters
+1.60s call     tests/test_jax_physics.py::test_psbl_photometry_matches_psbl_model
+1.46s call     tests/test_jax_likelihood.py::test_A09_fspl_traced_mag_matches_host
+1.05s call     tests/test_jax_likelihood.py::test_jax_joint_loglik_matches_fitter_pspl_photastrom
+0.88s call     tests/test_jax_physics.py::test_pspl_trajectory_grad_wrt_piE
+0.73s call     tests/test_jax_likelihood.py::test_loglikelihood_op_jax_grad_pspl_photastrom
+0.71s call     tests/test_jax_likelihood.py::test_jax_joint_loglik_grad_finite_pspl_photastrom
+0.68s call     tests/test_jax_likelihood.py::test_loglikelihood_op_jax_grad
+0.52s call     tests/test_jax_likelihood.py::test_jax_pspl_astrom_param3_loglik
+0.48s call     tests/test_jax_physics.py::test_psbl_image_positions_matches_model
+0.43s call     tests/test_jax_likelihood.py::test_gp_model_supported_for_analytic_jax_loglik
+0.42s call     tests/test_jax_likelihood.py::test_G06_nan_mag_batch_penalty
+0.37s call     tests/test_jax_likelihood.py::test_explicit_phot_param_method_replaces_packing
+0.36s call     tests/test_jax_likelihood.py::test_jax_loglik_matches_fitter_pspl
+41 passed, 2 deselected, 3 warnings in 24.11s
