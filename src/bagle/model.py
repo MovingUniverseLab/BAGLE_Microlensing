@@ -3406,6 +3406,106 @@ class PSPL_PhotParam3(PSPL_Param):
 
         return
 
+
+class PSPL_PhotParam4(PSPL_Param):
+    """
+    Point source point lens model for microlensing photometry only.
+
+    Photometry-only counterpart of :class:`PSPL_PhotAstromParam7`.
+    Same as :class:`PSPL_PhotParam2` except the microlensing parallax is
+    sampled as an amplitude and direction,
+    :math:`\\log_{10}\\pi_E` and :math:`\\phi_{\\mu_\\mathrm{rel}}`,
+    instead of Cartesian :math:`(\\pi_{E,E},\\pi_{E,N})`.
+
+    :math:`\\phi_{\\mu_\\mathrm{rel}}` is the angle of
+    :math:`\\vec{\\mu}_\\mathrm{rel}` (and of :math:`\\vec{\\pi}_E`)
+    in degrees East of North, so
+
+    .. math::
+
+        (\\pi_{E,E},\\,\\pi_{E,N})
+        = 10^{\\log_{10}\\pi_E}\\,(\\sin\\phi,\\,\\cos\\phi).
+
+    Attributes
+    ----------
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates.
+    u0_amp : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Positive when
+        u0_hat[0] > 0; negative when u0_hat[0] < 0.
+    tE : float
+        Einstein crossing time (days).
+    log10_piE : float
+        log10 of the microlensing parallax amplitude.
+    phi_muRel : float
+        Angle of the muRel (and piE) vector in degrees East of North.
+    b_sff : numpy array or list
+        Source flux fraction for each filter,
+        :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
+    mag_base : numpy array or list
+        Baseline magnitude for each photometric filter.
+
+    Notes
+    -----
+
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_base
+                       or b_sff (e.g. other photometric parameters).
+    """
+    fitter_param_names = ['t0', 'u0_amp', 'tE', 'log10_piE', 'phi_muRel',
+                          'b_sff', 'mag_base']
+    filt_param_names = ['b_sff', 'mag_base']
+    filt_param_usage = ['both', 'phot']
+    additional_param_names = ['piE_E', 'piE_N', 'mag_src']
+
+    paramAstromFlag = False
+    paramPhotFlag = True
+
+    def __init__(self, t0, u0_amp, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        self.t0 = t0
+        self.u0_amp = u0_amp
+        self.tE = tE
+        self.log10_piE = log10_piE
+        self.phi_muRel = phi_muRel  # degrees
+        self.b_sff = b_sff
+        self.mag_base = mag_base
+        self.raL = raL
+        self.decL = decL
+        self.obsLocation = obsLocation
+
+        # Must call after setting parameters.
+        # This checks for proper parameter formatting.
+        super().__init__()
+
+        # Derived quantities
+        self.phi_muRel_rad = np.deg2rad(phi_muRel)
+        self.piE_amp = 10 ** log10_piE
+        self.piE = self.piE_amp * np.array([np.sin(self.phi_muRel_rad),
+                                            np.cos(self.phi_muRel_rad)])
+        self.piE_E, self.piE_N = self.piE
+
+        self.mag_src = self.mag_base - 2.5 * np.log10(self.b_sff)
+
+        self.thetaE_hat = self.piE / self.piE_amp
+        self.muRel_hat = self.thetaE_hat
+
+        # Sign convention same as Gould 2004 / PSPL_PhotParam2:
+        # u0_amp > 0 means u0_E > 0; u0_amp < 0 means u0_E < 0.
+        self.u0_hat = u0_hat_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
+
+
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     fitter_param_names = [
         't0_geotr',
@@ -29902,6 +30002,20 @@ class PSPL_Phot_noPar_Param3(ModelClassABC,
         checkconflicts(self)
 
 
+@inheritdocstring
+class PSPL_Phot_noPar_Param4(ModelClassABC,
+                             PSPL_Phot,
+                             PSPL_noParallax,
+                             PSPL_PhotParam4):
+    """
+    Microlensing params with log10_piE, phi_muRel, mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
 # PSPL_phot_parallax / PSPL_phot_multiphot_parallax
 @inheritdocstring
 class PSPL_Phot_Par_Param1(ModelClassABC,
@@ -29941,6 +30055,20 @@ class PSPL_Phot_Par_Param3(ModelClassABC,
                            PSPL_Phot,
                            PSPL_Parallax,
                            PSPL_PhotParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_Phot_Par_Param4(ModelClassABC,
+                           PSPL_Phot,
+                           PSPL_Parallax,
+                           PSPL_PhotParam4):
+    """
+    Microlensing params with log10_piE, phi_muRel, mag_base
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
