@@ -3506,6 +3506,81 @@ class PSPL_PhotParam4(PSPL_Param):
         return
 
 
+class PSPL_PhotParam5(PSPL_PhotParam4):
+    """
+    Point source point lens model for microlensing photometry only.
+
+    Same as :class:`PSPL_PhotParam4` except for the sign convention on
+    ``u0_amp``. Here the sign is defined relative to the direction of
+    :math:`\\vec{\\mu}_\\mathrm{rel}` rather than relative to East, so
+
+    .. math::
+
+        \\vec{u}_0 = u_{0,\\mathrm{amp}}\\,(\\cos\\phi,\\,-\\sin\\phi)
+
+    in (E, N). The closest-approach vector is
+    :math:`\\hat{\\theta}_E` rotated by -90 degrees in the (E, N) plane,
+    which is continuous in :math:`\\phi_{\\mu_\\mathrm{rel}}` for a fixed
+    ``u0_amp``. The Gould 2004 convention used by :class:`PSPL_PhotParam4`
+    (``u0_amp > 0`` means ``u0_E > 0``) flips the side of the trajectory
+    at :math:`\\phi = 90` and :math:`270` degrees, which splits continuous
+    posteriors into separate islands in (``u0_amp``, ``phi_muRel``).
+
+    The two conventions are related by
+
+    .. math::
+
+        u_{0,\\mathrm{amp}}^{\\mathrm{Param5}}
+        = u_{0,\\mathrm{amp}}^{\\mathrm{Param4}}\\,\\mathrm{sign}(\\cos\\phi).
+
+    Attributes
+    ----------
+    t0 : float
+        Time (MJD.DDD) of closest projected approach between source and lens
+        as seen in Solar System barycentric coordinates.
+    u0_amp : float
+        Angular distance between the lens and source on the plane of the
+        sky at closest approach in units of thetaE. Positive when the
+        source lies along :math:`(\\cos\\phi, -\\sin\\phi)` from the lens;
+        negative when it lies along :math:`(-\\cos\\phi, \\sin\\phi)`.
+    tE : float
+        Einstein crossing time (days).
+    log10_piE : float
+        log10 of the microlensing parallax amplitude.
+    phi_muRel : float
+        Angle of the muRel (and piE) vector in degrees East of North.
+    b_sff : numpy array or list
+        Source flux fraction for each filter,
+        :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
+    mag_base : numpy array or list
+        Baseline magnitude for each photometric filter.
+
+    Notes
+    -----
+
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+                       Can be a single string if all observer locations are
+                       identical. Otherwise, array of same length as mag_base
+                       or b_sff (e.g. other photometric parameters).
+    """
+
+    def __init__(self, t0, u0_amp, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        super().__init__(t0, u0_amp, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        # Replace the Gould 2004 u0 direction with the trajectory-relative one.
+        self.u0_hat = u0_hat_perp_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        return
+
+
 class PSPL_PhotParam1_geoproj(PSPL_PhotParam1):
     fitter_param_names = [
         't0_geotr',
@@ -30016,6 +30091,21 @@ class PSPL_Phot_noPar_Param4(ModelClassABC,
         checkconflicts(self)
 
 
+@inheritdocstring
+class PSPL_Phot_noPar_Param5(ModelClassABC,
+                             PSPL_Phot,
+                             PSPL_noParallax,
+                             PSPL_PhotParam5):
+    """
+    Microlensing params with log10_piE, phi_muRel, mag_base, and a
+    trajectory-relative u0_amp sign
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
 # PSPL_phot_parallax / PSPL_phot_multiphot_parallax
 @inheritdocstring
 class PSPL_Phot_Par_Param1(ModelClassABC,
@@ -30068,6 +30158,21 @@ class PSPL_Phot_Par_Param4(ModelClassABC,
                            PSPL_PhotParam4):
     """
     Microlensing params with log10_piE, phi_muRel, mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_Phot_Par_Param5(ModelClassABC,
+                           PSPL_Phot,
+                           PSPL_Parallax,
+                           PSPL_PhotParam5):
+    """
+    Microlensing params with log10_piE, phi_muRel, mag_base, and a
+    trajectory-relative u0_amp sign
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32779,6 +32884,42 @@ def u0_hat_from_thetaE_hat(thetaE_hat, beta):
             u0_hat[1] = np.abs(thetaE_hat[0])
         else:
             u0_hat[1] = -np.abs(thetaE_hat[0])
+
+    return u0_hat
+
+
+def u0_hat_perp_from_thetaE_hat(thetaE_hat, beta):
+    """
+    Calculate the closest approach vector direction with the sign of
+    ``beta`` (or ``u0_amp``) defined relative to the trajectory.
+
+    Unlike :func:`u0_hat_from_thetaE_hat` (Gould 2004 convention,
+    ``u0_amp > 0`` means ``u0_E > 0``), the returned direction is
+    ``thetaE_hat`` rotated by -90 degrees in the (E, N) plane:
+
+    .. math::
+
+        \\hat{u}_0 = \\mathrm{sign}(\\beta)\\,(\\hat{\\theta}_{E,N},\\,-\\hat{\\theta}_{E,E})
+
+    This is continuous in the direction of ``thetaE_hat`` for a fixed
+    sign of ``beta``. The two conventions are related by
+    ``u0_amp_perp = u0_amp_gould * sign(thetaE_hat[1])``.
+
+    Parameters
+    ----------
+    thetaE_hat : array_like
+        Unit vector along the relative proper motion in (E, N), shape ``(2,)``.
+    beta : float
+        Signed impact parameter (mas or Einstein radii). Only the sign is used.
+
+    Returns
+    -------
+    u0_hat : numpy.ndarray
+        Unit vector, shape ``(2,)``, perpendicular to ``thetaE_hat``.
+    """
+    thetaE_hat = np.asarray(thetaE_hat, dtype=float)
+    sign = 1.0 if beta > 0 else -1.0
+    u0_hat = sign * np.array([thetaE_hat[1], -thetaE_hat[0]])
 
     return u0_hat
 

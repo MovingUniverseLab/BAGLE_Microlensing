@@ -1237,6 +1237,71 @@ def test_pspl_photastrom_param7_matches_param3():
                                rtol=1e-12)
 
 
+def test_pspl_phot_param5_matches_param4():
+    """Param5 matches Param4 after u0_amp5 = u0_amp4 * sign(cos(phi))."""
+    raL = 17.5 * 15.0
+    decL = -30.0
+    t0 = 57650.0
+    tE = 80.0
+    log10_piE = np.log10(0.1)
+    b_sff = [0.9]
+    mag_base = [19.0]
+    t = np.linspace(t0 - 400, t0 + 400, 200)
+
+    for phi_muRel in [30.0, 120.0, 200.0, 269.5, 270.5, 330.0]:
+        for u0_amp4 in [0.2, -0.2]:
+            u0_amp5 = u0_amp4 * np.sign(np.cos(np.deg2rad(phi_muRel)))
+
+            p4 = model.PSPL_Phot_Par_Param4(
+                t0, u0_amp4, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                raL=raL, decL=decL)
+            p5 = model.PSPL_Phot_Par_Param5(
+                t0, u0_amp5, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                raL=raL, decL=decL)
+
+            np.testing.assert_allclose(p5.u0, p4.u0, atol=1e-14)
+            np.testing.assert_allclose(p5.piE, p4.piE, rtol=1e-12)
+            np.testing.assert_allclose(p5.get_photometry(t),
+                                       p4.get_photometry(t), rtol=1e-12)
+
+
+def test_pspl_phot_param5_u0_continuous_across_270():
+    """Param5 u0 is continuous across phi = 270 deg; Param4 u0 is not."""
+    args = (57650.0, -0.03, 100.0, np.log10(0.05))
+    kw = dict(b_sff=[1.0], mag_base=[19.0], raL=17.5 * 15.0, decL=-30.0)
+
+    p5_lo = model.PSPL_Phot_Par_Param5(*args, 269.9, **kw)
+    p5_hi = model.PSPL_Phot_Par_Param5(*args, 270.1, **kw)
+    p4_lo = model.PSPL_Phot_Par_Param4(*args, 269.9, **kw)
+    p4_hi = model.PSPL_Phot_Par_Param4(*args, 270.1, **kw)
+
+    # Small step in phi gives a small step in u0 for Param5 ...
+    assert np.linalg.norm(p5_hi.u0 - p5_lo.u0) < 1e-3
+    # ... but Param4 jumps to the other side of the trajectory.
+    assert np.linalg.norm(p4_hi.u0 - p4_lo.u0) > 0.05
+
+    # u0 is always perpendicular to the trajectory.
+    for p in [p5_lo, p5_hi]:
+        np.testing.assert_allclose(np.dot(p.u0_hat, p.thetaE_hat), 0.0,
+                                   atol=1e-14)
+
+
+def test_pspl_phot_nopar_param5_runs():
+    """noPar Param5 builds and gives the same photometry as noPar Param4."""
+    phi_muRel = 250.0
+    u0_amp4 = 0.15
+    u0_amp5 = u0_amp4 * np.sign(np.cos(np.deg2rad(phi_muRel)))
+    t = np.linspace(57000.0, 58000.0, 100)
+
+    p4 = model.PSPL_Phot_noPar_Param4(57500.0, u0_amp4, 60.0, np.log10(0.1),
+                                      phi_muRel, [1.0], [18.0])
+    p5 = model.PSPL_Phot_noPar_Param5(57500.0, u0_amp5, 60.0, np.log10(0.1),
+                                      phi_muRel, [1.0], [18.0])
+
+    np.testing.assert_allclose(p5.get_photometry(t), p4.get_photometry(t),
+                               rtol=1e-12)
+
+
 def compare_lumlens_parallax_bulge():
     raL_in = 17.30 * 15.  # Bulge R.A.
     decL_in = -29.0
