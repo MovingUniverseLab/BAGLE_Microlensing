@@ -5264,6 +5264,105 @@ class PSPL_PhotAstromParam7(PSPL_Param):
         return
 
 
+class PSPL_PhotAstromParam8(PSPL_PhotAstromParam7):
+    """
+    Point Source Point Lens model for photometry and astrometry.
+
+    Same as :class:`PSPL_PhotAstromParam7` except for the sign convention on
+    ``u0_amp``. Here the sign is defined relative to the direction of
+    :math:`\\vec{\\mu}_\\mathrm{rel}` rather than relative to East, so
+
+    .. math::
+
+        \\vec{u}_0 = u_{0,\\mathrm{amp}}\\,(\\cos\\phi,\\,-\\sin\\phi)
+
+    in (E, N). The closest-approach vector is
+    :math:`\\hat{\\theta}_E` rotated by -90 degrees in the (E, N) plane,
+    which is continuous in :math:`\\phi_{\\mu_\\mathrm{rel}}` for a fixed
+    ``u0_amp``. The Gould 2004 convention used by
+    :class:`PSPL_PhotAstromParam7` (``u0_amp > 0`` means ``u0_E > 0``)
+    flips the side of the trajectory at :math:`\\phi = 90` and :math:`270`
+    degrees, which splits continuous posteriors into separate islands in
+    (``u0_amp``, ``phi_muRel``).
+
+    The two conventions are related by
+
+    .. math::
+
+        u_{0,\\mathrm{amp}}^{\\mathrm{Param8}}
+        = u_{0,\\mathrm{amp}}^{\\mathrm{Param7}}\\,\\mathrm{sign}(\\cos\\phi).
+
+    Attributes
+    ----------
+    t0 : float
+        Time of photometric peak, as seen from Earth (MJD.DDD)
+    u0_amp : float
+        Angular distance between the source and the geometric center of
+        the lens on the plane of the sky at closest approach in units of
+        thetaE. Positive when the source lies along
+        :math:`(\\cos\\phi, -\\sin\\phi)` from the lens; negative when it
+        lies along :math:`(-\\cos\\phi, \\sin\\phi)`.
+    tE : float
+        Einstein crossing time (days).
+    log10_thetaE : float
+        log10 of the Einstein radius in mas.
+    piS : float
+        Source parallax (mas).
+    log10_piE : float
+        log10 of the microlensing parallax amplitude.
+    phi_muRel : float
+        Angle of the muRel (and piE) vector in degrees East of North.
+    xS0_E : array_like
+        R.A. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame. One entry per filter.
+    xS0_N : array_like
+        Dec. of source position on sky at t = t0 (arcsec) in an
+        arbitrary ref. frame. One entry per filter.
+    muS_E : float
+        RA source proper motion (mas/yr).
+    muS_N : float
+        Dec source proper motion (mas/yr).
+    b_sff : numpy array or list
+        Source flux fraction for each filter,
+        :math:`b_\\mathrm{sff} = f_S / (f_S + f_L + f_N)`.
+    mag_base : numpy array or list
+        Baseline magnitude for each photometric filter.
+
+    Notes
+    -----
+
+    .. note:: Required parameters if calculating with parallax
+
+        * raL: Right ascension of the lens in decimal degrees.
+        * decL: Declination of the lens in decimal degrees.
+        * obsLocation: The observers location for each photometric
+                       dataset (def=['earth']) such as 'jwst' or 'spitzer'.
+    """
+
+    def __init__(self, t0, u0_amp, tE, log10_thetaE, piS,
+                 log10_piE, phi_muRel,
+                 xS0_E, xS0_N,
+                 muS_E, muS_N,
+                 b_sff, mag_base,
+                 raL=None, decL=None, obsLocation='earth'):
+        super().__init__(t0, u0_amp, tE, log10_thetaE, piS,
+                         log10_piE, phi_muRel,
+                         xS0_E, xS0_N,
+                         muS_E, muS_N,
+                         b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        # Replace the Gould 2004 u0 direction with the trajectory-relative one,
+        # then redo the lens position that depends on it.
+        self.u0_hat = u0_hat_perp_from_thetaE_hat(self.thetaE_hat, self.u0_amp)
+        self.u0 = np.abs(self.u0_amp) * self.u0_hat
+
+        self.thetaS0 = self.u0 * self.thetaE_amp  # mas
+        self.xL0 = self.xS0 - (self.thetaS0 * 1e-3)
+
+        return
+
+
 class PSPL_GP_PhotParam1(PSPL_PhotParam1):
     # Optional data-set specific parameters -- handled as dictionaries
     # (with keys on the filter index). Not ever data-set needs these.
@@ -29999,6 +30098,36 @@ class PSPL_PhotAstrom_Par_Param7(ModelClassABC,
                                  PSPL_PhotAstromParam7):
     """
     Microlensing params with log10_piE, phi_muRel, log10_thetaE, mag_base
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_noPar_Param8(ModelClassABC,
+                                   PSPL_PhotAstrom,
+                                   PSPL_noParallax,
+                                   PSPL_PhotAstromParam8):
+    """
+    Microlensing params with log10_piE, phi_muRel, log10_thetaE, mag_base,
+    and a trajectory-relative u0_amp sign
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_PhotAstrom_Par_Param8(ModelClassABC,
+                                 PSPL_PhotAstrom,
+                                 PSPL_Parallax,
+                                 PSPL_PhotAstromParam8):
+    """
+    Microlensing params with log10_piE, phi_muRel, log10_thetaE, mag_base,
+    and a trajectory-relative u0_amp sign
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

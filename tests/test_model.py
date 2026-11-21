@@ -1237,6 +1237,42 @@ def test_pspl_photastrom_param7_matches_param3():
                                rtol=1e-12)
 
 
+def test_pspl_photastrom_param8_matches_param7():
+    """Param8 matches Param7 after u0_amp8 = u0_amp7 * sign(cos(phi))."""
+    raL = 17.5 * 15.0
+    decL = -30.0
+    t0 = 57650.0
+    tE = 80.0
+    log10_thetaE = np.log10(1.5)
+    piS = 0.125
+    log10_piE = np.log10(0.1)
+    xS0_E, xS0_N = 0.0, 0.0
+    muS_E, muS_N = -4.0, -4.0
+    b_sff = [0.9]
+    mag_base = [19.0]
+    t = np.linspace(t0 - 400, t0 + 400, 200)
+
+    for phi_muRel in [30.0, 120.0, 200.0, 269.5, 270.5, 330.0]:
+        for u0_amp7 in [0.2, -0.2]:
+            u0_amp8 = u0_amp7 * np.sign(np.cos(np.deg2rad(phi_muRel)))
+
+            p7 = model.PSPL_PhotAstrom_Par_Param7(
+                t0, u0_amp7, tE, log10_thetaE, piS, log10_piE, phi_muRel,
+                xS0_E, xS0_N, muS_E, muS_N, b_sff, mag_base,
+                raL=raL, decL=decL)
+            p8 = model.PSPL_PhotAstrom_Par_Param8(
+                t0, u0_amp8, tE, log10_thetaE, piS, log10_piE, phi_muRel,
+                xS0_E, xS0_N, muS_E, muS_N, b_sff, mag_base,
+                raL=raL, decL=decL)
+
+            np.testing.assert_allclose(p8.u0, p7.u0, atol=1e-14)
+            np.testing.assert_allclose(p8.xL0, p7.xL0, atol=1e-14)
+            np.testing.assert_allclose(p8.get_photometry(t),
+                                       p7.get_photometry(t), rtol=1e-12)
+            np.testing.assert_allclose(p8.get_astrometry(t),
+                                       p7.get_astrometry(t), atol=1e-12)
+
+
 def test_pspl_phot_param5_matches_param4():
     """Param5 matches Param4 after u0_amp5 = u0_amp4 * sign(cos(phi))."""
     raL = 17.5 * 15.0
