@@ -8,8 +8,9 @@ from astropy.coordinates import SkyCoord, get_body_barycentric, get_body_barycen
     CartesianRepresentation
 from astropy.time import Time
 
-# Use the JPL ephemerides.
-solar_system_ephemeris.set('jpl')
+# Use the JPL DE440s ephemeris (2020; covers 1849-2150, ~32 MB download on
+# first use). astropy's 'jpl' alias still means the older DE430.
+solar_system_ephemeris.set('de440s')
 
 # Setup a parallax cache
 try:
@@ -53,10 +54,10 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
         and ``(N_times, 2)`` for an array. Equations follow MulensModel,
         in the barycentric convention.
     """
-    # Ephemeris version 2: Horizons observers are ICRF-equatorial and
-    # Hermite-interpolated on a fixed grid. joblib clears this function's
-    # disk cache when its source changes, so bump this version whenever
-    # get_observer_barycentric changes its output.
+    # Ephemeris version 3: JPL DE440s for astropy bodies; Horizons observers
+    # are ICRF-equatorial and Hermite-interpolated on a fixed grid. joblib
+    # clears this function's disk cache when its source changes, so bump
+    # this version whenever get_observer_barycentric changes its output.
 
     # Munge inputs into astropy format.
     times = Time(mjd + 2400000.5, format='jd', scale='tdb')
