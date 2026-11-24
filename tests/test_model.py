@@ -5974,7 +5974,11 @@ def test_jwst_parallax_bulge1(plot=False, verbose=False):
     run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
                                      b_sff, imag, outdir=f'{TEST_OUTPUT_DIR}/test_pspl_par_jwst_bulge1/',
-                                     plot=plot, verbose=verbose)
+                                     plot=plot, verbose=verbose,
+                                     # JWST orbits L2, only ~0.01 AU from Earth, so
+                                     # the Earth-JWST difference is small: max |dA|
+                                     # ~3e-4 and max |dx| ~1.3e-6 arcsec here.
+                                     min_dA=1e-4, min_dx=5e-7)
 
     return
 
@@ -6004,7 +6008,8 @@ def test_spitzer_parallax_bulge1(plot=False, verbose=False):
 def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
                                      mL, t0, xS0, beta, muS, muL, dL, dS,
                                      b_sff, mag_src, outdir='',
-                                     plot=False, verbose=False):
+                                     plot=False, verbose=False,
+                                     min_dA=1e-3, min_dx=1e-6):
     if (outdir != '') and (outdir != None):
         os.makedirs(outdir, exist_ok=True)
 
@@ -6152,8 +6157,10 @@ def run_test_pspl_satellite_parallax(raL, decL, obsLocation,
         print('Einstein crossing time: ', pspl_e.tE, pspl_e.tE)
 
     # make sure the two light curves and trajectories are different.
-    assert np.abs(A_e - A_s).max() > 1e-3  # mag
-    assert np.abs(xS_e - xS_s_lensed).max() > 1e-6  # arcsec
+    # The satellite must change the light curve and astrometry by at
+    # least min_dA (amplification) and min_dx (arcsec).
+    assert np.abs(A_e - A_s).max() > min_dA
+    assert np.abs(xS_e - xS_s_lensed).max() > min_dx  # arcsec
 
     return
 
