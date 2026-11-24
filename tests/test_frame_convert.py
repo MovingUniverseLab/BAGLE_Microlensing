@@ -1359,3 +1359,59 @@ def test_mjd_prime_to_vbm_time_tdb_to_utc():
     assert 60.0 / 86400.0 < delta_day < 80.0 / 86400.0
 
     return None
+
+
+@pytest.mark.parametrize('t0par', [57000.0, 57010.0, 56950.0])
+def test_convert_helio_geo_ast_reproduces_astrometry(t0par):
+    """Geo-projected astrometry params rebuild the model's source path.
+
+    "helio" here is BAGLE's Solar System barycentric frame. In the
+    geo-projected frame, Earth's parallax is linearized about t0par:
+
+        xS(t) = xS0_g + 1e-3 * [muS_g * (t - t0_g) / 365.25
+                                + piS * (P(t) - P0 - dP0 * (t - t0par) / 365.25)]
+
+    in arcsec, with xS0 in arcsec, muS in mas/yr, piS in mas and P in AU.
+    Also checks that geo -> helio inverts helio -> geo.
+    """
+    from bagle import parallax
+    days_per_year = 365.25
+
+    # Two filters with different origins.
+    mod = model.PSPL_PhotAstrom_Par_Param2(
+        57000.0, 0.2, 40.0, 1.5, 0.15, 0.08, -0.04,
+        np.array([0.010, 0.5]), np.array([-0.020, -0.3]), 3.0, -1.0,
+        np.array([1.0, 0.9]), np.array([18.5, 19.0]),
+        raL=266.4, decL=-29.0)
+    ra, dec, piS = mod.raL, mod.decL, mod.piS
+
+    phot_g = fc.convert_helio_geo_phot(
+        ra, dec, mod.t0, mod.u0_amp, mod.tE, mod.piE[0], mod.piE[1], t0par,
+        'helio', 'SL', 'LS', 'EN', 'tb', plot=False)
+    t0_g = phot_g[0]
+
+    # Earth's parallax (AU) and its rate (AU/yr) at t0par.
+    P0 = parallax.parallax_in_direction(ra, dec, np.array([t0par]))[0]
+    dP0 = parallax.dparallax_dt_in_direction(ra, dec, np.array([t0par]))[0]
+
+    t = np.linspace(t0par - 300, t0par + 300, 61)
+    P = parallax.parallax_in_direction(ra, dec, t)
+    P_geo = P - P0 - np.outer((t - t0par) / days_per_year, dP0)
+
+    for f in range(2):
+        xE, xN, mE, mN = mod.get_geoproj_ast_params(t0par, filt_idx=f)
+
+        # Rebuild the source path from the geo-projected parameters.
+        rebuilt = (np.array([xE, xN])
+                   + np.outer((t - t0_g) / days_per_year, [mE, mN]) * 1e-3
+                   + piS * P_geo * 1e-3)
+        truth = mod.get_source_astrometry_unlensed(t, filt_idx=f)
+        np.testing.assert_allclose(rebuilt, truth, rtol=0, atol=1e-9)  # arcsec
+
+        # Converting back recovers the barycentric parameters.
+        back = fc.convert_helio_geo_ast(
+            ra, dec, piS, xE, xN, mE, mN, *phot_g, t0par,
+            in_frame='geo', murel_in='LS', murel_out='SL',
+            coord_in='tb', coord_out='EN', plot=False)
+        np.testing.assert_allclose(back[:2], mod.xS0[f], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(back[2:], mod.muS, rtol=0, atol=1e-12)

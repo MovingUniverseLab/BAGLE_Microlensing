@@ -25,6 +25,7 @@ dependencies = ["numpy>=1.24",
                 "astropy>=5.3",
                 "celerite",
                 "jplephem",
+                "astroquery>=0.4.7",
                 "scipy>=1.10",
                 "pymc>=5.0",
                 "arviz>=0.16",
@@ -62,8 +63,9 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.pytest.ini_options]
+addopts = ["-m", "not slow"]
 markers = [
-    "slow: multi-seed sampler comparisons. Deselect with -m 'not slow'.",
+    "slow: expensive or release-only tests. Skipped by default; run with pytest -m slow or pytest -o addopts=.",
 ]
 
 [tool.basedpyright]

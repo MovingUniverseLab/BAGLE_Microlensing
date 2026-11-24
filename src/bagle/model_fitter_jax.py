@@ -29,6 +29,7 @@ from astropy.stats import sigma_clipped_stats
 import json
 from string import digits
 import copy
+import pickle
 import pdb
 from datetime import date
 import yaml
@@ -575,6 +576,13 @@ def build_explicit_jax_loglik_fn(fitter):
             b_sff = param_vec[idx_b] if idx_b is not None else 1.0
             # Optional luminous-lens / mag args for PSBL-style methods.
             kwargs = dict(b_sff=b_sff, parallax_vectors=pvec)
+            # Geoproj astrometry converts t0 / piE with the same fixed data.
+            if 'raL' in ast_sig.parameters and 'raL' in fitter.data:
+                kwargs['raL'] = fitter.data['raL']
+            if 'decL' in ast_sig.parameters and 'decL' in fitter.data:
+                kwargs['decL'] = fitter.data['decL']
+            if 't0par' in ast_sig.parameters and 't0par' in fitter.data:
+                kwargs['t0par'] = fitter.data['t0par']
             # FSPL / BFSPL take a static n_outline; FSBL default None = adaptive.
             if 'n_outline' in ast_sig.parameters:
                 n_outline_default = ast_sig.parameters['n_outline'].default
@@ -2748,6 +2756,37 @@ class MicrolensSolver(Solver):
         
         return
 
+    def write_priors_pkl(self):
+        """
+        Save the priors dictionary to ``<basename>priors.pkl``.
+
+        This is file output only. It does not rebuild or evaluate priors.
+
+        Returns
+        -------
+        None
+        """
+        # Same pickle the NumPy fitter writes at the start of solve().
+        with open(self.outputfiles_basename + 'priors.pkl', 'wb') as f:
+            pickle.dump(self.priors, f)
+
+        return None
+
+    def load_priors(self):
+        """
+        Load priors from the pickle written by :meth:`write_priors_pkl`.
+
+        Replaces ``self.priors``. Does not rebuild or evaluate them.
+
+        Returns
+        -------
+        None
+        """
+        with open(self.outputfiles_basename + 'priors.pkl', 'rb') as f:
+            self.priors = pickle.load(f)
+
+        return None
+
     def solve(self):
         """
         Run a MultiNest fit to find the optimal parameters (and their
@@ -2759,6 +2798,7 @@ class MicrolensSolver(Solver):
         self._check_b_sff_upper_bound()
 
         self.write_params_yaml()
+        self.write_priors_pkl()
 
         # Choose whether to use self.Prior or self.Prior_from_post depending
         # on whether self.post_param_names is none or not.
@@ -3222,6 +3262,77 @@ class MicrolensSolver(Solver):
 
         return results_list
 
+    def plot_ultranest_style(self, sim_vals=None, fit_vals=None,
+                             remake_fits=False, dims=None, kde=True):
+        """
+        Trace plot using UltraNest instead of dynesty.
+
+        ``load_mnest_results_for_dynesty`` already returns the
+        ``(samples, logvol, weights)`` sequences UltraNest expects.
+
+        Parameters
+        ----------
+        sim_vals : dict, optional
+            Comparison values to overplot. One entry per parameter
+            name, or omitted names are left blank.
+        fit_vals : {'map', 'mean', 'maxl'}, optional
+            Draw the global summary value instead of ``sim_vals``.
+        remake_fits : bool, optional
+            Rebuild the MultiNest FITS tables before plotting.
+        dims : sequence of int, optional
+            Parameter indices to keep. UltraNest has no ``dims``
+            argument, so the samples are trimmed here.
+        kde : bool, optional
+            Passed through to UltraNest's trace plot.
+
+        Returns
+        -------
+        None
+        """
+        from ultranest.plot import traceplot as un_traceplot
+
+        res = self.load_mnest_results_for_dynesty(remake_fits=remake_fits)
+        smy = self.load_mnest_summary(remake_fits=remake_fits)
+
+        truths = None
+
+        # sim_vals is a name-keyed dict; the plot wants parameter order.
+        if sim_vals is not None:
+            truths = []
+            for param in self.all_param_names:
+                if param in sim_vals:
+                    truths.append(sim_vals[param])
+                else:
+                    truths.append(None)
+
+        # A summary column replaces the simulated truths.
+        if fit_vals == 'map':
+            truths = [smy['MAP_' + param][0]
+                      for param in self.all_param_names]
+        if fit_vals == 'mean':
+            truths = [smy['Mean_' + param][0]
+                      for param in self.all_param_names]
+        if fit_vals == 'maxl':
+            truths = [smy['MaxLike_' + param][0]
+                      for param in self.all_param_names]
+
+        # Trim before the plot. UltraNest has no dims keyword.
+        if dims is not None:
+            labels = [self.all_param_names[i] for i in dims]
+            res = dict(res, samples=res['samples'][:, dims])
+            if truths is not None:
+                truths = [truths[i] for i in dims]
+        else:
+            labels = self.all_param_names
+
+        un_traceplot(results=res, labels=labels,
+                     show_titles=True, truths=truths, kde=kde)
+        plt.subplots_adjust(hspace=0.7)
+        plt.savefig(self.outputfiles_basename + 'un_trace.png')
+        plt.close()
+
+        return None
+
     def plot_dynesty_style(self, sim_vals=None, fit_vals=None, remake_fits=False, dims=None,
                            traceplot=True, cornerplot=True, kde=True):
         """
@@ -3649,37 +3760,56 @@ class MicrolensSolver(Solver):
 
         return
 
-    def print_likelihood(self, params='best', verbose=True):
+    def print_likelihood(self, params='best', def_best='maxl', verbose=True):
         """
+        Print log-likelihood and chi-squared for one parameter set.
+
         Parameters
         ----------
-        model_params : str or dict, optional
-            model_params = 'best' will load up the best solution and calculate
-                the chi^2 based on those values. Alternatively, pass in a dictionary
-                with the model parameters to use.
+        params : str or dict, optional
+            ``'best'`` loads the best solution. Otherwise a parameter
+            dictionary.
+        def_best : {'maxl', 'map', 'mean', 'median'}, optional
+            Which best-fit definition ``get_best_fit`` uses when
+            ``params`` is ``'best'``.
+        verbose : bool, optional
+            Passed to the likelihood and chi-squared printers.
+
+        Returns
+        -------
+        None
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         lnL = self.log_likely(params, verbose)
-        chi2 = self.calc_chi2(params, verbose)
+        chi2 = self.calc_chi2(params, verbose=verbose)
 
         print('logL :           {0:.1f}'.format(lnL))
         print('chi2 :           {0:.1f}'.format(chi2))
 
-        return
+        return None
 
-    def calc_chi2(self, params='best', verbose=False):
+    def calc_chi2(self, params='best', def_best='maxl', verbose=False):
         """
+        Chi-squared from the photometry and astrometry likelihoods.
+
         Parameters
         ----------
         params : str or dict, optional
-            model_params = 'best' will load up the best solution and calculate
-            the chi^2 based on those values. Alternatively, pass in a dictionary
-            with the model parameters to use.
+            ``'best'`` loads the best solution. Otherwise a parameter
+            dictionary.
+        def_best : {'maxl', 'map', 'mean', 'median'}, optional
+            Which best-fit definition to use when ``params`` is ``'best'``.
+        verbose : bool, optional
+            Print the per-filter chi-squared terms.
+
+        Returns
+        -------
+        chi2 : float
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Fitted parameters keyed by name.
         params = self.to_param_dict(params)
@@ -3788,17 +3918,26 @@ class MicrolensSolver(Solver):
         return chi2
 
 
-    def calc_chi2_manual(self, params='best', verbose=False):
+    def calc_chi2_manual(self, params='best', def_best='maxl', verbose=False):
         """
+        Chi-squared from the model positions and magnitudes directly.
+
         Parameters
         ----------
         params : str or dict, optional
-            model_params = 'best' will load up the best solution and calculate
-            the chi^2 based on those values. Alternatively, pass in a dictionary
-            with the model parameters to use.
+            ``'best'`` loads the best solution. Otherwise a parameter
+            dictionary.
+        def_best : {'maxl', 'map', 'mean', 'median'}, optional
+            Which best-fit definition to use when ``params`` is ``'best'``.
+        verbose : bool, optional
+            Print the per-filter chi-squared terms.
+
+        Returns
+        -------
+        chi2 : float
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Fitted parameters keyed by name.
         params = self.to_param_dict(params)
@@ -3969,19 +4108,26 @@ class MicrolensSolver(Solver):
                 plt.savefig(self.outputfiles_basename + 'chi_m_cdf_{0}.png'.format(ii))
                 plt.close()
 
-    def get_residual(self, params='best'):
+    def get_residual(self, params='best', def_best='maxl'):
         """
-        This is basically copied from calc_chi2.
-        
+        Normalized residuals, copied from the chi-squared data access.
+
         Parameters
         ----------
         params : str or dict, optional
-            model_params = 'best' will load up the best solution and calculate
-            the chi^2 based on those values. Alternatively, pass in a dictionary
-            with the model parameters to use.
+            ``'best'`` loads the best solution. Otherwise a parameter
+            dictionary.
+        def_best : {'maxl', 'map', 'mean', 'median'}, optional
+            Which best-fit definition to use when ``params`` is ``'best'``.
+
+        Returns
+        -------
+        chi_x_list, chi_y_list, chi_m_list : list
+            Astrometric East and North residuals and photometric
+            residuals, in units of the data uncertainty.
         """
         if params == 'best':
-            params = self.get_best_fit()
+            params = self.get_best_fit(def_best=def_best)
 
         # Fitted parameters keyed by name.
         params = self.to_param_dict(params)
@@ -8899,6 +9045,218 @@ def debug_gp_nan(data, model, filt_index=0):
     plt.xlabel('delta t (days)')
     plt.legend()
     plt.savefig('nans_deltat_hist.png')
+
+
+def make_sed_distance_gen(csv_file, prob_col='P_SEDdust_XP',
+                          param='dS', distance_unit='kpc'):
+    """
+    Build a source-distance or source-parallax prior from a SED PDF.
+
+    Copied from ``model_fitter.make_sed_distance_gen``. The CSV is the
+    declens ``sed_distance_prior.py`` format: 0.1 kpc bins with
+    ``D_lo_kpc`` / ``D_hi_kpc`` and a probability column that already
+    sums to 1. This re-normalizes that column and returns a
+    piecewise-constant PDF.
+
+    For ``param='piS'``, each distance bin maps to parallax with
+    pi_S = 1/D (D in kpc, pi_S in mas) and the bin probability is
+    conserved.
+
+    Parameters
+    ----------
+    csv_file : str
+        Path to the SED distance-prior CSV.
+    prob_col : str, optional
+        Probability column. Default is ``P_SEDdust_XP``.
+    param : {'dS', 'piS'}, optional
+        ``'dS'`` is source distance; ``'piS'`` is source parallax in mas.
+    distance_unit : {'pc', 'kpc'}, optional
+        Unit of the returned distribution when ``param='dS'``. Ignored
+        for ``param='piS'``.
+
+    Returns
+    -------
+    dist : scipy.stats.rv_histogram
+        Frozen distribution with ``pdf``, ``logpdf``, ``ppf``, and ``rvs``.
+    """
+    tab = Table.read(csv_file, format='ascii.csv')
+    if prob_col not in tab.colnames:
+        raise ValueError(
+            f"Column '{prob_col}' not found in {csv_file}. "
+            f"Available columns: {tab.colnames}")
+    for edge_col in ('D_lo_kpc', 'D_hi_kpc'):
+        if edge_col not in tab.colnames:
+            raise ValueError(
+                f"Column '{edge_col}' not found in {csv_file}.")
+    if param not in ('dS', 'piS'):
+        raise ValueError("param must be 'dS' or 'piS'.")
+
+    d_lo = np.asarray(tab['D_lo_kpc'], dtype=float)
+    d_hi = np.asarray(tab['D_hi_kpc'], dtype=float)
+    prob = np.asarray(tab[prob_col], dtype=float)
+
+    if len(prob) == 0:
+        raise ValueError(f"No rows found in {csv_file}.")
+    if np.any(~np.isfinite(prob)) or np.any(prob < 0):
+        raise ValueError(
+            f"Column '{prob_col}' must be finite and non-negative.")
+    if np.sum(prob) <= 0:
+        raise ValueError(
+            f"Column '{prob_col}' has zero total probability.")
+    if np.any(d_hi <= d_lo):
+        raise ValueError("Each bin must have D_hi_kpc > D_lo_kpc.")
+    if np.any(d_lo <= 0):
+        raise ValueError(
+            "Distance bins must be positive to convert to piS.")
+
+    # Contiguous edges: [D_lo_0, D_lo_1, ..., D_lo_n, D_hi_n]
+    bin_edges_kpc = np.append(d_lo, d_hi[-1])
+    if not np.allclose(d_hi[:-1], d_lo[1:]):
+        raise ValueError("Distance bins in the CSV must be contiguous.")
+
+    # Probability per bin, then a density so the pdf integrates to 1.
+    prob = prob / prob.sum()
+
+    if param == 'piS':
+        # pi_S (mas) = 1 / D (kpc). Reverse so the edges increase.
+        bin_edges = 1.0 / bin_edges_kpc[::-1]
+        prob = prob[::-1]
+    elif distance_unit == 'pc':
+        bin_edges = bin_edges_kpc * 1000.0
+    elif distance_unit == 'kpc':
+        bin_edges = bin_edges_kpc
+    else:
+        raise ValueError("distance_unit must be 'pc' or 'kpc'.")
+
+    density = prob / np.diff(bin_edges)
+
+    return scipy.stats.rv_histogram((density, bin_edges), density=True)
+
+
+def make_fdfdt():
+    """
+    Unit-normal prior on the time derivative of the blend fraction.
+
+    The scale is 1/365.25 so a draw of order 1 per year is order 1 per day
+    after the caller converts.
+
+    Returns
+    -------
+    dist : scipy.stats.rv_continuous
+        Frozen normal with location 0 and scale ``1/365.25``.
+    """
+    return scipy.stats.norm(loc=0, scale=1 / 365.25)
+
+
+def random_prob(generator, x):
+    """
+    Draw a prior value from a unit-interval sample and its log density.
+
+    Parameters
+    ----------
+    generator : scipy.stats.rv_frozen
+        Distribution with ``ppf`` and ``logpdf``.
+    x : float
+        Sample on [0, 1], as MultiNest passes into the prior.
+
+    Returns
+    -------
+    value : float
+        ``generator.ppf(x)``.
+    ln_prob : float
+        ``generator.logpdf(value)``.
+    """
+    value = generator.ppf(x)
+    ln_prob = generator.logpdf(value)
+
+    return value, ln_prob
+
+
+def save_params(model, file):
+    """
+    Write model parameters to a text file.
+
+    Filter-indexed names in ``fitter_param_names`` are written one line
+    per filter. A length-1 sequence is printed as a scalar.
+
+    Parameters
+    ----------
+    model : object
+        Instantiated BAGLE model.
+    file : file-like
+        Open text file.
+
+    Returns
+    -------
+    None
+    """
+    def get_param_value(pname):
+        # East/North and log10(thetaE) are stored under a different name.
+        if pname.endswith('_E') or pname.endswith('_N'):
+            pname_act = pname[:-2]
+        elif pname == 'log10_thetaE':
+            pname_act = 'thetaE_amp'
+        elif pname == 'thetaE':
+            pname_act = 'thetaE_amp'
+        else:
+            pname_act = pname
+
+        pvalue = getattr(model, pname_act)
+        if pname.endswith('_E'):
+            pvalue = pvalue[0]
+        if pname.endswith('_N'):
+            pvalue = pvalue[1]
+        if pname == 'log10_thetaE':
+            pvalue = np.log10(pvalue)
+
+        return pvalue
+
+    # One line per filter. A length-1 sequence stays a scalar.
+    filt_names = set(getattr(model, 'filt_param_names', []) or [])
+    for pname in model.fitter_param_names:
+        fmt_str = '{0:s} = {1:.2f}'
+        if pname.startswith('x'):
+            fmt_str = '{0:s} = {1:.4f}'
+
+        if pname == 'thetaE':
+            pvalu = get_param_value(pname)
+            print(f'thetaE = {np.around(pvalu, 2)}', file=file)
+            continue
+
+        if pname in filt_names:
+            values = np.asarray(
+                getattr(model, pname), dtype=float).reshape(-1)
+        else:
+            values = np.asarray(
+                get_param_value(pname), dtype=float).reshape(-1)
+
+        if values.size == 1:
+            print(fmt_str.format(pname, float(values[0])), file=file)
+            continue
+
+        for rr, value in enumerate(values):
+            print(fmt_str.format(f'{pname}{rr + 1}', float(value)),
+                  file=file)
+
+    for ff in range(len(model.phot_param_names)):
+        pname = model.phot_param_names[ff]
+        pvalu = np.array(get_param_value(pname))
+        for rr in range(len(pvalu)):
+            print(f'{pname + str(rr + 1)} = {np.around(pvalu[rr], 2)}',
+                  file=file)
+
+    for ff in range(len(model.additional_param_names)):
+        pname = model.additional_param_names[ff]
+        pvalu = get_param_value(pname)
+        fmt_str = '{0:s} = {1:.2f}'
+        if pname in multi_filt_params:
+            for rr in range(len(pvalu)):
+                print(fmt_str.format(pname + str(rr + 1), pvalu[rr]),
+                      file=file)
+        else:
+            print(fmt_str.format(pname, pvalu), file=file)
+
+    return None
 
 
 def plot_params(model):

@@ -460,6 +460,7 @@ def test_A09_fspl_traced_mag_matches_host():
     return None
 
 
+@pytest.mark.slow
 def test_G01_fspl_loglik_grad_t0_tE_radiusS():
     """G-01: jax.grad of FSPL phot lnL in t0, tE, radiusS vs central FD."""
     jax = pytest.importorskip("jax")
@@ -726,6 +727,7 @@ def test_G06_nan_mag_batch_penalty():
     return None
 
 
+@pytest.mark.slow
 def test_S04_vmap_batch_throughput():
     """S-04: jitted vmap over 64 parameter vectors stays finite."""
     data, cube = _make_pspl_phot_data()

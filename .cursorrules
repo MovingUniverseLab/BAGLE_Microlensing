@@ -63,11 +63,17 @@ env for this repo.
 
 ## Testing defaults
 
-When verifying changes, prefer:
+Plain `pytest` skips tests marked `slow` (`addopts = -m "not slow"` in
+`pyproject.toml`). Release / full coverage: `pytest -o addopts=`.
+Slow-only: `pytest -m slow`.
+
+When verifying changes, prefer the daily (non-slow) path:
 
 ```bash
 zsh -lic 'source /opt/miniforge3/etc/profile.d/conda.sh && conda activate /Users/jlu/.conda/envs/py314 && cd /Users/jlu/code/python/bagle && PYTHONPATH=src python -m pytest tests/test_jax_physics.py tests/test_jax_likelihood.py -q'
 ```
 
 Run `tests/test_model.py` (NumPy reference) and `tests/test_model_jax.py`
-(JAX model) after model or physics changes (slower; needs `py314` + full deps).
+(JAX model) after model or physics changes. Before a release, run the full
+suite with `BAGLE_TEST_GRID=full pytest -o addopts=` (includes `slow`
+and the full old-vs-jax epoch grids).

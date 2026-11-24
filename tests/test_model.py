@@ -4019,6 +4019,7 @@ def test_FSPL_PhotAstrom_lens_astrometry_origin(plot=False):
         fig.show()
 
         
+@pytest.mark.slow
 def test_FSPL_PhotAstrom_methods(plot=False):
     """
     Test FSPL astrometry with a really really small source.
@@ -4127,6 +4128,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
     return
 
+@pytest.mark.slow
 def test_FSPL_Phot_methods(plot=False):
     """
     Make sure can instantiate.

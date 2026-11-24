@@ -3980,6 +3980,7 @@ def test_FSPL_PhotAstrom_lens_astrometry_origin(plot=False):
         fig.show()
 
         
+@pytest.mark.slow
 def test_FSPL_PhotAstrom_methods(plot=False):
     """
     Test FSPL astrometry with a really really small source.
@@ -4088,6 +4089,7 @@ def test_FSPL_PhotAstrom_methods(plot=False):
 
     return
 
+@pytest.mark.slow
 def test_FSPL_Phot_methods(plot=False):
     """
     Make sure can instantiate.
@@ -4102,7 +4104,7 @@ def test_FSPL_Phot_methods(plot=False):
     radiusS = 1e-3  # in units of thetaE
     b_sff = [0.9]
     mag_base = [19.0]
-    
+
     # Array of times we will sample on.
     time_arr = np.linspace(t0 - 1000, t0 + 1000, 1000)
 

@@ -1,0 +1,67 @@
+# Daily pytest duration note
+# Generated: 2026-11-19 evening PT (cloud run UTC 2026-11-20)
+# Env: micromamba py314, PYTHONPATH=src, JAX_ENABLE_X64=1
+# Command noted in file body (pytest output below).
+#
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 50%]
+....xx.................................................................. [ 66%]
+........................................................................ [ 83%]
+.......................................................................  [100%]
+=============================== warnings summary ===============================
+tests/test_swap_parity.py: 66 warnings
+  /workspace/src/bagle/model.py:13924: RuntimeWarning: invalid value encountered in divide
+    dwbardz = self.m1 / (z_arr - z1.reshape((N_times, 1))) ** 2
+
+tests/test_swap_parity.py: 66 warnings
+  /workspace/src/bagle/model.py:13925: RuntimeWarning: invalid value encountered in divide
+    dwbardz += self.m2 / (z_arr - z2.reshape((N_times, 1))) ** 2
+
+tests/test_swap_parity.py: 66 warnings
+  /workspace/src/bagle/model.py:13926: RuntimeWarning: invalid value encountered in divide
+    dwbardz += self.m3 / (z_arr - z3.reshape((N_times, 1))) ** 2
+
+tests/test_swap_parity.py: 42 warnings
+  /workspace/src/bagle/model_fitter_jax.py:8769: RuntimeWarning: The iteration is not making good progress, as measured by the 
+   improvement from the last ten iterations.
+    invgamma_a, invgamma_b = scipy.optimize.fsolve(solve_for_params,
+
+tests/test_swap_parity.py: 42 warnings
+  /workspace/src/bagle/model_fitter.py:4473: RuntimeWarning: The iteration is not making good progress, as measured by the 
+   improvement from the last ten iterations.
+    invgamma_a, invgamma_b = scipy.optimize.fsolve(solve_for_params,
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 30 durations =============================
+208.78s call     tests/test_swap_parity.py::test_likelihood_parity[BFSBL_PhotAstrom_noPar_Param1]
+18.22s call     tests/test_swap_parity.py::test_fsbl_vbm_parity[FSBL_Limb_Phot_noPar_Param1]
+17.11s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_PhotAstrom_noPar_Param1]
+9.10s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_Par_Param1]
+7.53s call     tests/test_swap_parity.py::test_likelihood_parity[BFSBL_Phot_Par_Param1]
+7.39s call     tests/test_swap_parity.py::test_likelihood_parity[BFSBL_Phot_noPar_Param1]
+6.65s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_noPar_Param1]
+6.57s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_noPar_CircOrbs_Param1]
+6.51s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_noPar_EllOrbs_Param1]
+6.17s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_Par_EllOrbs_Param1]
+5.86s call     tests/test_swap_parity.py::test_likelihood_parity[FSBL_Phot_Par_CircOrbs_Param1]
+3.87s call     tests/test_swap_parity.py::test_likelihood_parity[PSBL_PhotAstrom_noPar_AccOrbs_Param1]
+2.54s call     tests/test_swap_parity.py::test_likelihood_parity[PSTL_PhotAstrom_Par_EllOrbs_Param1]
+1.63s call     tests/test_swap_parity.py::test_forward_parity[PSTL_PhotAstrom_Par_EllOrbs_Param1]
+1.59s call     tests/test_swap_parity.py::test_likelihood_parity[BSBL_PhotAstrom_Par_CircOrbs_Param3]
+1.53s call     tests/test_swap_parity.py::test_fsbl_vbm_parity[FSBL_PhotAstrom_noPar_Param1]
+1.33s call     tests/test_swap_parity.py::test_likelihood_parity[BFSPL_Limb_Phot_Par_Param1]
+1.24s call     tests/test_swap_parity.py::test_likelihood_parity[PSBL_PhotAstrom_Par_AccOrbs_Param1]
+1.17s call     tests/test_swap_parity.py::test_likelihood_parity[FSPL_Limb_Phot_Par_Param1]
+0.99s call     tests/test_swap_parity.py::test_fsbl_vbm_parity[FSBL_Phot_noPar_Param1]
+0.96s call     tests/test_swap_parity.py::test_likelihood_parity[BFSPL_PhotAstrom_Par_Param1]
+0.93s call     tests/test_swap_parity.py::test_likelihood_parity[BFSPL_Phot_Par_Param1]
+0.92s call     tests/test_swap_parity.py::test_likelihood_parity[PSTL_PhotAstrom_Par_Param3]
+0.92s call     tests/test_swap_parity.py::test_likelihood_parity[PSTL_PhotAstrom_Par_Param2]
+0.90s call     tests/test_swap_parity.py::test_fsbl_vbm_parity[BFSBL_PhotAstrom_noPar_Param1]
+0.87s call     tests/test_swap_parity.py::test_forward_parity[BFSPL_Limb_PhotAstrom_Par_Param1]
+0.86s call     tests/test_swap_parity.py::test_likelihood_parity[BSPL_PhotAstrom_Par_GP_AccOrbs_Param1]
+0.85s call     tests/test_swap_parity.py::test_likelihood_parity[PSTL_PhotAstrom_noPar_Param3]
+0.85s call     tests/test_swap_parity.py::test_likelihood_parity[BSPL_PhotAstrom_noPar_CircOrbs_Param1]
+0.85s call     tests/test_swap_parity.py::test_likelihood_parity[PSBL_PhotAstrom_noPar_CircOrbs_Param1]
+429 passed, 326 deselected, 2 xfailed, 282 warnings in 400.93s (0:06:40)

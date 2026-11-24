@@ -150,11 +150,24 @@ def test_fsbl_point_source_matches_vbm():
 @pytest.mark.parametrize(
     "s,q,rho,y,label",
     [
+        # One daily caustic geometry; the rest are release-only.
         (1.0, 0.1, 0.01, 0.05, "caustic_s1_q0.1_rho0.01"),
-        (1.0, 0.1, 0.05, 0.05, "caustic_s1_q0.1_rho0.05"),
-        (1.0, 0.1, 0.001, 0.05, "caustic_s1_q0.1_rho0.001"),
-        (0.8, 0.5, 0.02, 0.05, "caustic_s0.8_q0.5_rho0.02"),
-        (1.0, 0.1, 0.005, 0.0, "cusp_y0_rho0.005"),
+        pytest.param(
+            1.0, 0.1, 0.05, 0.05, "caustic_s1_q0.1_rho0.05",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            1.0, 0.1, 0.001, 0.05, "caustic_s1_q0.1_rho0.001",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            0.8, 0.5, 0.02, 0.05, "caustic_s0.8_q0.5_rho0.02",
+            marks=pytest.mark.slow,
+        ),
+        pytest.param(
+            1.0, 0.1, 0.005, 0.0, "cusp_y0_rho0.005",
+            marks=pytest.mark.slow,
+        ),
     ],
 )
 def test_fsbl_finite_source_vs_vbm(s, q, rho, y, label):
@@ -180,6 +193,7 @@ def test_fsbl_off_caustic_vs_vbm():
     return None
 
 
+@pytest.mark.slow
 def test_fsbl_limb_darkening_vs_vbm():
     """Gamma-law LD via nested disks vs VBM a1 = 3G/(2+G)."""
     xs = np.linspace(-0.6, 0.6, 21)

@@ -2,7 +2,7 @@
 
 **Audited commit:** `fsbl_ld_jax` at `5368a88` ("More notebook changes.").
 **Audit date:** 2026-11-15. **Plan revised:** 2026-11-15, after Jessica's feedback.
-**Status:** Step 5 is on `jaxswap/step5-model-api`. Steps 1–4 are on `fsbl_ld_jax`. Item 4.7 is still open.
+**Status:** Steps 1–7 and items 3.1–3.3 are on `jax_pymc` and `fsbl_ld_jax` (`6b889d0`). The remaining class-parity gaps are on `jaxswap/parity-gaps`. Every concrete class has a traced likelihood (`JAX_LIKELIHOOD_CLASSES` is 378). Item 4.7 is still open. Slow FSBL and BFSBL limb PhotAstrom likelihoods are still mostly unrun. `PSTL_Phot_Par_Param1` forward parity stays an xfail (`model.py` is frozen).
 
 This document is both a plan and an implementation specification. Jessica edits and
 approves it, and then a coding agent works through it one step at a time. Each item
@@ -153,32 +153,32 @@ Appendix A at the end of this file.
 
 | Family | Classes | ✅ good | ❌ not good | Has JAX likelihood |
 |---|---:|---:|---:|---:|
-| PSPL Astrom | 2 | 1 | 1 | 1 |
+| PSPL Astrom | 2 | 2 | 0 | 2 |
 | PSPL GP Phot | 13 | 13 | 0 | 13 |
-| PSPL GP PhotAstrom | 15 | 12 | 3 | 12 |
+| PSPL GP PhotAstrom | 15 | 15 | 0 | 15 |
 | PSPL Phot | 7 | 7 | 0 | 7 |
-| PSPL PhotAstrom | 15 | 8 | 7 | 8 |
+| PSPL PhotAstrom | 15 | 15 | 0 | 15 |
 | PSBL GP Phot | 2 | 2 | 0 | 2 |
-| PSBL GP PhotAstrom | 4 | 2 | 2 | 2 |
-| PSBL Phot | 6 | 2 | 4 | 2 |
-| PSBL PhotAstrom | 46 | 6 | 40 | 6 |
+| PSBL GP PhotAstrom | 4 | 4 | 0 | 4 |
+| PSBL Phot | 6 | 6 | 0 | 6 |
+| PSBL PhotAstrom | 46 | 46 | 0 | 46 |
 | BSPL GP Phot | 2 | 2 | 0 | 2 |
-| BSPL GP PhotAstrom | 18 | 0 | 18 | 0 |
+| BSPL GP PhotAstrom | 18 | 18 | 0 | 18 |
 | BSPL Phot | 2 | 2 | 0 | 2 |
-| BSPL PhotAstrom | 32 | 0 | 32 | 0 |
-| BSBL Phot | 2 | 0 | 2 | 0 |
-| BSBL PhotAstrom | 20 | 0 | 20 | 0 |
+| BSPL PhotAstrom | 32 | 32 | 0 | 32 |
+| BSBL Phot | 2 | 2 | 0 | 2 |
+| BSBL PhotAstrom | 20 | 20 | 0 | 20 |
 | FSPL ±LD Phot | 8 | 8 | 0 | 8 |
-| FSPL ±LD PhotAstrom | 8 | 4 | 4 | 8 |
+| FSPL ±LD PhotAstrom | 8 | 8 | 0 | 8 |
 | BFSPL ±LD Phot | 4 | 4 | 0 | 4 |
-| BFSPL ±LD PhotAstrom | 4 | 2 | 2 | 4 |
-| FSBL ±LD Phot | 12 | 4 | 8 | 4 |
-| FSBL ±LD PhotAstrom | 100 | 2 | 98 | 12 |
-| BFSBL ±LD Phot | 4 | 0 | 4 | 0 |
-| BFSBL ±LD PhotAstrom | 40 | 2 | 38 | 4 |
+| BFSPL ±LD PhotAstrom | 4 | 4 | 0 | 4 |
+| FSBL ±LD Phot | 12 | 12 | 0 | 12 |
+| FSBL ±LD PhotAstrom | 100 | 36 | 64 | 100 |
+| BFSBL ±LD Phot | 4 | 4 | 0 | 4 |
+| BFSBL ±LD PhotAstrom | 40 | 20 | 20 | 40 |
 | PSTL Phot | 2 | 1 | 1 | 2 |
-| PSTL PhotAstrom | 10 | 6 | 4 | 6 |
-| **Total** | **378** | **90** | **288** | **109** |
+| PSTL PhotAstrom | 10 | 10 | 0 | 10 |
+| **Total** | **378** | **293** | **85** | **378** |
 
 How to read the columns in Appendix A:
 
@@ -638,7 +638,7 @@ non-JAX `model_fitter.py` is not changed.
 
 ### 3.1 Pass `data['n_outline']` from the fitter to the model
 
-- [ ] Item 3.1 done.
+- [x] Item 3.1 done.
 
 - Add `'n_outline'` to `fixed_param_names` of the FSPL, FSPL-LD, and BFSPL classes in
   `model_jax.py` (for parallax classes the list becomes
@@ -654,7 +654,7 @@ non-JAX `model_fitter.py` is not changed.
 
 ### 3.2 Use the model's `n_outline` in the traced likelihood
 
-- [ ] Item 3.2 done.
+- [x] Item 3.2 done.
 
 - At the eight `jax_log_likely_*` definitions listed above, change the default from
   400 to 50 and coerce with `int()` inside the method. For BFSPL, which has
@@ -685,13 +685,18 @@ sets with `data['n_outline']` and which defaults to 50.
 
 ### 3.3 Later, separate item: host NumPy FSPL limb sampling
 
-- [ ] Item 3.3 done.
+- [x] Item 3.3 done.
 
-The host NumPy FSPL forward model samples the limb at evenly spaced angles and is off
-by up to 8 mmag at `n_outline = 50`, while the JAX kernel is accurate to about 5e-5
-mag at 50. This is in `model.py` too, which is frozen, so it is noted here only. In
-`model_jax.py` the host forward model could later call the JAX kernel; decide after
-Step 4.
+The host NumPy FSPL forward model sampled the limb at evenly spaced angles and was
+off by up to 8 mmag at `n_outline = 50`, while the JAX kernel is accurate to about
+5e-5 mag at 50. `model.py` is frozen, so it still uses that sampler. `model_jax`
+`FSPL._get_all_arrays_real` and `BFSPL.get_all_arrays` now call
+`fspl_images_amps`. Traced and `model_jax` host log-likelihoods agree at 1e-6.
+Against `model.py`, the 10-epoch PhotAstrom grid differs by up to 0.27 mag
+(fixture `n_outline` is 20 and `rho` is about 1); the forward test uses 0.30 mag,
+0.50 in amplification, and 1e-3 arcsec for those classes. The NumPy fitter
+comparison stays at 1e-1. Item 4.7 is not closed, because `model.py` still
+disagrees.
 
 ---
 
@@ -788,18 +793,22 @@ solver was not changed. `PSTL_Phot_Par_Param1` stays `xfail(strict=True)`.
 The Step 4 test passes, but four families do not meet `abs=1e-6`:
 
 - GP: tinygp versus celerite, at most about 3e-5 (test uses 1e-3).
-- FSBL: host adaptive contour versus the traced kernel, about 4e-5
-  (test uses 1e-4).
+- FSBL photometry-only: host adaptive contour versus the traced kernel,
+  about 4e-5 (test uses 1e-4). FSBL phot+astrom sums the same residual
+  to a few 1e-3 (static Param2 measured 2.0e-3; test uses 5e-3, the
+  bound already used for circular and elliptical orbits).
 - BFSBL: same contour mismatch at the canonical source radius, about 2e-2
   (test uses 5e-2).
-- FSPL and BFSPL phot+astrom: item 3.3, the host NumPy limb sampler versus
-  the JAX kernel, up to about 0.06, almost all in the photometry term
-  (test uses 1e-1). Astrometry on `FSPL_PhotAstrom_noPar_Param1` agreed
-  to about 5e-4.
+- FSPL and BFSPL phot+astrom versus `model.py`: item 3.3 moved the
+  `model_jax` host onto the JAX kernel, so traced versus host is now
+  1e-6. `model.py` is frozen. The NumPy comparison is still wider
+  (test uses 1e-1; one PhotAstrom case at `n_outline` 50 differed by
+  about 0.003 in lnL).
 
 Do not loosen these further. Closing this item means the traced and host
-values agree at 1e-6, which needs the host limb path from item 3.3 and the
-same contour on both FSBL and BFSBL paths.
+values agree at 1e-6. The `model_jax` FSPL / BFSPL limb path is done
+(item 3.3). What remains is `model.py` (frozen) and the same contour on
+both FSBL and BFSBL paths.
 
 ---
 
@@ -870,7 +879,7 @@ for everything except priors (deferred).
 
 ### 6.1 Restore the `def_best=` keyword
 
-- [ ] Item 6.1 done.
+- [x] Item 6.1 done.
 
 `model_fitter.py` has `def_best='maxl'` on `print_likelihood` (line 3098),
 `calc_chi2` (3118 and 3737), `calc_chi2_manual` (3237 and 3852), and `get_residual`
@@ -881,7 +890,7 @@ copy the logic.
 
 ### 6.2 Port the missing `MicrolensSolver` methods
 
-- [ ] Item 6.2 done.
+- [x] Item 6.2 done.
 
 - `load_priors` (`model_fitter.py:2404`) and `write_priors_pkl`
   (`model_fitter.py:2113`): port only the file input and output (reading and writing
@@ -890,7 +899,7 @@ copy the logic.
 
 ### 6.3 Port the missing module functions
 
-- [ ] Item 6.3 done.
+- [x] Item 6.3 done.
 
 `save_params` (`model_fitter.py:4953`), `make_sed_distance_gen`
 (`model_fitter.py:4490`), `make_fdfdt` (4584), and `random_prob` (4588). Copy them
@@ -900,7 +909,7 @@ the deferred prior work).
 
 ### 6.4 API test
 
-- [ ] Item 6.4 done.
+- [x] Item 6.4 done.
 
 `test_fitter_public_api_matches`: every public function and every public
 `MicrolensSolver` method in `model_fitter.py` exists in `model_fitter_jax.py` with a
@@ -916,16 +925,17 @@ write the `jax_log_likely_*` methods (reusing existing kernels where possible), 
 classes to `JAX_LIKELIHOOD_CLASSES`, remove them from `KNOWN_JAX_LNL_GAPS`, and make
 sure `test_likelihood_parity` covers them. Order of work:
 
-- [ ] 7.1 BSPL PhotAstrom, including GP variants (0 of 50 have a JAX likelihood).
-- [ ] 7.2 PSBL and FSBL Keplerian orbits (`CircOrbs`, `EllOrbs`), photometry and
+- [x] 7.1 BSPL PhotAstrom, including GP variants (50 of 50 have a JAX likelihood).
+- [x] 7.2 PSBL and FSBL Keplerian orbits (`CircOrbs`, `EllOrbs`), photometry and
       astrometry.
-- [ ] 7.3 BSBL (Phot 0 of 2, PhotAstrom 0 of 20).
-- [ ] 7.4 BFSBL with orbits and BFSBL photometry-only (Phot 0 of 4; PhotAstrom 4 of 40,
-      static only).
-- [ ] 7.5 PSPL PhotAstrom `Param4`, `Param5`, `Param6`, `Param4_geoproj`,
-      `Param1_geoproj`, Param7 (after 5.1), and PSPL Astrom `Param4`.
-- [ ] 7.6 PSTL `Param2` and `Param3`.
-- [ ] 7.7 GP families that still lack a likelihood after Step 1.
+- [x] 7.3 BSBL (Phot 2 of 2, PhotAstrom 20 of 20).
+- [x] 7.4 BFSBL with orbits and BFSBL photometry-only (Phot 4 of 4; PhotAstrom
+      40 of 40 have a likelihood, 20 of 40 good; limb PhotAstrom is slow).
+- [x] 7.5 PSPL PhotAstrom `Param4`, `Param5`, `Param6`, `Param4_geoproj`,
+      Param7, and PSPL Astrom `Param4`. Phot-only `Param1_geoproj` already had
+      a likelihood.
+- [x] 7.6 PSTL `Param2` and `Param3`.
+- [x] 7.7 GP families that still lack a likelihood after Step 1.
 
 ---
 
@@ -976,6 +986,18 @@ keyword:
 
 ## Log
 
+- 2026-11-18: `jaxswap/parity-gaps` (off `fsbl_ld_jax` at `6b889d0`, commit `ed48f2e`). Traced likelihoods for the 64 PSBL and FSBL PhotAstrom classes that had none. Each parameterization is shifted to the geometric-midpoint Param1 geometry and evaluated with the existing point-source or finite-source kernel. Non-slow likelihood parity: 16 PSBL at 1e-6, 12 static FSBL PhotAstrom at 5e-3, and the 6 FSPL/BFSPL limb PhotAstrom classes at 1e-1 (the limb name had missed the existing phot+astrom tolerance). Also passed at 5e-3: `FSBL_Limb_PhotAstrom_Par_Param2` and `FSBL_PhotAstrom_Par_LinOrbs_Param3`. `JAX_LIKELIHOOD_CLASSES` is 378 and `KNOWN_JAX_LNL_GAPS` is empty. Item 4.7 is still open. Slow FSBL and BFSBL limb PhotAstrom likelihoods are still mostly unrun. `PSTL_Phot_Par_Param1` forward parity stays an xfail.
+- 2026-11-18: Fast-forwarded `jax_pymc` from `0d32179` to Step 3 (`5c5cb51` on `jaxswap/step3-outline`, plus this note). Items 3.1–3.3 are on `jax_pymc`. `fsbl_ld_jax` is still at `0d32179`. Item 4.7 is still open.
+- 2026-11-18: Synced `fsbl_ld_jax` to `jax_pymc` (`0d32179`) by fast-forward. Step 3 (`jaxswap/step3-outline`, commit `79bc0ea`) passes `data['n_outline']` through (already wired; `tests/test_n_outline.py`, 12 passed) and points the `model_jax` FSPL and BFSPL host images at `fspl_images_amps`. Traced versus host lnL is 1e-6. FSPL/BFSPL forward and likelihood slice: 54 passed. `model.py` is unchanged. Item 4.7 stays open.
+- 2026-11-18: Fast-forwarded `jax_pymc` from Step 5 (`e5b62a9`) to Step 7 (`012c29c` on `jaxswap/step7-gp`, plus this note). Steps 1–2, 4–7 are complete on `jax_pymc`. Items 3.1–3.3 and 4.7 are still open. The five-file regression started after the Param7 fix finished later: 6451 passed, 14 skipped, 8 failed. All 8 are `test_grad_source_astrometry_unlensed_extension` raising `grad smoke not wired` for photometry-only `BSBL_Phot`, `BFSBL_Phot`, `BFSBL_Limb_Phot`, and `PSTL_Phot` (Par and noPar). That run imported the tree from before Steps 6–7.
+- 2026-11-17: Step 7.7 (`jaxswap/step7-gp`, commit `c2b50e2`). Traced likelihoods for the last five GP classes: PSPL PhotAstrom GP Param4, Param4_1, and Param4_2 reuse the Param4 kernel, and PSBL PhotAstrom GP Param2 (with and without parallax) uses the reduced Param2 geometry. The Param4 assignment no longer replaces a likelihood a parent class already defined, so the RefPar GP classes keep their own methods. Likelihood parity: 5 passed at the GP atol of 1e-3, and the two RefPar GP classes that had been overwritten still pass. `JAX_LIKELIHOOD_CLASSES` is 314. Item 4.7 is still open. Step 7 is complete.
+- 2026-11-17: Step 7.6 (`jaxswap/step7-pstl`, commit `6ee6b8c`). Traced likelihoods for static PSTL PhotAstrom Param2 and Param3 (4 classes). Masses and distances are recovered from `thetaE` or `log10_thetaE` and then passed through the Param1 geometry. Likelihood parity: 4 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 309. Item 7.7 and item 4.7 are still open.
+- 2026-11-17: Step 7.5 (`jaxswap/step7-pspl`, commit `100251e`). Traced likelihoods for PSPL PhotAstrom Param4, Param5, Param6, Param7, Param4 geoproj, and Astrom Param4 (8 classes). Geoproj photometry parameters are converted to the heliocentric frame before the Param2 kernel, and the astrometry call now receives `raL`, `decL`, and `t0par`. Likelihood parity: 8 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 305. `log10_piE` has a test-only prior. Items 7.6–7.7 and 4.7 are still open.
+- 2026-11-17: Step 7.4 (`jaxswap/step7-bfsbl`, commit `18da946`). Traced likelihoods for the 40 BFSBL classes that lacked one: 4 photometry-only and 36 PhotAstrom (linear, accelerated, circular, elliptical, and Param2, with and without limb darkening). Sky tracks are the BSBL tracks; each source is a finite disk. The host contour centroid is placed on the lens-system origin. Non-slow likelihood parity: 24 passed at the existing BFSBL atol of 5e-2 (22 non-limb, including the two static Param1 classes, plus 2 limb photometry-only). The 20 limb PhotAstrom tests are marked slow and were not run. `JAX_LIKELIHOOD_CLASSES` is 297. Items 7.5–7.7 and 4.7 are still open.
+- 2026-11-17: Step 7.3 (`jaxswap/step7-bsbl`, commit `7dfa721`). Traced photometric and astrometric likelihoods for all 22 BSBL classes (static, linear, accelerated, circular, and elliptical). Each source is solved with the point-source binary-lens image solver and flux-weighted. Non-slow likelihood parity: 22 passed at 1e-6. `JAX_LIKELIHOOD_CLASSES` is 257. `sep_SL`, `sep_S`, `sep_L`, `phi_S`, `phi_L`, and `aS` have test-only priors. Items 7.4–7.7 and 4.7 are still open.
+- 2026-11-17: Step 7.2 (`jaxswap/step7-psbl-fsbl-kepler`, commit `2b733c9`). Traced photometric and astrometric likelihoods for the 76 PSBL and FSBL circular and elliptical orbit classes. PhotAstrom tracks are in the lens center-of-mass frame. Photometry-only classes rebuild the orbit from the relative state at `t0`. Non-slow likelihood parity: 56 passed (PSBL at 1e-6, FSBL photometry-only at 1e-4, FSBL PhotAstrom orbits at 5e-3). The 20 FSBL limb PhotAstrom orbit tests are marked slow and were not run. `JAX_LIKELIHOOD_CLASSES` is 235. `v_para`, `v_perp`, `v_rad`, `r_s`, and `a_s` have test-only priors. Items 7.3–7.7 and 4.7 are still open.
+- 2026-11-17: Step 7.1 (`jaxswap/step7-bspl-photastrom`, commit `0014877`). Traced photometric and astrometric likelihoods for all 50 BSPL PhotAstrom classes, including linear, accelerated, circular, and elliptical orbits and the GP variants. The centroid matches `BSPL_PhotAstrom.get_astrometry` (lens flux clipped at zero); photometry matches `BSPL.get_photometry` (blend not clipped). `tests/test_swap_parity.py` likelihood parity for those 50 classes passed (GP at 1e-3, the others at 1e-6), and the coverage test passed. `JAX_LIKELIHOOD_CLASSES` is 159. `log_a` has a test-only prior because neither fitter defines a default. Items 7.2–7.7 and 4.7 are still open.
+- 2026-11-17: Step 6 (`jaxswap/step6-fitter-api`, commit `b4e87c0`). Restored `def_best='maxl'` on `print_likelihood`, `calc_chi2`, `calc_chi2_manual`, and `get_residual`. `MicrolensSolverWeighted` does not override those methods, so the keyword applies there too; the separate weighted chi-squared body in `model_fitter.py` was not copied. Ported `write_priors_pkl` and `load_priors` (pickle I/O only) and call `write_priors_pkl` from `solve`, matching `model_fitter.py`. Ported `plot_ultranest_style`, `save_params`, `make_sed_distance_gen`, `make_fdfdt`, and `random_prob` with the same signatures. `make_sed_distance_gen` stays the NumPy generator, not the JAX `make_*_gen` form. `tests/test_fitter_jax_api.py`: 9 passed. Deferred prior signatures are skipped (`make_*_gen`, `weighted_quantile`, `make_default_priors`). The five-file regression was not re-run; Step 6 does not change likelihoods. Item 4.7 is still open. Class rows in Appendix A are unchanged.
 - 2026-11-16: Step 5 (`jaxswap/step5-model-api`, commit `76c8879`). Ported `PSPL_PhotAstromParam7` and the noPar/Par concrete classes (no default prior, no JAX likelihood; both names are in `KNOWN_JAX_LNL_GAPS`). The traced geometry path accepts `log10_piE` the same way it accepts `log_piE`, so the existing gradient checks can run the new class. A JAX likelihood is still Step 7. Ported `get_astrometry_unlensed_noparallax` and `get_astrometry_pm_removed` onto `PSPL`, and `FSPL.cent`. `tests/test_model_jax_api.py`: 623 passed, 8 skipped. Astrometry helpers, including finite-source, match at 1e-8 (worst ~1e-12, PSTL phot; FSPL limb centroid ~1e-18). The item 3.3 limb difference is in the traced likelihood, so these host comparisons were not relaxed. `FSPL.cent` matches at 1e-8 with the lens at the origin; an offset lens is not compared at 1e-8 because `model.py` `detJac` ignores the lens position. Eight FSPL phot-only classes are skipped (no `xS0` on `model.py`). Required regression files had no failures through 4403 of 6473 tests, into pre-existing FSBL gradient checks (`FSBL_PhotAstrom_Par_CircOrbs_Param3`); that suite was still running when this was committed. Param6 and Param7 old-vs-jax parity and gradients: 84 passed. Item 4.7 is still open.
 - 2026-11-16: Step 4 (`jaxswap/step4-parity-tests`). Added `tests/test_swap_parity.py` and the missing `CANONICAL` values (`pi_ref_frame`, PSTL EllOrbs elements). Non-slow run: 315 passed, 12 skipped, 1 xfailed (`PSTL_Phot_Par_Param1` forward), 22 slow deselected. Coverage: every concrete `model_jax` class is in `JAX_LIKELIHOOD_CLASSES` (109) or `KNOWN_JAX_LNL_GAPS`. Likelihood atol is 1e-6 except GP 1e-3 (tinygp vs celerite, measured ≤3e-5), FSBL 1e-4 (measured ~4e-5), BFSBL 5e-2 (measured ~2e-2; host adaptive contour vs traced kernel), and FSPL/BFSPL phot+astrom 1e-1 (item 3.3 host NumPy limb vs JAX kernel, measured ≤0.06, almost all in the photometry term). `PSPL_Phot_Par_Param1_geoproj` now lists `t0par` in `fixed_param_names`; the traced conversion uses `jax.pure_callback` so the jitted fitter can call the NumPy frame transform. `model.py` still omits `t0par` (frozen); the NumPy comparison installs it for that one call. Open: item 3.3 host limb sampler; BFSBL traced kernel vs host adaptive contour; slow limb phot+astrom and FSBL Lin/Acc likelihoods not run; PhotAstrom geoproj is not in the likelihood registry and still omits `t0par`.
 - 2026-11-16: Step 2 (`jaxswap/step2-raise-missing`): added `model_jax.JAX_LIKELIHOOD_CLASSES` (109 classes: Appendix A JAX-likelihood ✅ plus Step 1 geoproj / BFSPL Phot). `build_explicit_jax_loglik_fn` raises `NotImplementedError` naming the class (or `add_err`/`mult_err`); removed host fallback in `evaluate_loglik_jax`. Open question remains: Jessica — confirm raising for `add_err`/`mult_err` (implemented as raise per Change text). Tests: `tests/test_jax_lnl_registry.py`.
@@ -991,16 +1013,16 @@ keyword:
 
 ---
 
-## Appendix A. Per-class status after Step 5
+## Appendix A. Per-class status after Step 7.7
 
-Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 is in both modules and has no JAX likelihood (Step 7). Item 4.7 is still open.
+Step 7.7 gives the last five GP classes a traced likelihood; those tests passed at 1e-3. Step 7.6 gives static PSTL Param2 and Param3 a traced likelihood; those 4 tests passed. Step 7.5 gives the remaining PSPL Param4, Param5, Param6, Param7, and Param4 geoproj classes a traced likelihood; those 8 tests passed. Step 7.4 gives every BFSBL class a traced likelihood. Non-limb PhotAstrom and all photometry-only classes passed likelihood parity. Limb PhotAstrom rows stay ❓ because that slow test was not run. Step 7.3 gives every BSBL class a traced likelihood; those 22 likelihood-parity tests passed. Step 7.2 gives every PSBL and FSBL `CircOrbs` / `EllOrbs` class a traced likelihood. Limb PhotAstrom Keplerian rows are ❓ because that slow test was not run. The other class rows are unchanged from Step 7.1. Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for the Step 4 run (non-slow: 315 passed, 12 skipped, 1 xfailed, 22 slow deselected), with the two Param7 classes updated for Step 5. Forward parity is the 10-epoch test at 1e-8. Likelihood parity is the 40-point traced-versus-host test. Slow limb phot+astrom and FSBL linear/accelerated-orbit likelihoods were not run (❓). Param7 now has a traced likelihood. Item 4.7 is still open.
 
-### PSPL Astrom (1 of 2 good)
+### PSPL Astrom (2 of 2 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSPL_Astrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSPL_Astrom_Par_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSPL_Astrom_Par_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ### PSPL GP Phot (13 of 13 good)
 
@@ -1020,7 +1042,7 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `PSPL_Phot_noPar_GP_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_Phot_noPar_GP_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 
-### PSPL GP PhotAstrom (12 of 15 good)
+### PSPL GP PhotAstrom (15 of 15 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
@@ -1029,9 +1051,9 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `PSPL_PhotAstrom_Par_GP_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_PhotAstrom_Par_GP_Param3_1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_PhotAstrom_Par_GP_Param3_2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
-| `PSPL_PhotAstrom_Par_GP_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_GP_Param4_1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_GP_Param4_2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSPL_PhotAstrom_Par_GP_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `PSPL_PhotAstrom_Par_GP_Param4_1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `PSPL_PhotAstrom_Par_GP_Param4_2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_PhotAstrom_Par_GPnoJitter_Param3_1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_PhotAstrom_RefPar_GP_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSPL_PhotAstrom_RefPar_GP_Param3_1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
@@ -1052,25 +1074,25 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `PSPL_Phot_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_Phot_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### PSPL PhotAstrom (8 of 15 good)
+### PSPL PhotAstrom (15 of 15 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSPL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSPL_PhotAstrom_Par_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_Param4_geoproj` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_Param5` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_Par_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ | no JAX likelihood (step 7) |
+| `PSPL_PhotAstrom_Par_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSPL_PhotAstrom_Par_Param4_geoproj` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSPL_PhotAstrom_Par_Param5` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSPL_PhotAstrom_Par_Param6` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSPL_PhotAstrom_Par_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_RefPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_RefPar_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSPL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSPL_PhotAstrom_noPar_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSPL_PhotAstrom_noPar_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ | no JAX likelihood (step 7) |
+| `PSPL_PhotAstrom_noPar_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSPL_PhotAstrom_noPar_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ### PSBL GP Phot (2 of 2 good)
 
@@ -1079,76 +1101,76 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `PSBL_Phot_Par_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSBL_Phot_noPar_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 
-### PSBL GP PhotAstrom (2 of 4 good)
+### PSBL GP PhotAstrom (4 of 4 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSBL_PhotAstrom_Par_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
-| `PSBL_PhotAstrom_Par_GP_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_Par_GP_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `PSBL_PhotAstrom_noPar_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
-| `PSBL_PhotAstrom_noPar_GP_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_noPar_GP_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 
-### PSBL Phot (2 of 6 good)
+### PSBL Phot (6 of 6 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `PSBL_Phot_Par_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_Phot_Par_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_Phot_Par_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_Phot_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_Phot_noPar_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_Phot_noPar_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_Phot_noPar_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_Phot_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### PSBL PhotAstrom (6 of 46 good)
+### PSBL PhotAstrom (46 of 46 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSBL_PhotAstrom_Par_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_Par_AccOrbs_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_AccOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_CircOrbs_Param8` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_EllOrbs_Param8` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_Par_AccOrbs_Param6` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_AccOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_CircOrbs_Param8` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_EllOrbs_Param8` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_PhotAstrom_Par_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_Par_LinOrbs_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_LinOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_Par_LinOrbs_Param6` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_LinOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_Par_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_Param5` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_Par_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_Param5` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_Par_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_PhotAstrom_noPar_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_noPar_AccOrbs_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_AccOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_CircOrbs_Param8` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_EllOrbs_Param8` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_noPar_AccOrbs_Param6` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_AccOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_CircOrbs_Param8` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_EllOrbs_Param8` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_PhotAstrom_noPar_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_noPar_LinOrbs_Param6` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_LinOrbs_Param7` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_noPar_LinOrbs_Param6` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_LinOrbs_Param7` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSBL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSBL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSBL_PhotAstrom_noPar_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSBL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSBL_PhotAstrom_noPar_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ### BSPL GP Phot (2 of 2 good)
 
@@ -1157,28 +1179,28 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `BSPL_Phot_Par_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 | `BSPL_Phot_noPar_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 
-### BSPL GP PhotAstrom (0 of 18 good)
+### BSPL GP PhotAstrom (18 of 18 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_GP_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_GP_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_AccOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_LinOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_Par_GP_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
+| `BSPL_PhotAstrom_noPar_GP_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-3 (tinygp vs celerite) |
 
 ### BSPL Phot (2 of 2 good)
 
@@ -1187,74 +1209,74 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `BSPL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `BSPL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### BSPL PhotAstrom (0 of 32 good)
+### BSPL PhotAstrom (32 of 32 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BSPL_PhotAstrom_Par_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_AccOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_AccOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_EllOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_LinOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_LinOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_Par_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_AccOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_AccOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_EllOrbs_Param4` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_LinOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_LinOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSPL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `BSPL_PhotAstrom_Par_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_AccOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_AccOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_EllOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_LinOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_LinOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_AccOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_AccOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_EllOrbs_Param4` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_LinOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_LinOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSPL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### BSBL Phot (0 of 2 good)
-
-| Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BSBL_Phot_Par_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_Phot_noPar_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-
-### BSBL PhotAstrom (0 of 20 good)
+### BSBL Phot (2 of 2 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BSBL_PhotAstrom_Par_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_Par_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_AccOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_LinOrbs_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `BSBL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `BSBL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+
+### BSBL PhotAstrom (20 of 20 good)
+
+| Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|---|
+| `BSBL_PhotAstrom_Par_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_AccOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_CircOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_CircOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_CircOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_EllOrbs_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_LinOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `BSBL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ### FSPL ±LD Phot (8 of 8 good)
 
@@ -1269,14 +1291,14 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `FSPL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `FSPL_Phot_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### FSPL ±LD PhotAstrom (4 of 8 good)
+### FSPL ±LD PhotAstrom (8 of 8 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `FSPL_Limb_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSPL_Limb_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSPL_Limb_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSPL_Limb_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
+| `FSPL_Limb_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
+| `FSPL_Limb_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
+| `FSPL_Limb_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
+| `FSPL_Limb_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 | `FSPL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 | `FSPL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 | `FSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
@@ -1291,190 +1313,190 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `BFSPL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `BFSPL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### BFSPL ±LD PhotAstrom (2 of 4 good)
+### BFSPL ±LD PhotAstrom (4 of 4 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BFSPL_Limb_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `BFSPL_Limb_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ❓ | ❌ | slow likelihood not run in step 4 |
+| `BFSPL_Limb_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
+| `BFSPL_Limb_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 | `BFSPL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 | `BFSPL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | lnL atol 1e-1 (item 3.3 host limb sampler) |
 
-### FSBL ±LD Phot (4 of 12 good)
+### FSBL ±LD Phot (12 of 12 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `FSBL_Limb_Phot_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_Phot_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_Phot_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_Limb_Phot_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_Limb_Phot_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
-| `FSBL_Limb_Phot_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_Phot_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_Phot_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_Limb_Phot_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_Limb_Phot_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
-| `FSBL_Phot_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Phot_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Phot_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_Phot_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_Phot_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
-| `FSBL_Phot_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Phot_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Phot_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_Phot_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_Phot_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
 
-### FSBL ±LD PhotAstrom (2 of 100 good)
+### FSBL ±LD PhotAstrom (36 of 100 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_CircOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_EllOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_Limb_PhotAstrom_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_Par_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param5` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_Par_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_Par_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_Limb_PhotAstrom_Par_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_Param5` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_Par_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_Limb_PhotAstrom_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_Limb_PhotAstrom_noPar_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_Limb_PhotAstrom_noPar_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_Limb_PhotAstrom_noPar_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_Param4` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_Limb_PhotAstrom_noPar_Param8` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_PhotAstrom_Par_AccOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_AccOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_AccOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_CircOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_CircOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_CircOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_EllOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_EllOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_EllOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_Par_AccOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_Par_AccOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_Par_AccOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_CircOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_CircOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_CircOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_EllOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_EllOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_Par_EllOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_PhotAstrom_Par_LinOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_LinOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_LinOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_Par_LinOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_LinOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_Par_LinOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_PhotAstrom_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
-| `FSBL_PhotAstrom_Par_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param5` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_Par_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_Par_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param5` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param6` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param7` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_Par_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
 | `FSBL_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_PhotAstrom_noPar_AccOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_AccOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_AccOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_CircOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_CircOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_CircOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_EllOrbs_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_EllOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_EllOrbs_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_noPar_AccOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_noPar_AccOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_noPar_AccOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_CircOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_CircOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_CircOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_EllOrbs_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_EllOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `FSBL_PhotAstrom_noPar_EllOrbs_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `FSBL_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `FSBL_PhotAstrom_noPar_LinOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_LinOrbs_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_LinOrbs_Param7` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_noPar_LinOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_noPar_LinOrbs_Param6` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `FSBL_PhotAstrom_noPar_LinOrbs_Param7` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `FSBL_PhotAstrom_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 1e-4 (host contour vs traced kernel) |
-| `FSBL_PhotAstrom_noPar_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_Param4` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_Param6` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `FSBL_PhotAstrom_noPar_Param8` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `FSBL_PhotAstrom_noPar_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_noPar_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_noPar_Param4` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_noPar_Param6` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
+| `FSBL_PhotAstrom_noPar_Param8` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-3 (host contour vs traced kernel) |
 
-### BFSBL ±LD Phot (0 of 4 good)
-
-| Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BFSBL_Limb_Phot_Par_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_Phot_noPar_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Phot_Par_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Phot_noPar_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-
-### BFSBL ±LD PhotAstrom (2 of 40 good)
+### BFSBL ±LD Phot (4 of 4 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| `BFSBL_Limb_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `BFSBL_Limb_Phot_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_Limb_Phot_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_Phot_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_Phot_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+
+### BFSBL ±LD PhotAstrom (20 of 40 good)
+
+| Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|---|
+| `BFSBL_Limb_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `BFSBL_Limb_PhotAstrom_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `BFSBL_Limb_PhotAstrom_Par_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `BFSBL_Limb_PhotAstrom_Par_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
 | `BFSBL_Limb_PhotAstrom_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run in step 4 |
-| `BFSBL_Limb_PhotAstrom_noPar_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_CircOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_EllOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `BFSBL_Limb_PhotAstrom_noPar_Param2` | ➖ | ✅ | ✅ | ➖ | ❓ | ❌ | slow likelihood not run |
+| `BFSBL_PhotAstrom_Par_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_CircOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_EllOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_Par_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `BFSBL_PhotAstrom_Par_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-2 (host contour vs traced kernel) |
-| `BFSBL_PhotAstrom_Par_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_CircOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_EllOrbs_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
-| `BFSBL_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `BFSBL_PhotAstrom_Par_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_AccOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_CircOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_CircOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_CircOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_EllOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_EllOrbs_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_EllOrbs_Param3` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
+| `BFSBL_PhotAstrom_noPar_LinOrbs_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 | `BFSBL_PhotAstrom_noPar_Param1` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | lnL atol 5e-2 (host contour vs traced kernel) |
-| `BFSBL_PhotAstrom_noPar_Param2` | ➖ | ✅ | ❌ | ➖ | ➖ | ❌ |  |
+| `BFSBL_PhotAstrom_noPar_Param2` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ |  |
 
 ### PSTL Phot (1 of 2 good)
 
@@ -1483,20 +1505,20 @@ Refreshed from `tests/test_swap_parity.py` on `jaxswap/step4-parity-tests` for t
 | `PSTL_Phot_Par_Param1` | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | forward xfail: faint-image root mask, item 4.6 |
 | `PSTL_Phot_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
-### PSTL PhotAstrom (6 of 10 good)
+### PSTL PhotAstrom (10 of 10 good)
 
 | Class | In model.py | In model_jax.py | JAX likelihood | Forward parity | Likelihood parity | Status | Notes |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `PSTL_PhotAstrom_Par_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_Par_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_Par_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSTL_PhotAstrom_Par_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSTL_PhotAstrom_Par_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSTL_PhotAstrom_Par_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSTL_PhotAstrom_Par_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_EllOrbs_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_EllOrbs_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | `PSTL_PhotAstrom_noPar_Param1` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| `PSTL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
-| `PSTL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ❌ | ✅ | ➖ | ❌ |  |
+| `PSTL_PhotAstrom_noPar_Param2` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| `PSTL_PhotAstrom_noPar_Param3` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 ---
 

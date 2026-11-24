@@ -53,7 +53,10 @@ def parallax_in_direction(RA, Dec, mjd, obsLocation='earth'):
         and ``(N_times, 2)`` for an array. Equations follow MulensModel,
         in the barycentric convention.
     """
-    #print('parallax_in_direction: len(t) = ', len(mjd))
+    # Ephemeris version 2: Horizons observers are ICRF-equatorial and
+    # Hermite-interpolated on a fixed grid. joblib clears this function's
+    # disk cache when its source changes, so bump this version whenever
+    # get_observer_barycentric changes its output.
 
     # Munge inputs into astropy format.
     times = Time(mjd + 2400000.5, format='jd', scale='tdb')
@@ -102,25 +105,25 @@ def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     -------
     dpvec_dt : numpy array
         ``d(E, N) / dt`` in AU/yr. Shape matches ``parallax_in_direction``.
-        Equations follow MulensModel.
+        Uses the same barycentric convention as ``parallax_in_direction``
+        (vector from the observer toward the Solar System barycenter), so
+        this is the exact time derivative of that function's output.
     """
-    # print('parallax_in_direction: len(t) = ', len(mjd))
     # Munge inputs into astropy format.
     times = Time(mjd + 2400000.5, format='jd', scale='tdb')
     coord = SkyCoord(RA, Dec, unit=(units.deg, units.deg))
 
     direction = coord.cartesian.xyz.value
-    import pdb
     north = np.array([0., 0., 1.])
     _east_projected = np.cross(north, direction) / np.linalg.norm(np.cross(north, direction))
     _north_projected = np.cross(direction, _east_projected) / np.linalg.norm(np.cross(direction, _east_projected))
 
-    obs_posvel = get_observer_barycentric(obsLocation, times, velocity=True)[1]
-    sun_posvel = get_body_barycentric_posvel('Sun', times)[1]
-    sun_obs_vel = sun_posvel - obs_posvel
-    #pdb.set_trace()
+    obs_vel = get_observer_barycentric(obsLocation, times, velocity=True)[1]
 
-    vel = sun_obs_vel.xyz.T.to(units.au / units.year)
+    # Barycentric convention, matching parallax_in_direction (pos = -obs_pos).
+    # The old heliocentric form (v_sun - v_obs) differed by the Sun's
+    # barycentric velocity (~10 m/s).
+    vel = (-obs_vel).xyz.T.to(units.au / units.year)
 
     e = np.dot(vel, _east_projected)
     n = np.dot(vel, _north_projected)
@@ -130,43 +133,39 @@ def dparallax_dt_in_direction(RA, Dec, mjd, obsLocation='earth'):
     return dpvec_dt
 
 
-def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
+def get_observer_barycentric(body, times, ephem_step=1.0, velocity=False):
     """
-    Get the barycentric position of a satellite or other Solar System body
-    using JPL emphemerides through the Horizon app.
+    Barycentric ICRS position (and optionally velocity) of an observer.
 
-    The ephemeris is queried at a decimated time step set by min_ephem_step
-    (def=1 day) that must be 1 day or larger. The positions
-    (and optionally velocities) are then interpolated onto the desired
-    time array.
+    Bodies in astropy's JPL ephemeris (e.g. ``'earth'``) are evaluated
+    directly with ``get_body_barycentric(_posvel)``. Any other body (e.g. a
+    spacecraft such as JWST, ``'-170'``) is fetched from JPL Horizons on a
+    fixed, fine time grid spanning ``times`` and interpolated onto ``times``
+    with a cubic Hermite spline that uses the Horizons velocities as the
+    derivatives.
 
-    Inputs
-    ------
+    Parameters
+    ----------
     body : str
-        The name of the Solar System body. Must use the JPL Horizon
-        naming scheme.
+        Observer body. An astropy solar-system body name, or any JPL
+        Horizons target id/name.
+    times : astropy.time.Time
+        Scalar or array of times. Converted to TDB internally.
+    ephem_step : float, optional
+        Horizons grid step in days (default 1.0). The grid is fixed and does
+        NOT depend on the spacing of ``times``. A 1-day grid with Hermite
+        interpolation reproduces Earth's orbit to well under 1 km. Use a
+        smaller step only for observers on short-period orbits (e.g. LEO).
+    velocity : bool, optional
+        If True, also return the velocity.
 
-    times : astropy.time.Time array
-        Array of times (astropy.time.core.Time) objects at which to
-        fetch the position of the specified Solar System body. Times
-        should be in the TDB scale.
-
-    Optional Inputs
-    ---------------
-    min_ephem_step : int
-        Minimum time step to query JPL in days. Must not be <1 and must
-        be in integer days.
-
-    veloctiy : bool
-        If true, return both position and velocity vectors over time.
-
-    Return
-    ------
-    coord : astropy.coordinates.CartesianRepresentation
-        The xyz coordinates in the plane of the Solar System at the
-        input times.
+    Returns
+    -------
+    pos : astropy.coordinates.CartesianRepresentation
+        Barycentric ICRS (equatorial) position, same shape as ``times``.
+    vel : astropy.coordinates.CartesianRepresentation
+        Only if ``velocity=True``. Barycentric ICRS velocity.
     """
-
     # Capitalized Earth is the same builtin body. Do not alias
     # 'l2' or a Roman Horizons id; those stay caller-supplied.
     _observer_aliases = {'Earth': 'earth', 'EARTH': 'earth'}
@@ -175,49 +174,59 @@ def get_observer_barycentric(body, times, min_ephem_step=1, velocity=False):
 
     if body in solar_system_ephemeris.bodies:
         if velocity:
-            obs_pos, obs_vel = get_body_barycentric_posvel(body=body, time=times)
-        else:
-            obs_pos = get_body_barycentric(body=body, time=times)
-    else:
-        # Figure out a cadence for the ephemerides, not smaller than 1 day.
-        dt = np.median(np.diff(times)).jd
-        if dt < min_ephem_step:
-            dt = min_ephem_step
+            return get_body_barycentric_posvel(body=body, time=times)
+        return get_body_barycentric(body=body, time=times)
 
-        # Get the date range, add some padding on each side.
-        t_min = times.min()
-        t_max = times.max()
-        t_min.format = 'iso'
-        t_max.format = 'iso'
-        t_min = str(t_min - dt*u.day).split()[0]
-        t_max = str(t_max + dt*u.day).split()[0]
-        step = f'{dt:.0f}d'
+    pos, vel = _horizons_barycentric_posvel(body, times, ephem_step)
+    return (pos, vel) if velocity else pos
 
-        # Fetch the Horizons ephemeris.
-        from astroquery.jplhorizons import Horizons
-        obj = Horizons(id=body, location="@0", epochs={'start':t_min, 'stop':t_max, 'step':step})
-        obj_data = obj.vectors()
 
-        ephem_jd = obj_data['datetime_jd']
+def _horizons_barycentric_posvel(body, times, ephem_step=1.0):
+    """
+    Fetch a Horizons state-vector table for ``body`` and interpolate it.
 
-        # Interpolate to the actual time array.
-        obj_x_at_t = np.interp(times.jd, ephem_jd, obj_data['x'].to('km')) * u.km
-        obj_y_at_t = np.interp(times.jd, ephem_jd, obj_data['y'].to('km')) * u.km
-        obj_z_at_t = np.interp(times.jd, ephem_jd, obj_data['z'].to('km')) * u.km
+    The table is barycentric (``location='@0'``) and in the ICRF equatorial
+    frame (``refplane='earth'``, i.e. Horizons REF_PLANE=FRAME), matching
+    astropy's ``get_body_barycentric``. astroquery's default
+    ``refplane='ecliptic'`` would be rotated 23.4 deg about x.
+    """
+    from astroquery.jplhorizons import Horizons
+    from scipy.interpolate import CubicHermiteSpline
 
-        if velocity:
-            obj_vx_at_t = np.interp(times.jd, ephem_jd, obj_data['vx'].to('km/s')) * u.km / u.s
-            obj_vy_at_t = np.interp(times.jd, ephem_jd, obj_data['vy'].to('km/s')) * u.km / u.s
-            obj_vz_at_t = np.interp(times.jd, ephem_jd, obj_data['vz'].to('km/s')) * u.km / u.s
+    jd = times.tdb.jd
+    jd_flat = np.atleast_1d(jd).ravel()
 
-            obs_vel = CartesianRepresentation(obj_vx_at_t, obj_vy_at_t, obj_vz_at_t)
+    # Fixed grid, padded by two steps so every requested time has spline
+    # support on both sides. Horizons vector tables are in TDB.
+    step_min = max(1, int(round(ephem_step * 1440)))
+    pad = 2 * step_min / 1440.0
+    start = Time(jd_flat.min() - pad, format='jd', scale='tdb').iso
+    stop = Time(jd_flat.max() + pad, format='jd', scale='tdb').iso
 
-        obs_pos = CartesianRepresentation(obj_x_at_t, obj_y_at_t, obj_z_at_t)
+    obj = Horizons(id=body, location='@0',
+                   epochs={'start': start, 'stop': stop, 'step': f'{step_min}m'})
+    tab = obj.vectors(refplane='earth')
 
-    if velocity:
-        return (obs_pos, obs_vel)
-    else:
-        return obs_pos
+    t_tab = np.asarray(tab['datetime_jd'], dtype=float)
+    xyz = np.column_stack([tab[c].to(u.au).value for c in ('x', 'y', 'z')])
+    vxyz = np.column_stack(
+        [tab[c].to(u.au / u.day).value for c in ('vx', 'vy', 'vz')])
+
+    if jd_flat.min() < t_tab[0] or jd_flat.max() > t_tab[-1]:
+        raise ValueError(f'Horizons table for {body!r} does not cover the '
+                         f'requested times ({t_tab[0]}-{t_tab[-1]} JD TDB).')
+
+    spline = CubicHermiteSpline(t_tab, xyz, vxyz, axis=0)
+    pos = spline(jd_flat)                 # AU
+    vel = spline.derivative()(jd_flat)    # AU/day
+
+    # Restore the input shape (scalar or array).
+    shape = np.shape(jd)
+    pos_rep = CartesianRepresentation(
+        *(pos[:, i].reshape(shape) for i in range(3)), unit=u.au)
+    vel_rep = CartesianRepresentation(
+        *(vel[:, i].reshape(shape) for i in range(3)), unit=u.au / u.day)
+    return pos_rep, vel_rep
 
 
 def sun_position(mjd, radians=False):

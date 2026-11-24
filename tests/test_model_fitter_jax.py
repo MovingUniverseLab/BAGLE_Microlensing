@@ -33,7 +33,8 @@ TEST_OUTPUT_DIR = os.path.join(_TESTS_DIR, 'test_output')
 os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
 @pytest.mark.skip(reason="broken- error in test")
-def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
+@pytest.mark.slow
+def test_pspl_parallax_fit_geoproj(verbose=False, resume=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -99,7 +100,8 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
 
     pspl_out = fitter.get_best_fit_model()
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     if verbose:
         fitter.summarize_results()
 
@@ -118,7 +120,7 @@ def test_pspl_parallax_fit_geoproj(verbose=False, resume=False):
     return
 
 
-def test_pspl_parallax_fit(verbose=False, resume=False):
+def test_pspl_parallax_fit(plot=False, verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -130,7 +132,7 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
                              outputfiles_basename=outdir + 'jax_',
                              sampling_efficiency=0.9,
                              evidence_tolerance=0.8,
-                             max_iter=5000,
+                             max_iter=2000,
                              dump_callback=None,
                              resume=resume, verbose=False,
                              seed=FIT_SEED)
@@ -197,7 +199,8 @@ def test_pspl_parallax_fit(verbose=False, resume=False):
     p_in['b_sff1'] = p_in['b_sff'][0]
     p_in['mag_src1'] = p_in['mag_src'][0]
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     if verbose:
@@ -287,6 +290,7 @@ def test_make_t0_gen():
     return
 
 
+@pytest.mark.slow
 def test_PSPL_Solver(plot=False, verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_pspl_solver/'
     base = outdir + 'jax_'
@@ -370,6 +374,7 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
 
     if plot:
         fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
         fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     # Compare input and output model paramters
@@ -391,7 +396,8 @@ def test_PSPL_Solver(plot=False, verbose=False, resume=False):
 
     return
 
-def test_pspl_dy_fit():
+@pytest.mark.slow
+def test_pspl_dy_fit(plot=False):
     # No parallax
     data, p_in = fake_data.fake_data1(seed=FIT_SEED)
 
@@ -561,7 +567,8 @@ def test_pspl_ultranest_fit():
     sampler.plot_corner()
 
     fitter.summarize_results()
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     
     return sampler
 
@@ -635,7 +642,8 @@ def test_pspl_ultranest_fit():
     return
 
 
-def test_lumlens_parallax_fit(verbose=False):
+@pytest.mark.slow
+def test_lumlens_parallax_fit(verbose=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -713,7 +721,8 @@ def test_lumlens_parallax_fit(verbose=False):
 
     if verbose:
         fitter.summarize_results()
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     imag_out = pspl_out.get_photometry(data['t_phot1'])
@@ -735,7 +744,8 @@ def test_lumlens_parallax_fit(verbose=False):
     return
 
 
-def test_lumlens_parallax_fit_2p1a(verbose=False):
+@pytest.mark.slow
+def test_lumlens_parallax_fit_2p1a(verbose=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -831,7 +841,8 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
 
     if verbose:
         fitter.summarize_results()
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     imag_out = pspl_out.get_photometry(data['t_phot1'])
@@ -853,6 +864,7 @@ def test_lumlens_parallax_fit_2p1a(verbose=False):
     return
 
 
+@pytest.mark.slow
 def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lumlens_bulge4_DEBUG/'
     os.makedirs(outdir, exist_ok=True)
@@ -983,6 +995,7 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
 
     if plot:
         fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
         fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     imag_out = pspl_out.get_photometry(data['t_phot1'])
@@ -1008,7 +1021,8 @@ def test_lumlens_parallax_fit_4p2a(plot=False, verbose=False, resume=False):
 
 
 # NOTE: some of plotting stuff is not functioning... 
-def test_correlated_data2(resume=False):
+@pytest.mark.slow
+def test_correlated_data2(resume=False, plot=False):
     true_model, data, data_corr, params = fake_data.fake_correlated_data(seed=FIT_SEED)
     
     data['phot_files'] = 'fake'
@@ -1046,7 +1060,8 @@ def test_correlated_data2(resume=False):
     fitter_corr.priors['gp_log_omegao'] = model_fitter.make_norm_gen('gp_log_omegao', 0.5, 1.5)
 
     fitter_corr.solve()
-    fitter_corr.plot_dynesty_style(sim_vals=params, kde=False)
+    if plot:
+        fitter_corr.plot_dynesty_style(sim_vals=params, kde=False)
     best_mod = fitter_corr.get_best_fit_model(def_best='maxl')
     fitter_corr.plot_model_and_data(best_mod, input_model=true_model,
                                     zoomx=[[56800, 57200]])
@@ -1054,7 +1069,8 @@ def test_correlated_data2(resume=False):
     return
 
 
-def test_correlated_data_astrom(verbose=False, resume=False):
+@pytest.mark.slow
+def test_correlated_data_astrom(verbose=False, resume=False, plot=False):
     true_model, data, data_corr, params = (
         fake_data.fake_correlated_data_with_astrom(seed=FIT_SEED))
 
@@ -1100,7 +1116,8 @@ def test_correlated_data_astrom(verbose=False, resume=False):
 
     fitter_corr.solve()
 
-    fitter_corr.plot_dynesty_style(sim_vals=params, kde=False)
+    if plot:
+        fitter_corr.plot_dynesty_style(sim_vals=params, kde=False)
     # best_mod = fitter_corr.get_best_fit_model(def_best='maxl')
     # fitter_corr.plot_model_and_data(best_mod, input_model=true_model, gp=True,
     #                                 mnest_results=mnest_results,
@@ -1108,7 +1125,8 @@ def test_correlated_data_astrom(verbose=False, resume=False):
 
     return
 
-def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=False):
+@pytest.mark.slow
+def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=False, plot=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param3_solver/jax_'
 
     os.makedirs(os.path.dirname(base), exist_ok=True)
@@ -1186,7 +1204,8 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
 
-    fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
     fitter.plot_model_and_data(psbl_out, input_model=psbl_in)
     if verbose:
         fitter.summarize_results()
@@ -1201,7 +1220,8 @@ def test_PSBL_PhotAstrom_Par_Param3(prior = 'narrow', verbose=False, resume=Fals
     return
 
 
-def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=False):
+@pytest.mark.slow
+def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=False, plot=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param2_solver/jax_'
 
     os.makedirs(os.path.dirname(base), exist_ok=True)
@@ -1286,7 +1306,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
 
-    fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
     fitter.plot_model_and_data(psbl_out, input_model=psbl_in)
     if verbose:
         fitter.summarize_results()
@@ -1300,7 +1321,8 @@ def test_PSBL_PhotAstrom_Par_Param2(prior = 'narrow', verbose=False, resume=Fals
 
     return
 
-def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
+@pytest.mark.slow
+def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False, plot=False):
     base = f'{TEST_OUTPUT_DIR}/test_psbl_photastrom_par_param1_solver/jax_'
 
     os.makedirs(os.path.dirname(base), exist_ok=True)
@@ -1373,7 +1395,8 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     # There should be a better way to do this.
     p_in_params = {k: p_in[k] for k in pnames}
 
-    fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in_params, kde=False)
     fitter.plot_model_and_data(psbl_out, input_model=psbl_in)
     if verbose:
         fitter.summarize_results()
@@ -1388,7 +1411,7 @@ def test_PSBL_PhotAstrom_Par_Param1(verbose=False, resume=False):
     return
 
 
-def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', resume=False):
+def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', resume=False, plot=False):
     # Choose which base you want to use.
     # Comment out the one you don't want.
     outdir = f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/'
@@ -1459,7 +1482,7 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
     fitter = MicrolensSolver(data, model.PSBL_Phot_noPar_Param1,
                              n_live_points=100,
                              dump_callback=None,
-                             max_iter=5000,
+                             max_iter=1000,
                              evidence_tolerance=2.0,
                              sampling_efficiency=3.0,
                              outputfiles_basename=base,
@@ -1500,12 +1523,14 @@ def test_PSBL_phot_nopar_fit(regen=False, fit=True, summarize=False, suffix='', 
 
     assert np.abs(lnL_out - lnL_in) < 10
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
 
     return
 
 
-def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', resume=False):
+@pytest.mark.slow
+def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', resume=False, plot=False):
     # Choose which base you want to use.
     # Comment out the one you don't want.
     base = f'{TEST_OUTPUT_DIR}/test_psbl_phot_solver/par_jax' + suffix + '_'
@@ -1612,7 +1637,8 @@ def test_PSBL_phot_par_fit(regen=False, fit=True, summarize=False, suffix='', re
 
     assert np.abs(lnL_out - lnL_in) < 10
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
 
     return
 
@@ -1695,7 +1721,8 @@ def test_generate_params_dict():
 
 
 @pytest.mark.skip(reason="broken")
-def test_u0_sign_change(new_u0_sign=False, resume=False):
+@pytest.mark.slow
+def test_u0_sign_change(new_u0_sign=False, resume=False, plot=False):
     # This is an old run from when the 0 sign was wrong. 
     old_base = f'{TEST_OUTPUT_DIR}/test_pspl_solver/aa_old_u0_jax_'
     new_base = f'{TEST_OUTPUT_DIR}/test_pspl_solver/aa_new_u0_jax_'
@@ -1738,6 +1765,7 @@ def test_u0_sign_change(new_u0_sign=False, resume=False):
     
     return
 
+@pytest.mark.slow
 def test_pspl_solver_gp_params(resume=False):
     """
     Instantiate PSPL_Solver and make sure the optional GP 
@@ -1862,6 +1890,7 @@ def test_pspl_solver_gp_params(resume=False):
     return
 
 @pytest.mark.skip(reason="broken")
+@pytest.mark.slow
 def test_plot_model_and_data_GP_err():
     # SKIP
 
@@ -2017,7 +2046,8 @@ def test_plot_model_and_data_GP_err():
     
 #     return
     
-def test_cache_parallax_vector(verbose=False, resume=False):
+@pytest.mark.slow
+def test_cache_parallax_vector(verbose=False, resume=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_lmc/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -2098,7 +2128,8 @@ def test_cache_parallax_vector(verbose=False, resume=False):
     p_in['b_sff1'] = p_in['b_sff']
     p_in['mag_src1'] = p_in['mag_src']
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
     if verbose:
         fitter.summarize_results()
@@ -2121,7 +2152,8 @@ def test_cache_parallax_vector(verbose=False, resume=False):
 
     return
 
-def test_hobson_weights(hobson=True, resume=False, verbose=False):
+@pytest.mark.slow
+def test_hobson_weights(hobson=True, resume=False, verbose=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_hobson/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -2258,7 +2290,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     pspl_out = fitter.get_model(best)
     pspl_in = fitter.get_model(p_in)
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
     if verbose:
         fitter.summarize_results()
@@ -2301,7 +2334,8 @@ def test_hobson_weights(hobson=True, resume=False, verbose=False):
     return
 
 
-def test_bspl_parallax_fit(verbose=False, resume=False):
+@pytest.mark.slow
+def test_bspl_parallax_fit(verbose=False, resume=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_bspl_solver/'
     os.makedirs(outdir, exist_ok=True)
 
@@ -2360,7 +2394,8 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
     p_in['mag_src_pri1'] = p_in['mag_src_pri'][0]
     p_in['mag_src_sec1'] = p_in['mag_src_sec'][0]
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(bspl_out, input_model=bspl_in)
     if verbose:
         fitter.summarize_results()
@@ -2383,7 +2418,8 @@ def test_bspl_parallax_fit(verbose=False, resume=False):
 
     return
 
-def test_multi_obsLocation(resume=False, verbose=False):
+@pytest.mark.slow
+def test_multi_obsLocation(resume=False, verbose=False, plot=False):
     outdir = f'{TEST_OUTPUT_DIR}/test_mnest_bulge_multiLoc/'
     outroot = 'jax_'
     base = outdir + outroot
@@ -2499,7 +2535,8 @@ def test_multi_obsLocation(resume=False, verbose=False):
     # Save the data for future plotting.
     pickle_data(base, data, p_in)
 
-    fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
+    if plot:
+        fitter.plot_dynesty_style(sim_vals=p_in, kde=False)
     fitter.plot_model_and_data(pspl_out, input_model=pspl_in)
 
     # Compare input and output model paramters
@@ -2841,7 +2878,7 @@ def test_old_data_priors_supported_in_pymc(prior_name, plot=False):
 
     with pymc.Model():
         scipy_to_pymc(scipy_prior, 'theta')
-        idata = pymc.sample_prior_predictive(draws=3000, random_seed=FIT_SEED)
+        idata = pymc.sample_prior_predictive(draws=500, random_seed=FIT_SEED)
 
     samples = idata.prior['theta'].values.reshape(-1)
     _assert_scipy_pymc_prior_similar(scipy_prior, samples)
@@ -2873,7 +2910,7 @@ def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
     scipy_prior = prior_fn('theta', *args)
     with pymc.Model():
         scipy_to_pymc(scipy_prior, 'theta')
-        idata = pymc.sample_prior_predictive(draws=3000, random_seed=FIT_SEED)
+        idata = pymc.sample_prior_predictive(draws=500, random_seed=FIT_SEED)
 
     samples = idata.prior['theta'].values.reshape(-1)
     for q in [0.16, 0.5, 0.84]:
@@ -2890,6 +2927,7 @@ def test_scipy_to_pymc_priors(prior_fn, args, plot=False):
 
     return
 
+@pytest.mark.slow
 def test_microlens_solver_pymc_vs_multinest(plot=False, resume_mnest=False):
     pytest.importorskip('pymc')
 
@@ -3083,6 +3121,7 @@ def test_microlens_solver_numpyro_grad_finite():
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=False):
     """NumPyro NUTS posteriors should be close to MultiNest on fake_data1."""
     pytest.importorskip('numpyro')
@@ -3169,6 +3208,7 @@ def test_microlens_solver_numpyro_nuts_vs_multinest(plot=True, resume_mnest=Fals
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
                                                      resume_mnest=False):
     """JAXNS nested-sampling posteriors should be close to MultiNest.
@@ -3281,6 +3321,7 @@ def test_microlens_solver_numpyro_jaxns_vs_multinest(plot=True,
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_numpyro_jaxns_smoke():
     """JAXNS smoke test: finite logZ and MultiNest-compatible table."""
     try:
@@ -3322,6 +3363,7 @@ def test_microlens_solver_numpyro_jaxns_smoke():
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_numpyro_smc_nuts_smoke():
     """NumPyro SMC-NUTS smoke: finite logZ and MultiNest-compatible table."""
     pytest.importorskip('numpyro')
@@ -3361,6 +3403,7 @@ def test_microlens_solver_numpyro_smc_nuts_smoke():
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
                                                         resume_mnest=False):
     """NumPyro SMC-NUTS medians should be near MultiNest on fake_data1."""
@@ -3449,6 +3492,7 @@ def test_microlens_solver_numpyro_smc_nuts_vs_multinest(plot=False,
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_pymc_smc_smoke():
     """PyMC SMC smoke: finite logZ and MultiNest-compatible table."""
     pytest.importorskip('pymc')
@@ -3485,6 +3529,7 @@ def test_microlens_solver_pymc_smc_smoke():
     return None
 
 
+@pytest.mark.slow
 def test_microlens_solver_pymc_smc_vs_multinest(plot=False, resume_mnest=False):
     """PyMC SMC medians should be near MultiNest on fake_data1."""
     pytest.importorskip('pymc')

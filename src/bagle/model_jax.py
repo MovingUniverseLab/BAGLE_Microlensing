@@ -512,10 +512,50 @@ from bagle import jax_physics
 # against the host. Add a class here only together with a
 # likelihood-parity test (see docs/dev/jax_swap_plan.md Step 2 / 7).
 JAX_LIKELIHOOD_CLASSES = frozenset([
+    'BFSBL_Limb_PhotAstrom_Par_AccOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_Par_CircOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_Par_EllOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_Par_LinOrbs_Param1',
     'BFSBL_Limb_PhotAstrom_Par_Param1',
+    'BFSBL_Limb_PhotAstrom_Par_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param2',
+    'BFSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3',
+    'BFSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1',
     'BFSBL_Limb_PhotAstrom_noPar_Param1',
+    'BFSBL_Limb_PhotAstrom_noPar_Param2',
+    'BFSBL_Limb_Phot_Par_Param1',
+    'BFSBL_Limb_Phot_noPar_Param1',
+    'BFSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param2',
+    'BFSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param2',
+    'BFSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'BFSBL_PhotAstrom_Par_LinOrbs_Param1',
     'BFSBL_PhotAstrom_Par_Param1',
+    'BFSBL_PhotAstrom_Par_Param2',
+    'BFSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BFSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BFSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BFSBL_PhotAstrom_noPar_LinOrbs_Param1',
     'BFSBL_PhotAstrom_noPar_Param1',
+    'BFSBL_PhotAstrom_noPar_Param2',
+    'BFSBL_Phot_Par_Param1',
+    'BFSBL_Phot_noPar_Param1',
     'BFSPL_Limb_PhotAstrom_Par_Param1',
     'BFSPL_Limb_PhotAstrom_noPar_Param1',
     'BFSPL_Limb_Phot_Par_Param1',
@@ -524,25 +564,193 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'BFSPL_PhotAstrom_noPar_Param1',
     'BFSPL_Phot_Par_Param1',
     'BFSPL_Phot_noPar_Param1',
+    'BSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param2',
+    'BSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param2',
+    'BSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'BSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'BSBL_PhotAstrom_Par_Param1',
+    'BSBL_PhotAstrom_Par_Param2',
+    'BSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'BSBL_PhotAstrom_noPar_Param1',
+    'BSBL_PhotAstrom_noPar_Param2',
+    'BSBL_Phot_Par_Param1',
+    'BSBL_Phot_noPar_Param1',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param1',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param2',
+    'BSPL_PhotAstrom_Par_AccOrbs_Param3',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param1',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param2',
+    'BSPL_PhotAstrom_Par_CircOrbs_Param3',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param1',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param2',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param3',
+    'BSPL_PhotAstrom_Par_EllOrbs_Param4',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param1',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param2',
+    'BSPL_PhotAstrom_Par_GP_AccOrbs_Param3',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param1',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param2',
+    'BSPL_PhotAstrom_Par_GP_LinOrbs_Param3',
+    'BSPL_PhotAstrom_Par_GP_Param1',
+    'BSPL_PhotAstrom_Par_GP_Param2',
+    'BSPL_PhotAstrom_Par_GP_Param3',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param1',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param2',
+    'BSPL_PhotAstrom_Par_LinOrbs_Param3',
+    'BSPL_PhotAstrom_Par_Param1',
+    'BSPL_PhotAstrom_Par_Param2',
+    'BSPL_PhotAstrom_Par_Param3',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_AccOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_CircOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_EllOrbs_Param4',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_GP_AccOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_GP_LinOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_GP_Param1',
+    'BSPL_PhotAstrom_noPar_GP_Param2',
+    'BSPL_PhotAstrom_noPar_GP_Param3',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param1',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param2',
+    'BSPL_PhotAstrom_noPar_LinOrbs_Param3',
+    'BSPL_PhotAstrom_noPar_Param1',
+    'BSPL_PhotAstrom_noPar_Param2',
+    'BSPL_PhotAstrom_noPar_Param3',
     'BSPL_Phot_Par_GP_Param1',
     'BSPL_Phot_Par_Param1',
     'BSPL_Phot_noPar_GP_Param1',
     'BSPL_Phot_noPar_Param1',
     'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_Par_AccOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param4',
+    'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_Par_CircOrbs_Param8',
+    'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param4',
+    'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_Par_EllOrbs_Param8',
     'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_Par_LinOrbs_Param7',
     'FSBL_Limb_PhotAstrom_Par_Param1',
+    'FSBL_Limb_PhotAstrom_Par_Param2',
+    'FSBL_Limb_PhotAstrom_Par_Param3',
+    'FSBL_Limb_PhotAstrom_Par_Param4',
+    'FSBL_Limb_PhotAstrom_Par_Param5',
+    'FSBL_Limb_PhotAstrom_Par_Param6',
+    'FSBL_Limb_PhotAstrom_Par_Param7',
+    'FSBL_Limb_PhotAstrom_Par_Param8',
     'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_AccOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param4',
+    'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_noPar_CircOrbs_Param8',
+    'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param4',
+    'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param7',
+    'FSBL_Limb_PhotAstrom_noPar_EllOrbs_Param8',
     'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_LinOrbs_Param7',
     'FSBL_Limb_PhotAstrom_noPar_Param1',
+    'FSBL_Limb_PhotAstrom_noPar_Param2',
+    'FSBL_Limb_PhotAstrom_noPar_Param3',
+    'FSBL_Limb_PhotAstrom_noPar_Param4',
+    'FSBL_Limb_PhotAstrom_noPar_Param6',
+    'FSBL_Limb_PhotAstrom_noPar_Param8',
+    'FSBL_Limb_Phot_Par_CircOrbs_Param1',
+    'FSBL_Limb_Phot_Par_EllOrbs_Param1',
     'FSBL_Limb_Phot_Par_Param1',
+    'FSBL_Limb_Phot_noPar_CircOrbs_Param1',
+    'FSBL_Limb_Phot_noPar_EllOrbs_Param1',
     'FSBL_Limb_Phot_noPar_Param1',
     'FSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param3',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param6',
+    'FSBL_PhotAstrom_Par_AccOrbs_Param7',
+    'FSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'FSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'FSBL_PhotAstrom_Par_CircOrbs_Param4',
+    'FSBL_PhotAstrom_Par_CircOrbs_Param7',
+    'FSBL_PhotAstrom_Par_CircOrbs_Param8',
+    'FSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'FSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'FSBL_PhotAstrom_Par_EllOrbs_Param4',
+    'FSBL_PhotAstrom_Par_EllOrbs_Param7',
+    'FSBL_PhotAstrom_Par_EllOrbs_Param8',
     'FSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param3',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param6',
+    'FSBL_PhotAstrom_Par_LinOrbs_Param7',
     'FSBL_PhotAstrom_Par_Param1',
+    'FSBL_PhotAstrom_Par_Param2',
+    'FSBL_PhotAstrom_Par_Param3',
+    'FSBL_PhotAstrom_Par_Param4',
+    'FSBL_PhotAstrom_Par_Param5',
+    'FSBL_PhotAstrom_Par_Param6',
+    'FSBL_PhotAstrom_Par_Param7',
+    'FSBL_PhotAstrom_Par_Param8',
     'FSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param6',
+    'FSBL_PhotAstrom_noPar_AccOrbs_Param7',
+    'FSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_CircOrbs_Param4',
+    'FSBL_PhotAstrom_noPar_CircOrbs_Param7',
+    'FSBL_PhotAstrom_noPar_CircOrbs_Param8',
+    'FSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_EllOrbs_Param4',
+    'FSBL_PhotAstrom_noPar_EllOrbs_Param7',
+    'FSBL_PhotAstrom_noPar_EllOrbs_Param8',
     'FSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param3',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param6',
+    'FSBL_PhotAstrom_noPar_LinOrbs_Param7',
     'FSBL_PhotAstrom_noPar_Param1',
+    'FSBL_PhotAstrom_noPar_Param2',
+    'FSBL_PhotAstrom_noPar_Param3',
+    'FSBL_PhotAstrom_noPar_Param4',
+    'FSBL_PhotAstrom_noPar_Param6',
+    'FSBL_PhotAstrom_noPar_Param8',
+    'FSBL_Phot_Par_CircOrbs_Param1',
+    'FSBL_Phot_Par_EllOrbs_Param1',
     'FSBL_Phot_Par_Param1',
+    'FSBL_Phot_noPar_CircOrbs_Param1',
+    'FSBL_Phot_noPar_EllOrbs_Param1',
     'FSBL_Phot_noPar_Param1',
     'FSPL_Limb_PhotAstrom_Par_Param1',
     'FSPL_Limb_PhotAstrom_Par_Param2',
@@ -561,27 +769,82 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'FSPL_Phot_noPar_Param1',
     'FSPL_Phot_noPar_Param2',
     'PSBL_PhotAstrom_Par_AccOrbs_Param1',
+    'PSBL_PhotAstrom_Par_AccOrbs_Param6',
+    'PSBL_PhotAstrom_Par_AccOrbs_Param7',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param1',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param2',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param3',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param4',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param7',
+    'PSBL_PhotAstrom_Par_CircOrbs_Param8',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param1',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param2',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param3',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param4',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param7',
+    'PSBL_PhotAstrom_Par_EllOrbs_Param8',
     'PSBL_PhotAstrom_Par_GP_Param1',
+    'PSBL_PhotAstrom_Par_GP_Param2',
     'PSBL_PhotAstrom_Par_LinOrbs_Param1',
+    'PSBL_PhotAstrom_Par_LinOrbs_Param6',
+    'PSBL_PhotAstrom_Par_LinOrbs_Param7',
     'PSBL_PhotAstrom_Par_Param1',
+    'PSBL_PhotAstrom_Par_Param2',
+    'PSBL_PhotAstrom_Par_Param3',
+    'PSBL_PhotAstrom_Par_Param4',
+    'PSBL_PhotAstrom_Par_Param5',
+    'PSBL_PhotAstrom_Par_Param7',
     'PSBL_PhotAstrom_noPar_AccOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_AccOrbs_Param6',
+    'PSBL_PhotAstrom_noPar_AccOrbs_Param7',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param2',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param3',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param4',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param7',
+    'PSBL_PhotAstrom_noPar_CircOrbs_Param8',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param2',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param3',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param4',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param7',
+    'PSBL_PhotAstrom_noPar_EllOrbs_Param8',
     'PSBL_PhotAstrom_noPar_GP_Param1',
+    'PSBL_PhotAstrom_noPar_GP_Param2',
     'PSBL_PhotAstrom_noPar_LinOrbs_Param1',
+    'PSBL_PhotAstrom_noPar_LinOrbs_Param6',
+    'PSBL_PhotAstrom_noPar_LinOrbs_Param7',
     'PSBL_PhotAstrom_noPar_Param1',
+    'PSBL_PhotAstrom_noPar_Param2',
+    'PSBL_PhotAstrom_noPar_Param3',
+    'PSBL_PhotAstrom_noPar_Param4',
+    'PSBL_Phot_Par_CircOrbs_Param1',
+    'PSBL_Phot_Par_EllOrbs_Param1',
     'PSBL_Phot_Par_GP_Param1',
     'PSBL_Phot_Par_Param1',
+    'PSBL_Phot_noPar_CircOrbs_Param1',
+    'PSBL_Phot_noPar_EllOrbs_Param1',
     'PSBL_Phot_noPar_GP_Param1',
     'PSBL_Phot_noPar_Param1',
     'PSPL_Astrom_Par_Param3',
+    'PSPL_Astrom_Par_Param4',
     'PSPL_PhotAstrom_Par_GP_Param1',
     'PSPL_PhotAstrom_Par_GP_Param2',
     'PSPL_PhotAstrom_Par_GP_Param3',
     'PSPL_PhotAstrom_Par_GP_Param3_1',
     'PSPL_PhotAstrom_Par_GP_Param3_2',
+    'PSPL_PhotAstrom_Par_GP_Param4',
+    'PSPL_PhotAstrom_Par_GP_Param4_1',
+    'PSPL_PhotAstrom_Par_GP_Param4_2',
     'PSPL_PhotAstrom_Par_GPnoJitter_Param3_1',
     'PSPL_PhotAstrom_Par_Param1',
     'PSPL_PhotAstrom_Par_Param2',
     'PSPL_PhotAstrom_Par_Param3',
+    'PSPL_PhotAstrom_Par_Param4',
+    'PSPL_PhotAstrom_Par_Param4_geoproj',
+    'PSPL_PhotAstrom_Par_Param5',
+    'PSPL_PhotAstrom_Par_Param6',
+    'PSPL_PhotAstrom_Par_Param7',
     'PSPL_PhotAstrom_RefPar_GP_Param3',
     'PSPL_PhotAstrom_RefPar_GP_Param3_1',
     'PSPL_PhotAstrom_RefPar_GP_Param4',
@@ -593,6 +856,8 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSPL_PhotAstrom_noPar_Param1',
     'PSPL_PhotAstrom_noPar_Param2',
     'PSPL_PhotAstrom_noPar_Param3',
+    'PSPL_PhotAstrom_noPar_Param4',
+    'PSPL_PhotAstrom_noPar_Param7',
     'PSPL_Phot_Par_GP_Param1',
     'PSPL_Phot_Par_GP_Param1_2',
     'PSPL_Phot_Par_GP_Param2',
@@ -616,9 +881,13 @@ JAX_LIKELIHOOD_CLASSES = frozenset([
     'PSTL_PhotAstrom_Par_EllOrbs_Param1',
     'PSTL_PhotAstrom_Par_EllOrbs_Param2',
     'PSTL_PhotAstrom_Par_Param1',
+    'PSTL_PhotAstrom_Par_Param2',
+    'PSTL_PhotAstrom_Par_Param3',
     'PSTL_PhotAstrom_noPar_EllOrbs_Param1',
     'PSTL_PhotAstrom_noPar_EllOrbs_Param2',
     'PSTL_PhotAstrom_noPar_Param1',
+    'PSTL_PhotAstrom_noPar_Param2',
+    'PSTL_PhotAstrom_noPar_Param3',
     'PSTL_Phot_Par_Param1',
     'PSTL_Phot_noPar_Param1',
 ])
@@ -19822,6 +20091,73 @@ class BSPL_PhotAstromParam1(PSPL_Param):
     paramPhotFlag = True
     orbitFlag = False
 
+    @classmethod
+    def jax_log_likely_photometry(cls, vec, t, mag_obs, mag_err, b_sff,
+                                  mag_src, parallax_vectors=None,
+                                  gp_params=None, fixed_jitter=True):
+        """
+        Photometric log-likelihood for this BSPL PhotAstrom parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Filter-local parameters in ``fitter_param_names`` order.
+        t, mag_obs, mag_err : array_like, shape (N_times,)
+            Times (MJD), magnitudes, and uncertainties.
+        b_sff : float
+            Source flux fraction for this filter.
+        mag_src : float or tuple
+            Accepted for the fitter. Magnitudes are read from ``vec``.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+        gp_params : dict or None
+            Gaussian-process hyperparameters.
+        fixed_jitter : bool
+            Use a fixed jitter term when a GP is present.
+
+        Returns
+        -------
+        lnL : float
+        """
+        from bagle.jax.bspl import bspl_photastrom_log_likely_photometry
+
+        lnL = bspl_photastrom_log_likely_photometry(
+            cls.fitter_param_names, vec, t, mag_obs, mag_err, b_sff,
+            parallax_vectors=parallax_vectors, gp_params=gp_params,
+            fixed_jitter=fixed_jitter,
+        )
+        return lnL
+
+    @classmethod
+    def jax_log_likely_astrometry(cls, vec, t, x_obs, y_obs, x_err,
+                                  y_err, b_sff=1.0,
+                                  parallax_vectors=None):
+        """
+        Astrometric log-likelihood for this BSPL PhotAstrom parameterization.
+
+        Parameters
+        ----------
+        vec : array_like
+            Filter-local parameters in ``fitter_param_names`` order.
+        t, x_obs, y_obs, x_err, y_err : array_like, shape (N_times,)
+            Times (MJD) and East/North positions and uncertainties (arcsec).
+        b_sff : float, optional
+            Source flux fraction.
+        parallax_vectors : array_like or None
+            Parallax table, shape ``(N_times, 2)``.
+
+        Returns
+        -------
+        lnL : float
+        """
+        from bagle.jax.bspl import bspl_photastrom_log_likely_astrometry
+
+        lnL = bspl_photastrom_log_likely_astrometry(
+            cls.fitter_param_names, vec, t, x_obs, y_obs, x_err, y_err,
+            b_sff=b_sff, parallax_vectors=parallax_vectors,
+        )
+        return lnL
+
     def __init__(self, mL, t0, beta, dL, dL_dS,
                  xS0_E, xS0_N,
                  muL_E, muL_N,
@@ -22838,6 +23174,21 @@ class BSPL_PhotAstrom_EllOrbs_Param4(PSPL_Param):
         return
 
 
+# Param2, Param3, and the Keplerian mixins do not inherit Param1.
+# Share Param1's traced likelihood. ``cls`` is the class the fitter
+# calls, so each mixin still reads its own ``fitter_param_names``.
+_bspl_phot_lnl = BSPL_PhotAstromParam1.__dict__["jax_log_likely_photometry"]
+_bspl_ast_lnl = BSPL_PhotAstromParam1.__dict__["jax_log_likely_astrometry"]
+for _bspl_cls in (
+    BSPL_PhotAstromParam2,
+    BSPL_PhotAstromParam3,
+    BSPL_PhotAstrom_EllOrbs_Param1,
+    BSPL_PhotAstrom_EllOrbs_Param2,
+    BSPL_PhotAstrom_EllOrbs_Param3,
+    BSPL_PhotAstrom_EllOrbs_Param4,
+):
+    _bspl_cls.jax_log_likely_photometry = _bspl_phot_lnl
+    _bspl_cls.jax_log_likely_astrometry = _bspl_ast_lnl
 
 
 class BSPL_PhotAstrom_CircOrbs_Param1(BSPL_PhotAstrom_EllOrbs_Param1):
@@ -28067,6 +28418,7 @@ class FSPL(PSPL):
             the lens is inside the source).
         """
         # Real centroids [N_times, [+, -], [E, N]] and amps [N_times, [+, -]].
+        # The JAX kernel (clustered limb), not the evenly spaced NumPy sampler.
         img_real, amps = self._get_all_arrays_real(t, filt_idx=filt_idx)
 
         # Complex East + i North with the source axis: [N_times, 1, [+, -]].
@@ -28080,9 +28432,10 @@ class FSPL(PSPL):
         """
         Real-valued FSPL image centroids and amplifications (host path).
 
-        Uniform contour integration when ``|u| >= 2 rho``; adaptive mesh
-        when the source limb can pass close to the lens. One preallocated
-        output when a light curve mixes both regimes.
+        The clustered-limb JAX kernel (:func:`bagle.jax.fspl.fspl_images_amps`)
+        at this model's ``n_outline``. That is the same sampler the traced
+        likelihood uses. ``get_all_arrays_CI`` and ``get_all_arrays_amg``
+        remain the older NumPy paths.
 
         Parameters
         ----------
@@ -28098,28 +28451,27 @@ class FSPL(PSPL):
         amps : ndarray, shape (len(t), 2)
             Image amplifications.
         """
+        from bagle.jax.fspl import fspl_images_amps, static_n_outline
+
         t = np.atleast_1d(np.asarray(t, dtype=float))
-        u_amp = np.linalg.norm(self.get_u(t, filt_idx=filt_idx), axis=1)
+        u = np.asarray(self.get_u(t, filt_idx=filt_idx), dtype=float)
+        rho = float(self.source_radius_thetaE_units())
+        n_out = static_n_outline(getattr(self, 'n_outline', None))
 
-        # Adaptive mesh is only needed when a source-boundary point can sit
-        # near the lens (|u| ~ rho). Uniform CI is enough farther away.
-        rho = self.source_radius_thetaE_units()
-        close = u_amp < (2.0 * rho)
-        if not np.any(close):
-            self.amgFlag = False
-            return self.get_all_arrays_CI(t, filt_idx)
-        if np.all(close):
-            self.amgFlag = True
-            return self.get_all_arrays_amg(t, filt_idx)
+        # Uniform disk when limb darkening is off.
+        gamma = float(self.limb_gamma(filt_idx))
+        gamma_arg = None if gamma == 0.0 else gamma
 
-        far = ~close
-        images = np.empty((t.size, 2, 2), dtype=float)
-        amps = np.empty((t.size, 2), dtype=float)
-        images[far], amps[far] = self.get_all_arrays_CI(t[far], filt_idx)
-        images[close], amps[close] = self.get_all_arrays_amg(
-            t[close], filt_idx
-        )
-        self.amgFlag = True
+        images, amps = fspl_images_amps(
+            u, rho, n_out, gamma=gamma_arg, n_ld=int(self.ld_n_nodes))
+        images = np.asarray(images, dtype=float)
+        amps = np.asarray(amps, dtype=float)
+
+        # Astrometric models want sky arcsec; photometry stays in thetaE.
+        images = np.asarray(
+            self.fspl_images_to_sky(images, t, filt_idx=filt_idx), dtype=float)
+        self.amgFlag = False
+
         return images, amps
 
     def get_all_arrays_amg_only(self, t, filt_idx=0):
@@ -29046,8 +29398,7 @@ class FSPL_PhotParam1(PSPL_Param):
         parallax_vectors, gp_params, fixed_jitter : optional
             Parallax table and optional GP path.
         n_outline : int, optional
-            Static limb count (not sampled). Default 400 matches A-09
-            host/JAX magnitude parity away from the limb.
+            Static limb count (not sampled). Default 50, same as the host.
 
         Returns
         -------
@@ -39288,12 +39639,10 @@ class BFSPL(PSPL):
         """
         Image centroids and amplifications for both finite sources.
 
-        Each source uses the point-lens contour integrals in
-        :mod:`bagle.fspl_contour`. Adaptive limb sampling is used when
-        ``|u| < 2 rho`` for that source; otherwise ``n_outline`` equally
-        spaced samples. Limb darkening (when
-        :meth:`limb_gamma_pri` / :meth:`limb_gamma_sec` are non-zero) sums
-        nested uniform disks.
+        Each source uses the clustered-limb JAX kernel
+        (:func:`bagle.jax.fspl.fspl_images_amps`) at that source's
+        ``n_outline``. Limb darkening sums nested uniform disks inside
+        the kernel.
 
         Parameters
         ----------
@@ -39314,10 +39663,7 @@ class BFSPL(PSPL):
         t = np.atleast_1d(np.asarray(t, dtype=float))
         n_t = t.size
 
-        # Source centres relative to the lens (Einstein radii).
-        u_vec = self.get_u(t, filt_idx=filt_idx)
-        zeta_pri = u_vec[:, 0, 0] + 1j * u_vec[:, 0, 1]
-        zeta_sec = u_vec[:, 1, 0] + 1j * u_vec[:, 1, 1]
+        from bagle.jax.fspl import fspl_images_amps
 
         rho_pri = self._bfspl_rho('pri')
         rho_sec = self._bfspl_rho('sec')
@@ -39326,32 +39672,36 @@ class BFSPL(PSPL):
         n_pri = self._bfspl_outline('pri')
         n_sec = self._bfspl_outline('sec')
 
-        # Adaptive mesh only when a limb point can sit near the lens.
-        close_pri = np.abs(zeta_pri) < (2.0 * rho_pri)
-        close_sec = np.abs(zeta_sec) < (2.0 * rho_sec)
+        # Same clustered limb the traced likelihood uses, per source.
+        def _disk(u_rows, rho, gamma, n_out):
+            """
+            One source through the clustered-limb kernel.
 
-        img_pri = np.empty((n_t, 2, 2), dtype=float)
-        amp_pri = np.empty((n_t, 2), dtype=float)
-        img_sec = np.empty((n_t, 2, 2), dtype=float)
-        amp_sec = np.empty((n_t, 2), dtype=float)
+            Parameters
+            ----------
+            u_rows : ndarray, shape (N_times, 2)
+                Source-lens separation in Einstein radii.
+            rho : float
+                Source radius in Einstein radii.
+            gamma : float or None
+                Linear limb-darkening coefficient. 0 is uniform.
+            n_out : int
+                Static limb sample count.
 
-        # Primary: split close / far epochs like FSPL.get_all_arrays.
-        if n_t > 0:
-            far = ~close_pri
-            if np.any(far):
-                img_pri[far], amp_pri[far] = self._bfspl_one_source(
-                    zeta_pri[far], rho_pri, g_pri, n_pri, use_amg=False)
-            if np.any(close_pri):
-                img_pri[close_pri], amp_pri[close_pri] = self._bfspl_one_source(
-                    zeta_pri[close_pri], rho_pri, g_pri, n_pri, use_amg=True)
+            Returns
+            -------
+            img : ndarray, shape (N_times, 2, 2)
+            amp : ndarray, shape (N_times, 2)
+            """
+            gamma_arg = None if gamma in (0, 0.0, None) else float(gamma)
+            img, amp = fspl_images_amps(
+                u_rows, float(rho), int(n_out), gamma=gamma_arg)
 
-            far = ~close_sec
-            if np.any(far):
-                img_sec[far], amp_sec[far] = self._bfspl_one_source(
-                    zeta_sec[far], rho_sec, g_sec, n_sec, use_amg=False)
-            if np.any(close_sec):
-                img_sec[close_sec], amp_sec[close_sec] = self._bfspl_one_source(
-                    zeta_sec[close_sec], rho_sec, g_sec, n_sec, use_amg=True)
+            return np.asarray(img, dtype=float), np.asarray(amp, dtype=float)
+
+        u_vec = self.get_u(t, filt_idx=filt_idx)
+        img_pri, amp_pri = _disk(u_vec[:, 0, :], rho_pri, g_pri, n_pri)
+        img_sec, amp_sec = _disk(u_vec[:, 1, :], rho_sec, g_sec, n_sec)
 
         # Convert lens-relative Einstein radii to sky arcsec when needed.
         if getattr(self, 'astrometryFlag', False):
@@ -39846,15 +40196,14 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
             Summed photometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_photometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         # Source magnitudes from the fitter tuple or the class vector.
         if isinstance(mag_src, (tuple, list)):
@@ -39897,15 +40246,14 @@ class BFSPL_PhotAstromParam1(PSPL_Param):
             Summed astrometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_astrometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         return bfspl_log_likely_astrometry(
             t, p['t0'], g['tE'], g['u0_pri'], g['u0_sec'], g['thetaE_hat'],
@@ -40323,15 +40671,14 @@ class BFSPL_PhotParam1(BSPL_PhotParam1):
             Summed photometric log-likelihood.
         """
 
-        # Host default is 50; False means point-source on the host path.
-        if n_outline is False or n_outline is None:
-            n_outline = 50
-        else:
-            n_outline = int(n_outline)
-
         from bagle.jax.bfs import bfspl_log_likely_photometry
+        from bagle.jax.fspl import static_n_outline
 
         p, g = cls._jax_bfspl_phot_geometry(vec)
+
+        # Shared static count: the larger of the two source outlines.
+        n_outline = static_n_outline(
+            n_outline, p.get('n_outline_pri'), p.get('n_outline_sec'))
 
         # Source magnitudes from the fitter tuple or the class vector.
         if isinstance(mag_src, (tuple, list)):
@@ -40668,6 +41015,9 @@ class PSPL_PhotAstrom_Par_Param4_geoproj(ModelClassABC,
                                          PSPL_Parallax,
                                          PSPL_PhotAstrom,
                                          PSPL_PhotAstromParam4_geoproj):
+    # t0par is fixed data, same as the photometry-only geoproj class.
+    fixed_param_names = ['raL', 'decL', 't0par']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
@@ -45717,4 +46067,158 @@ def cluster(image, R):
             loops += 1
             total += 1
     return (np.array(clusters), np.array(centres))
+
+
+# Keplerian PSBL / FSBL likelihoods. The descriptor is copied so ``cls`` is
+# the class the fitter calls and each parameterization reads its own names.
+from bagle.jax.binary_kepler import _KeplerBinaryLnL
+
+_kep_phot = _KeplerBinaryLnL.__dict__['jax_log_likely_photometry']
+_kep_ast = _KeplerBinaryLnL.__dict__['jax_log_likely_astrometry']
+for _kep_name, _kep_cls in list(globals().items()):
+    if not isinstance(_kep_cls, type):
+        continue
+    if not (_kep_name.startswith('PSBL') or _kep_name.startswith('FSBL')):
+        continue
+    if 'CircOrbs' not in _kep_name and 'EllOrbs' not in _kep_name:
+        continue
+    _kep_names = getattr(_kep_cls, 'fitter_param_names', None)
+    if not _kep_names:
+        continue
+    _kep_cls.jax_log_likely_photometry = _kep_phot
+    if 'dmag_Lp_Ls' in _kep_names:
+        _kep_cls.jax_log_likely_astrometry = _kep_ast
+
+
+# BSBL likelihoods, copied the same way so each parameterization is ``cls``.
+from bagle.jax.bsbl import _BSBLLnL
+
+_bsbl_phot = _BSBLLnL.__dict__['jax_log_likely_photometry']
+_bsbl_ast = _BSBLLnL.__dict__['jax_log_likely_astrometry']
+for _bsbl_name, _bsbl_cls in list(globals().items()):
+    if not isinstance(_bsbl_cls, type):
+        continue
+    if not _bsbl_name.startswith('BSBL'):
+        continue
+    _bsbl_names = getattr(_bsbl_cls, 'fitter_param_names', None)
+    if not _bsbl_names:
+        continue
+    # Concrete data classes only. Abstract mixins have no fitter names.
+    if '_Par_' not in _bsbl_name and '_noPar_' not in _bsbl_name:
+        continue
+    _bsbl_cls.jax_log_likely_photometry = _bsbl_phot
+    if 'xS0_E' in _bsbl_names or 'xS0_com_E' in _bsbl_names or (
+            'xS0_p_E' in _bsbl_names):
+        _bsbl_cls.jax_log_likely_astrometry = _bsbl_ast
+
+
+# BFSBL likelihoods. Static Param1 already defines its own methods.
+from bagle.jax.bfsbl import _BFSBLLnL
+
+_bfsbl_phot = _BFSBLLnL.__dict__['jax_log_likely_photometry']
+_bfsbl_ast = _BFSBLLnL.__dict__['jax_log_likely_astrometry']
+for _bfsbl_name, _bfsbl_cls in list(globals().items()):
+    if not isinstance(_bfsbl_cls, type):
+        continue
+    if not _bfsbl_name.startswith('BFSBL'):
+        continue
+    if '_Par_' not in _bfsbl_name and '_noPar_' not in _bfsbl_name:
+        continue
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _bfsbl_cls.__mro__):
+        continue
+    _bfsbl_names = getattr(_bfsbl_cls, 'fitter_param_names', None)
+    if not _bfsbl_names:
+        continue
+    _bfsbl_cls.jax_log_likely_photometry = _bfsbl_phot
+    if 'xS0_E' in _bfsbl_names or 'xS0_com_E' in _bfsbl_names or (
+            'xS0_p_E' in _bfsbl_names):
+        _bfsbl_cls.jax_log_likely_astrometry = _bfsbl_ast
+
+
+# Reduced PSPL PhotAstrom (Param4, Param5, Param6, Param7) and Astrom Param4.
+from bagle.jax.pspl_reduced import _PSPLGeoLnL, _PSPLReducedLnL
+
+_pspl_phot = _PSPLReducedLnL.__dict__['jax_log_likely_photometry']
+_pspl_ast = _PSPLReducedLnL.__dict__['jax_log_likely_astrometry']
+_pspl_geo_phot = _PSPLGeoLnL.__dict__['jax_log_likely_photometry']
+_pspl_geo_ast = _PSPLGeoLnL.__dict__['jax_log_likely_astrometry']
+for _pspl_name, _pspl_cls in list(globals().items()):
+    if not isinstance(_pspl_cls, type):
+        continue
+    _pspl_names = getattr(_pspl_cls, 'fitter_param_names', None)
+    if not _pspl_names:
+        continue
+    if _pspl_name.startswith('PSPL_Astrom') and 'Param4' in _pspl_name:
+        _pspl_cls.jax_log_likely_astrometry = _pspl_ast
+        continue
+    if not _pspl_name.startswith('PSPL_PhotAstrom'):
+        continue
+    if not any(tag in _pspl_name for tag in (
+            'Param4', 'Param5', 'Param6', 'Param7')):
+        continue
+    if 'geoproj' in _pspl_name:
+        _pspl_cls.jax_log_likely_photometry = _pspl_geo_phot
+        _pspl_cls.jax_log_likely_astrometry = _pspl_geo_ast
+        continue
+    # RefPar and earlier parameterizations already define their own methods.
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _pspl_cls.__mro__):
+        continue
+    _pspl_cls.jax_log_likely_photometry = _pspl_phot
+    _pspl_cls.jax_log_likely_astrometry = _pspl_ast
+
+
+# Static PSTL Param2 and Param3. Keplerian PSTL already has its own methods.
+from bagle.jax.pstl_reduced import _PSTLReducedLnL
+
+_pstl_phot = _PSTLReducedLnL.__dict__['jax_log_likely_photometry']
+_pstl_ast = _PSTLReducedLnL.__dict__['jax_log_likely_astrometry']
+for _pstl_name in ('PSTL_PhotAstromParam2', 'PSTL_PhotAstromParam3'):
+    _pstl_cls = globals()[_pstl_name]
+    _pstl_cls.jax_log_likely_photometry = _pstl_phot
+    _pstl_cls.jax_log_likely_astrometry = _pstl_ast
+
+
+# PSBL and FSBL parameterizations that had no traced likelihood.
+# Keplerian classes and Param1 already define their own methods.
+from bagle.jax.psbl_frames import _PSBLFrameLnL
+
+_frame_phot = _PSBLFrameLnL.__dict__['jax_log_likely_photometry']
+_frame_ast = _PSBLFrameLnL.__dict__['jax_log_likely_astrometry']
+for _frame_name, _frame_cls in list(globals().items()):
+    if not isinstance(_frame_cls, type):
+        continue
+    if not (_frame_name.startswith('PSBL_PhotAstrom')
+            or _frame_name.startswith('FSBL_PhotAstrom')
+            or _frame_name.startswith('FSBL_Limb_PhotAstrom')):
+        continue
+    if '_Par_' not in _frame_name and '_noPar_' not in _frame_name:
+        continue
+    if 'CircOrbs' in _frame_name or 'EllOrbs' in _frame_name:
+        continue
+    if 'GP' in _frame_name:
+        continue
+    if any('jax_log_likely_photometry' in _base.__dict__
+           for _base in _frame_cls.__mro__):
+        continue
+    _frame_names = getattr(_frame_cls, 'fitter_param_names', None)
+    if not _frame_names:
+        continue
+    _frame_cls.jax_log_likely_photometry = _frame_phot
+    if 'dmag_Lp_Ls' in _frame_names:
+        _frame_cls.jax_log_likely_astrometry = _frame_ast
+
+
+# PSBL GP Param2 uses the reduced GP kernel, not the frame kernel above.
+from bagle.jax.psbl_reduced import _PSBLReducedLnL
+
+_psbl_gp_phot = _PSBLReducedLnL.__dict__['jax_log_likely_photometry']
+_psbl_gp_ast = _PSBLReducedLnL.__dict__['jax_log_likely_astrometry']
+for _psbl_gp_name in (
+        'PSBL_PhotAstrom_Par_GP_Param2',
+        'PSBL_PhotAstrom_noPar_GP_Param2'):
+    _psbl_gp_cls = globals()[_psbl_gp_name]
+    _psbl_gp_cls.jax_log_likely_photometry = _psbl_gp_phot
+    _psbl_gp_cls.jax_log_likely_astrometry = _psbl_gp_ast
 
