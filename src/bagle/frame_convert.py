@@ -1520,37 +1520,72 @@ def convert_helio_geo_ast(ra, dec,
     The default conversion assumes that inputs are in
     source-lens (S - L) and EN coordinate conventions.
 
+    Note that "helio" (h) here, as elsewhere in BAGLE, means BAGLE's
+    internal Solar System barycentric frame, not a true heliocentric one.
+
+    Units and definitions
+    ---------------------
+    BAGLE's source astrometry, in either frame, is
+
+        xS(t) [arcsec] = xS0 + 1e-3 * [muS * (t - t0) / 365.25
+                                       + piS * P(t)]
+
+    with ``xS0`` in arcsec, ``muS`` in mas/yr, ``piS`` in mas, ``t`` and
+    ``t0`` in MJD (days), and ``P(t)`` the East/North parallax vector in AU
+    from :func:`bagle.parallax.parallax_in_direction`. ``xS0`` is the source
+    position at that frame's own ``t0``.
+
+    In the geocentric-projected frame, Earth's parallax motion is
+    linearized about ``t0par`` and moved into the rectilinear part:
+
+        P_geo(t) = P(t) - P0 - dP0 * (t - t0par) / 365.25
+
+    where ``P0`` (AU) and ``dP0`` (AU/yr, from
+    :func:`bagle.parallax.dparallax_dt_in_direction`) are evaluated at
+    ``t0par`` for Earth. Both frames then describe the same source path,
+    which gives, for helio (h) -> geo (g):
+
+        muS_g = muS_h + piS * dP0                                   [mas/yr]
+        xS0_g = xS0_h + 1e-3 * [muS_h * (t0_g - t0_h) / 365.25
+                                + piS * P0
+                                + piS * dP0 * (t0_g - t0par) / 365.25]  [arcsec]
+
+    and the algebraic inverse for geo -> helio. ``t0_g`` and ``t0_h`` come
+    from :func:`convert_helio_geo_phot`.
+
     Parameters
     ----------
-    ra : float
     ra, dec : str, float
         Equatorial coordinates of the microlensing event.
-        If string, needs to be of the form
+        If float, in degrees. If string, needs to be of the form
         'HH:MM:SS.SSSS', 'DD:MM:SS.SSSS'
     piS : float or array
-        Source parallax (mas)
+        Source parallax (mas).
     xS0E_in : float or array
-        Source position relative to RA/Dec, East component, in input frame. (arcsec)
+        Source position relative to RA/Dec, East component, at the input
+        frame's t0, in the input frame (arcsec).
     xS0N_in : float or array
-        Source position relative to RA/Dec, North component, in input frame. (arcsec)
+        Source position relative to RA/Dec, North component, at the input
+        frame's t0, in the input frame (arcsec).
     muSE_in : float or array
-        Source proper motion, East component, in input frame. (mas/yr)
+        Source proper motion, East component, in input frame (mas/yr).
     muSN_in : float or array
-        Source proper motion, North component, in input frame. (mas/yr)
+        Source proper motion, North component, in input frame (mas/yr).
     t0_in : float or array
         Time at which minimum source-lens projected separation in the rectilinear
-        frame occurs, in input frame. (MJD)
+        frame occurs, in input frame (MJD, days).
     u0_in : float or array
         Minimum source-lens projected separation in the rectilinear frame,
-        in units of the Einstein radius, in input frame.
+        in units of the Einstein radius, in input frame (dimensionless).
     tE_in : float or array
-        Einstein crossing time, in input frame. (days)
+        Einstein crossing time, in input frame (days).
     piEE_in : float or array
-        Microlensing parallax, East component, in input frame.
+        Microlensing parallax, East component, in input frame (dimensionless).
     piEN_in : float or array
-        Microlensing parallax, North component, in input frame.
-    t0par : float or array
-        Reference time for the geocentric projected coordinate system. (MJD)
+        Microlensing parallax, North component, in input frame (dimensionless).
+    t0par : float
+        Reference time for the geocentric projected coordinate system
+        (MJD, days).
     in_frame : str
         'helio' if converting from Solar System barycentric to geocentric projected frame.
         'geo' if converting from geocentric projected to Solar System barycentric frame.
@@ -1575,44 +1610,67 @@ def convert_helio_geo_ast(ra, dec,
     Returns
     -------
     xS0E_out : float or array
-        East component of the source position relative to RA and Dec in the new frame (arcsec).
+        East component of the source position relative to RA and Dec,
+        at the output frame's t0, in the new frame (arcsec).
     xS0N_out : float or array
-        North component of the source position relative to RA and Dec in the new frame (arcsec).
+        North component of the source position relative to RA and Dec,
+        at the output frame's t0, in the new frame (arcsec).
     muSE_out : float or array
         East component of the source proper motion in the new frame (mas/yr).
     muSN_out : float or array
         North component of the source proper motion in the new frame (mas/yr).
     """
-    day_to_yr = 365.25
+    days_per_year = 365.25
+    mas_to_arcsec = 1e-3
 
-    # UNITS: I think this is 1/days, NOT 1/years.
-    # Need to convert, depending on input units.
+    if in_frame not in ('helio', 'geo'):
+        raise Exception('in_frame can only be "helio" or "geo"!')
+
     if type(ra) == str:
         ra = str(str(Angle(ra, unit = u.hourangle)))
-    
+
+    # Earth's parallax vector (AU) and its rate (AU/yr) at t0par.
     par_t0par = parallax.parallax_in_direction(ra, dec, t0par)
     dp_dt_t0par = parallax.dparallax_dt_in_direction(ra, dec, t0par)
 
-    t0_out, _, _, _, _ = convert_helio_geo_phot(ra, dec, 
-                                                t0_in, u0_in, tE_in, 
+    t0_out, _, _, _, _ = convert_helio_geo_phot(ra, dec,
+                                                t0_in, u0_in, tE_in,
                                                 piEE_in, piEN_in, t0par,
                                                 in_frame,
-                                                murel_in, murel_out, 
+                                                murel_in, murel_out,
                                                 coord_in, coord_out,
                                                 plot=plot)
 
-    if in_frame=='helio':
-        muSE_out = muSE_in + piS * dp_dt_t0par[0] * day_to_yr
-        muSN_out = muSN_in + piS * dp_dt_t0par[1] * day_to_yr
-        xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) + piS * par_t0par[0]
-        xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) + piS * par_t0par[1]
-    elif in_frame=='geo':
-        muSE_out = muSE_in - piS * dp_dt_t0par[0] * day_to_yr
-        muSN_out = muSN_in - piS * dp_dt_t0par[1] * day_to_yr
-        xS0E_out = xS0E_in + muSE_in * (t0_out - t0_in) - piS * par_t0par[0] - piS * (t0_out - t0_in) * dp_dt_t0par[0]
-        xS0N_out = xS0N_in + muSN_in * (t0_out - t0_in) - piS * par_t0par[1] - piS * (t0_out - t0_in) * dp_dt_t0par[1]
-    else:
-        raise Exception('in_frame can only be "helio" or "geo"!')
+    # +1 adds Earth's linearized parallax motion (helio -> geo);
+    # -1 removes it (geo -> helio).
+    sign = 1.0 if in_frame == 'helio' else -1.0
+
+    # Elapsed years from the input t0 to the output t0, and from t0par to
+    # the heliocentric t0 (the epoch where the parallax offset is applied).
+    dt_out_in = (t0_out - t0_in) / days_per_year
+    t0_helio = t0_in if in_frame == 'helio' else t0_out
+    t0_geo = t0_out if in_frame == 'helio' else t0_in
+
+    xS0_in = np.array([xS0E_in, xS0N_in], dtype=float)
+    muS_in = np.array([muSE_in, muSN_in], dtype=float)
+    out = []
+    for i in range(2):
+        # Proper motion: add/remove piS * dP0 (mas * AU/yr = mas/yr).
+        muS_out_i = muS_in[i] + sign * piS * dp_dt_t0par[i]
+
+        # Position at the output t0: carry the input motion to t0_out, then
+        # add/remove Earth's linearized parallax offset at that epoch.
+        if in_frame == 'helio':
+            offset = (piS * par_t0par[i] +
+                      piS * dp_dt_t0par[i] * (t0_geo - t0par) / days_per_year)
+        else:
+            offset = (piS * par_t0par[i] +
+                      piS * dp_dt_t0par[i] * (t0_helio - t0par) / days_per_year)
+        xS0_out_i = xS0_in[i] + mas_to_arcsec * (muS_in[i] * dt_out_in +
+                                                 sign * offset)
+        out.append((xS0_out_i, muS_out_i))
+
+    (xS0E_out, muSE_out), (xS0N_out, muSN_out) = out
 
     return xS0E_out, xS0N_out, muSE_out, muSN_out
 
