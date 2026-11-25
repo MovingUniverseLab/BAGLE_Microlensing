@@ -2946,7 +2946,8 @@ def convert_u0_amp_t0_bsbl_orbit(t0_in, u0_amp_in, tE, thetaE_hat, orbL, orbS,
 
     return t0_out, u0_amp_out
 
-def convert_astrometry_to_scan_frame(x, y, scan_angle):
+def convert_astrometry_to_scan_frame(x, y, scan_angle,
+                                     inverse=False):
     """
     Convert RA/Dec frame astrometry to alternative frame based on
     a scan angle.
@@ -2959,7 +2960,8 @@ def convert_astrometry_to_scan_frame(x, y, scan_angle):
         Scan angle (theta as defined by Gaia) time series
     """
     scan_angle_rad = np.deg2rad(scan_angle)
+    if inverse: scan_angle_rad *= -1
     w = x*np.sin(scan_angle_rad) + y*np.cos(scan_angle_rad)
-    z = x*np.cos(scan_angle_rad) + y*np.sin(scan_angle_rad)
+    z = -x*np.cos(scan_angle_rad) + y*np.sin(scan_angle_rad)
     return w,z
 

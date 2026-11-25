@@ -378,3 +378,21 @@ def sun_position(mjd, radians=False):
         dec = np.degrees(dec)
 
     return ra, dec, longmed, oblt
+
+
+def _parse_to_mjd(text):
+    pattern = r"(?:prior to|after)\s+A\.D\.\s+(\d{4}-[A-Za-z]{3}-\d{2}\s+\d{2}:\d{2}:\d{2})\.(\d+)\s+TDB"
+    match = re.search(pattern, text)
+    if not match:
+        return None
+    
+    dt = datetime.strptime(match.group(1), "%Y-%b-%d %H:%M:%S")
+    iso_str = f"{dt.strftime('%Y-%m-%d %H:%M:%S')}.{match.group(2)}"
+    return Time(iso_str, format='iso', scale='tdb').mjd
+
+def get_horizons_mjd_range(target_id, id_type=None):
+    """Returns (min_mjd, max_mjd) in TDB."""
+    res_min = Horizons(id=target_id, id_type=id_type, location='@0', epochs=-1931076.5).ephemerides_async()
+    res_max = Horizons(id=target_id, id_type=id_type, location='@0', epochs=5373484.5).ephemerides_async()
+    
+    return _parse_to_mjd(res_min.text), _parse_to_mjd(res_max.text)
