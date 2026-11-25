@@ -44,7 +44,7 @@ import warnings
 from bagle.dynesty.utils import resample_equal, unitcheck
 from bagle.dynesty.utils import quantile as _quantile
 from itertools import groupby
-from astroquery.jplhorizons import Horizons
+from bagle.parallax import get_horizons_mjd_range
 
 from matplotlib import logging
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -79,6 +79,36 @@ _LEGACY_COLUMN_WARNED = set()
 
 # Sidecar layout written next to MultiNest results.
 RESULTS_SCHEMA = 2
+
+# Load finite-coverage observer ranges once per module import.
+t_lim_obsLocation = {}
+for _observer in ('Gaia', 'Roman', 'HST', 'JWST'):
+    try:
+        t_lim_obsLocation[_observer] = get_horizons_mjd_range(_observer)
+    except Exception as exc:
+        warnings.warn(f'Could not retrieve {_observer} ephemeris date range: {exc}',
+                      RuntimeWarning, stacklevel=2)
+        t_lim_obsLocation[_observer] = (None, None)
+
+
+def _observer_limited_plot_times(t_mod, baseline, obs_location, step=1):
+    """Keep extended plot dates inside finite-coverage observer ephemerides."""
+    start = t_mod.min() - baseline
+    stop = t_mod.max() + baseline
+    obs_location = str(obs_location).casefold()
+    range_key = next((observer for observer in t_lim_obsLocation
+                      if observer.casefold() == obs_location), None)
+    if range_key is None:
+        return np.arange(start, stop, step)
+
+    min_mjd, max_mjd = t_lim_obsLocation[range_key]
+    if min_mjd is None or max_mjd is None:
+        return t_mod
+
+    # The observer interpolation requests two days of Horizons support.
+    start = max(start, min_mjd + 3)
+    stop = min(stop, max_mjd - 3)
+    return np.arange(start, stop, step)
 
 
 
@@ -5105,7 +5135,11 @@ def plot_photometry(data, model, input_model=None, dense_time=True, residuals=Tr
     if dense_time:
         # 1 day sampling over whole range
         #mod_t = np.arange(dat_t.min(), dat_t.max(), 0.1) #end model at last photometry data point
-        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #begin/end model +/-2000 days after last data point (for ongoing events)
+        obs_location = getattr(model, 'obsLocation', 'earth')
+        if not isinstance(obs_location, str):
+            obs_location = obs_location[filt_index]
+        mod_t = _observer_limited_plot_times(
+            dat_t, 2000, obs_location, step=0.1)
 
     else:
         mod_t = dat_t
@@ -5249,7 +5283,11 @@ def plot_photometry_gp(data, model, input_model=None, dense_time=True, residuals
     if dense_time:
         # 1 day sampling over whole range
         #mod_t = np.arange(dat_t.min(), dat_t.max(), 1)
-        mod_t = mod_t = np.arange(dat_t.min()-2000, dat_t.max()+2000, 0.1) #+/-2000 days (for ongoing events)
+        obs_location = getattr(model, 'obsLocation', 'earth')
+        if not isinstance(obs_location, str):
+            obs_location = obs_location[filt_index]
+        mod_t = _observer_limited_plot_times(
+            dat_t, 2000, obs_location, step=0.1)
     else:
         mod_t = dat_t
 
@@ -5354,7 +5392,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     if data.get('ypos' + str(data_filt_index + 1)) is not None:
         dat_y = data['ypos' + str(data_filt_index + 1)] * 1e3
         dat_ye = data['ypos_err' + str(data_filt_index + 1)] * 1e3
-        use_dat_y = True
+        use_dat_y = np.any(np.isfinite(dat_y))
     else:
         use_dat_y=False
         dat_y, dat_ye = np.full_like(dat_x, np.nan), np.full_like(dat_x, np.nan)
@@ -5383,7 +5421,10 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     # longtime = np.arange(model.t0 - baseline, model.t0 + baseline, 1)
     # Note: can't use arbitrary times for scanning telescope
     baseline = 3*(dat_t.max() - dat_t.min())
-    t_long = np.arange(t_mod.min() - baseline, t_mod.max() + baseline, 1)
+    obs_location = getattr(model, 'obsLocation', 'earth')
+    if not isinstance(obs_location, str):
+        obs_location = obs_location[filt_index]
+    t_long = _observer_limited_plot_times(t_mod, baseline, obs_location)
 
     #### Models
     #
@@ -5398,6 +5439,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     
     if dat_scan_angle is None:
         dat_y_for_plot = dat_y
+        data_label = 'Data'
     else:
         scan_angle_rad = np.deg2rad(dat_scan_angle)
         scan_sin = np.sin(scan_angle_rad)
@@ -5408,8 +5450,12 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
                             p_mod_unlens_tdat[:,1], dat_scan_angle)).T
         w_unit_vector = np.column_stack((scan_sin, scan_cos))
         z_unit_vector = np.column_stack((-scan_cos, scan_sin))
-        if not np.any(~np.isnan(dat_y)):
-            dat_y_for_plot = p_mod_lens_tdat_scan[:,1]*1e3
+        if use_dat_y:
+            dat_y_for_plot = dat_y
+            data_label = 'Data'
+        else:
+            dat_y_for_plot = p_mod_lens_tdat_scan[:, 1] * 1e3
+            data_label = 'Data (model AC)'
         dat_ra = dat_x*scan_sin - dat_y_for_plot*scan_cos
         dat_dec = dat_x*scan_cos + dat_y_for_plot*scan_sin
 
@@ -5495,7 +5541,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         plt.errorbar(dat_x, dat_y, xerr=dat_xe, yerr=dat_ye,
                  fmt='k.', label='Data')
     else:
-        plt.plot(dat_ra, dat_dec, 'k.', label='Data')
+        plt.plot(dat_ra, dat_dec, 'k.', label=data_label)
         plot_scan_error_segments(plt.gca(), dat_ra, dat_dec, dat_xe,
                                  dat_ye if use_dat_y else None)
 
@@ -5662,7 +5708,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         x_mod_tdat = p_mod_unlens_tdat_scan[:, 0]
         y_mod_tdat = p_mod_unlens_tdat_scan[:, 1]
     x_no_pm = dat_x/1e3 - x_mod_tdat
-    y_no_pm = dat_y/1e3 - y_mod_tdat
+    y_no_pm = dat_y_for_plot/1e3 - y_mod_tdat
     if dat_scan_angle is None:
         x_no_pm_sky, y_no_pm_sky = x_no_pm, y_no_pm
     else:
@@ -5757,7 +5803,8 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.errorbar(dat_t, y_no_pm * 1e3,
-                 yerr=dat_ye, fmt='k.', label='Data')
+                 yerr=dat_ye if use_dat_y else None,
+                 fmt='k.', label=data_label)
     # Model
     if dat_scan_angle is None:
         plt.plot(t_mod, y_mod_no_pm * 1e3, 'r-', label='Model')
@@ -5838,7 +5885,7 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
         plt.errorbar(dat_x, dat_y, xerr=dat_xe, yerr=dat_ye,
                      fmt='k.', label='Data')
     else:
-        plt.plot(dat_ra, dat_dec, 'k.', label='Data')
+        plt.plot(dat_ra, dat_dec, 'k.', label=data_label)
         plot_scan_error_segments(plt.gca(), dat_ra, dat_dec, dat_xe,
                                  dat_ye if use_dat_y else None)
 
@@ -5894,7 +5941,8 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
 
     # Data
     plt.errorbar(dat_t, y_no_pm_sky * 1e3,
-                 yerr=dat_ye, fmt='k.', label='Data')
+                 yerr=dat_ye if use_dat_y else None,
+                 fmt='k.', label=data_label)
     
     # Model
     plt.plot(t_long, y_mod_no_pm_longtime * 1e3, 'r-', label='Model')
@@ -6052,8 +6100,9 @@ def plot_astrometry(data, model, input_model=None, dense_time=True,
     fig_list.append(fig)
     plt.clf()
 
-    plt.errorbar(dat_t, y_keep_par * 1e3,
-                 yerr=dat_ye, fmt='k.', label='Data')
+    if use_dat_y:
+        plt.errorbar(dat_t, y_keep_par * 1e3,
+                     yerr=dat_ye, fmt='k.', label='Data')
     if dat_scan_angle is None:
         plt.plot(t_mod, p_mod_keep_par_tmod[:, 1] * 1e3, 'r-', label='Model')
     else:
@@ -7496,6 +7545,7 @@ def cornerplot_2truth(results, dims=None, span=None, quantiles=[0.025, 0.5, 0.97
 
     return (fig, axes)
 
+
 def contour2d_alpha(x, y, smooth=0.02, span=None, weights=None, sigma_levels=[1, 2, 3],
                     ax=None, color='gray',
                     plot_density=True,
@@ -8316,6 +8366,4 @@ def cornerplot_custom(results_list, dims=None, quantiles=[0.025, 0.5, 0.975],
                             ax.axhline(truths[i], color=truth_color,
                                        **truth_kwargs)
     return (fig, axes)
-    
-### Some new helper functionality for Gaia stuff
-t_lim_obsLocation = {'Gaia'}
+
