@@ -77,6 +77,20 @@ def _max_dist_km(a, b):
     return np.max(np.linalg.norm(np.atleast_2d(d.T), axis=-1))
 
 
+@pytest.mark.parametrize(('text', 'scale'), [
+    ('prior to A.D. 2013-DEC-19 09:54:19.5\n774 UT', 'utc'),
+    ('after A.D. 2025-JAN-25 12:00:00.1234 TDB', 'tdb'),
+])
+def test_parse_horizons_observer_range_boundary(text, scale):
+    parsed = parallax._parse_to_mjd(text)
+    expected = Time(
+        '2013-12-19 09:54:19.5774' if scale == 'utc'
+        else '2025-01-25 12:00:00.1234',
+        format='iso', scale=scale,
+    ).tdb.mjd
+    assert parsed == pytest.approx(expected, abs=1e-10)
+
+
 def test_horizons_query_is_barycentric_equatorial(fake_horizons):
     """The Horizons query uses the SSB origin and the ICRF equatorial plane."""
     t = Time(SPARSE_JD, format='jd', scale='tdb')
