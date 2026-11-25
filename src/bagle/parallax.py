@@ -1,8 +1,10 @@
-import math
+import re
+from datetime import datetime
 
 import numpy as np
 import joblib
 import os
+from astroquery.jplhorizons import Horizons
 from astropy import units, units as u
 from astropy.coordinates import SkyCoord, get_body_barycentric, get_body_barycentric_posvel, solar_system_ephemeris, \
     CartesianRepresentation
@@ -366,7 +368,7 @@ def sun_position(mjd, radians=False):
 
     if (len(ra) > 1):
         neg = np.where(ra < 0.0)[0]
-        ra[neg] = ra[neg] + 2.0 * math.pi
+        ra[neg] = ra[neg] + 2.0 * np.pi
 
     dec = np.arcsin(np.sin(l_rad) * np.sin(oblt_rad))
 
@@ -381,14 +383,18 @@ def sun_position(mjd, radians=False):
 
 
 def _parse_to_mjd(text):
-    pattern = r"(?:prior to|after)\s+A\.D\.\s+(\d{4}-[A-Za-z]{3}-\d{2}\s+\d{2}:\d{2}:\d{2})\.(\d+)\s+TDB"
+    pattern = (r"(?:prior to|after)\s+A\.D\.\s+"
+               r"(\d{4}-[A-Za-z]{3}-\d{2}\s+\d{2}:\d{2}:\d{2})\."
+               r"(\d+(?:\s+\d+)*)\s+(TDB|UT)")
     match = re.search(pattern, text)
     if not match:
         return None
-    
+
     dt = datetime.strptime(match.group(1), "%Y-%b-%d %H:%M:%S")
-    iso_str = f"{dt.strftime('%Y-%m-%d %H:%M:%S')}.{match.group(2)}"
-    return Time(iso_str, format='iso', scale='tdb').mjd
+    fraction = re.sub(r"\s+", "", match.group(2))
+    iso_str = f"{dt.strftime('%Y-%m-%d %H:%M:%S')}.{fraction}"
+    scale = 'utc' if match.group(3).upper() == 'UT' else 'tdb'
+    return Time(iso_str, format='iso', scale=scale).tdb.mjd
 
 def get_horizons_mjd_range(target_id, id_type=None):
     """Returns (min_mjd, max_mjd) in TDB."""
