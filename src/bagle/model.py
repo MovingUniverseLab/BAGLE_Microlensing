@@ -5633,6 +5633,47 @@ class PSPL_GP_PhotParam3(PSPL_PhotParam3):
         return
 
 
+class PSPL_GP_PhotParam5_2(PSPL_PhotParam5):
+    """
+    Same as :class:`PSPL_PhotParam5` (log10_piE, phi_muRel, mag_base, and a
+    trajectory-relative u0_amp sign) with the Gaussian process
+    parametrization of :class:`PSPL_GP_PhotParam2_2`.
+
+    The GP parameters are optional and data-set specific, passed as
+    dictionaries keyed on the photometric filter index. Only data-sets
+    included in the dictionaries use a GP.
+    """
+    phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
+    additional_param_names = PSPL_PhotParam5.additional_param_names + ['gp_log_rho', 'gp_log_S0']
+
+    def __init__(self, t0, u0_amp, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                 gp_log_sigma, gp_rho, gp_log_omega04_S0, gp_log_omega0,
+                 raL=None, decL=None, obsLocation='earth'):
+
+        self.gp_log_sigma = gp_log_sigma
+        self.gp_rho = gp_rho
+        self.gp_log_omega04_S0 = gp_log_omega04_S0
+        self.gp_log_omega0 = gp_log_omega0
+
+        super().__init__(t0, u0_amp, tE, log10_piE, phi_muRel, b_sff, mag_base,
+                         raL=raL, decL=decL, obsLocation=obsLocation)
+
+        self.gp_log_rho = {}
+        for key, val in self.gp_rho.items():
+            self.gp_log_rho[key] = np.log(val)
+
+        self.gp_log_S0 = {}
+        for key, val in self.gp_log_omega04_S0.items():
+            self.gp_log_S0[key] = self.gp_log_omega04_S0[key] - 4 * self.gp_log_omega0[key]
+
+        # Setup a useful "use_phot_gp" flag.
+        self.use_gp_phot = np.zeros(len(self.b_sff), dtype='bool')
+        for key in self.gp_log_sigma.keys():
+            self.use_gp_phot[key] = True
+
+        return
+
+
 class PSPL_GP_PhotAstromParam1(PSPL_PhotAstromParam1):
     phot_optional_param_names = ['gp_log_sigma', 'gp_rho', 'gp_log_omega04_S0', 'gp_log_omega0']
 
@@ -30397,6 +30438,22 @@ class PSPL_Phot_Par_GP_Param3(ModelClassABC,
                               PSPL_Phot,
                               PSPL_Parallax,
                               PSPL_GP_PhotParam3):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        startbases(self)
+        checkconflicts(self)
+
+
+@inheritdocstring
+class PSPL_Phot_Par_GP_Param5_2(ModelClassABC,
+                                PSPL_GP,
+                                PSPL_Phot,
+                                PSPL_Parallax,
+                                PSPL_GP_PhotParam5_2):
+    """
+    Microlensing params with log10_piE, phi_muRel, mag_base, a
+    trajectory-relative u0_amp sign, and a GP (PSPL_GP_PhotParam2_2 style)
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         startbases(self)
