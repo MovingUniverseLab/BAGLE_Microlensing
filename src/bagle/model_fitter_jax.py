@@ -1609,8 +1609,11 @@ class MicrolensSolver(Solver):
 
         # FITS extensions: only when the results FITS file already exists.
         fits_path = outroot + '.fits'
+        # Read fully into memory and rewrite: in-place updates need writable
+        # mmap, which some filesystems (e.g. NERSC CFS/DVS) do not support.
         try:
-            hdul = fits.open(fits_path, mode='update')
+            with fits.open(fits_path, memmap=False, lazy_load_hdus=False) as src:
+                hdul = fits.HDUList([hdu.copy() for hdu in src])
         except FileNotFoundError:
             return None
 
@@ -1643,7 +1646,7 @@ class MicrolensSolver(Solver):
         # Append both extensions and flush to disk.
         hdul.append(fits.BinTableHDU(fixed_tab, name='FIXED'))
         hdul.append(fits.BinTableHDU(filt_tab, name='FILTERS'))
-        hdul.close()
+        hdul.writeto(fits_path, overwrite=True)
         return None
 
     def interleave_optional(self, fit_names, optional_by_filter, ast_optional):
